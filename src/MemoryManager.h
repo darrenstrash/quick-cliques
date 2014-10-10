@@ -16,11 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<stdlib.h>
+#include <cstdlib>
 
 /*! \file MemoryManager.h
 
-    \brief see MemoryManager.c
+    \brief see MemoryManager.cpp
 
     \author Darren Strash (first name DOT last name AT gmail DOT com)
 
@@ -36,7 +36,7 @@
 */
 
 #ifdef MEMORY_DEBUG
-#include<stdio.h>
+#include <cstdio.h>
 
 /*! \brief Call malloc and ensure that it returns non-NULL.
 

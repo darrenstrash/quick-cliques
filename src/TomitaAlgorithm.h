@@ -16,17 +16,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
+#include "Tools.h"
+#include <list>
+#include <vector>
+#include "MemoryManager.h"
 
-/*! \file tomita_algorithm.h
+/*! \file TomitaAlgorithm.h
 
-    \brief see tomita_algorithm.c
+    \brief see TomitaAlgorithm.cpp
 
     \author Darren Strash (first name DOT last name AT gmail DOT com)
 
@@ -43,7 +44,7 @@
 
 long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                 LinkedList* cliques,
+                                 std::list<std::list<int>> &cliques,
                                  #endif
                                  int    numVertices );
 
@@ -55,9 +56,9 @@ int findBestPivotNonNeighborsMatrix( int** pivotNonNeighbors, int* numNonNeighbo
 
 void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
                                            #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                           LinkedList* cliques,
+                                           std::list<std::list<int>> &cliques,
                                            #endif
-                                           LinkedList* partialClique, 
+                                           std::list<int> &partialClique, 
                                            char** adjacencyMatrix,
                                            int* vertexSets, int* vertexLookup, int size,
                                            int beginX, int beginP, int beginR );

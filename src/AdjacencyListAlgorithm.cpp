@@ -13,18 +13,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-#include<limits.h>
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<time.h>
+#include <limits.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <time.h>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
-#include"adjlist_algorithm.h"
+#include "Tools.h"
+#include <list>
+#include "MemoryManager.h"
+#include "AdjacencyListAlgorithm.h"
 
-/*! \file adjlist_algorithm.c
+using namespace std;
+
+/*! \file AdjacencyListAlgorithm.cpp
 
     \brief This file contains the main algorithm for listing all cliques
            according to the algorithm of Tomita et al. (TCS 2006) with one
@@ -84,10 +86,10 @@
     \return The number of maximal cliques of the input graph.
 */
 
-long listAllMaximalCliquesAdjacencyList( LinkedList** adjList, 
+long listAllMaximalCliquesAdjacencyList( vector<list<int>> const &adjList, 
                                          int** adjacencyList, 
                                          #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                         LinkedList* cliques,
+                                         list<list<int> &cliques,
                                          #endif
                                          int* degree, 
                                          int size)
@@ -97,12 +99,12 @@ long listAllMaximalCliquesAdjacencyList( LinkedList** adjList,
 
     // vertex sets are stored in an array like this:
     // |--X--|--P--|
-    int* vertexSets = Calloc(size, sizeof(int));
+    int* vertexSets = (int*)Calloc(size, sizeof(int));
 
     // vertex i is stored in vertexSets[vertexLookup[i]]
-    int* vertexLookup = Calloc(size,sizeof(int));
+    int* vertexLookup = (int*)Calloc(size,sizeof(int));
 
-    LinkedList* partialClique = createLinkedList();
+    list<int> partialClique;
 
     for(i=size-1;i>-1;i--)
     {
@@ -129,8 +131,6 @@ long listAllMaximalCliquesAdjacencyList( LinkedList** adjList,
 
     Free(vertexSets);
     Free(vertexLookup);
-
-    destroyLinkedList(partialClique);
 
     return cliqueCount;
 }
@@ -224,7 +224,7 @@ int findBestPivotNonNeighborsAdjacencyList( int** pivotNonNeighbors, int* numNon
     // we initialize enough space for all of P; this is
     // slightly space inefficient, but it results in faster
     // computation of non-neighbors.
-    *pivotNonNeighbors = Calloc(beginR-beginP, sizeof(int));
+    *pivotNonNeighbors = (int*)Calloc(beginR-beginP, sizeof(int));
     memcpy(*pivotNonNeighbors, &vertexSets[beginP], (beginR-beginP)*sizeof(int));
 
     // we will decrement numNonNeighbors as we find neighbors
@@ -298,9 +298,9 @@ int findBestPivotNonNeighborsAdjacencyList( int** pivotNonNeighbors, int* numNon
 
 void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
                                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  LinkedList* cliques,
+                                                  list<list<int>> &cliques,
                                                   #endif
-                                                  LinkedList* partialClique, 
+                                                  list<int> &partialClique, 
                                                   int** adjacencyList, int* degree,
                                                   int* vertexSets, int* vertexLookup, int size,
                                                   int beginX, int beginP, int beginR )
@@ -353,7 +353,9 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
         vertexLookup[vertex] = beginR;
 
         // add vertex into partialClique, representing R.
-        Link* vertexLink = addLast(partialClique, (void*)vertex);
+        partialClique.push_back(vertex);
+        list<int>::iterator vertexLink(partialClique.end());
+        --vertexLink;
 
         #ifdef PRINT_CLIQUES_TOMITA_STYLE
         printf("%d ", vertex);
@@ -414,7 +416,7 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
         #endif
 
         // remove vertex from partialCliques
-        delete(vertexLink);
+        partialClique.erase(vertexLink);
 
         // the location of vertex may have changed
         vertexLocation = vertexLookup[vertex];

@@ -15,18 +15,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
+#include "Tools.h"
+#include <list>
+#include <vector>
+#include "MemoryManager.h"
 
-/*! \file adjlist_algorithm.h
+/*! \file AdjacencyListAlgorithm.h
 
-    \brief see adjlist_algorithm.c
+    \brief see AdjacencyListAlgorithm.cpp
 
     \author Darren Strash (first name DOT last name AT gmail DOT com)
 
@@ -41,10 +42,10 @@
     \endhtmlonly
 */
 
-long listAllMaximalCliquesAdjacencyList( LinkedList** adjList, 
+long listAllMaximalCliquesAdjacencyList( std::vector<std::list<int>> const &adjList, 
                                          int** adjacencyList, 
                                          #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                         LinkedList* cliques,
+                                         std::list<std::list<int>> cliques,
                                          #endif
                                          int* degree, 
                                          int size);
@@ -56,9 +57,9 @@ int findBestPivotNonNeighborsAdjacencyList( int** pivotNonNeighbors, int* numNon
 
 void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
                                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  LinkedList* cliques,
+                                                  std::list<std::list<int>> &cliques,
                                                   #endif
-                                                  LinkedList* partialClique, 
+                                                  std::list<int> &partialClique, 
                                                   int** adjacencyList, int* degree,
                                                   int* vertexSets, int* vertexLookup, int size,
                                                   int beginX, int beginR, int beginP);

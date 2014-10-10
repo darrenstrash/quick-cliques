@@ -13,19 +13,22 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<time.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <time.h>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
-#include"degeneracy_algorithm.h"
+#include "Tools.h"
+#include <list>
+#include <vector>
+#include "MemoryManager.h"
+#include "DegeneracyAlgorithm.h"
 
-/*! \file degeneracy.c
+using namespace std;
 
-    \brief Execute the algorithm in degeneracy_algorithm.c
+/*! \file degeneracy.cpp
+
+    \brief Execute the algorithm in DegeneracyAlgorithm.cpp
            and print the number of cliques found and wall clock
            execution time.
 
@@ -52,7 +55,7 @@ int main()
     int n; // number of vertices
     int m; // 2x number of edges
 
-    LinkedList** adjacencyList = readInGraphAdjList(&n,&m);
+    vector<list<int>> adjacencyList = readInGraphAdjList(&n,&m);
 
     int i;
 
@@ -60,7 +63,7 @@ int main()
     int* degree; // = Calloc(n, sizeof(int));
 
     #ifdef RETURN_CLIQUES_ONE_BY_ONE
-    LinkedList* cliques = createLinkedList();
+    list<list<int>> cliques;
     #endif
 
     runAndPrintStatsListList( &listAllMaximalCliquesDegeneracy,
@@ -72,19 +75,11 @@ int main()
                               degree, n );
 
     #ifdef RETURN_CLIQUES_ONE_BY_ONE
-    destroyCliqueResults(cliques);
+    cliques.clear();
     #endif
 
     // Free up memory from adjacency list.
-
-    i = 0;
-    while(i<n)
-    {
-        destroyLinkedList(adjacencyList[i]);
-        i++;
-    }
-
-    Free(adjacencyList); 
+    adjacencyList.clear();
 
     return 0;
 }

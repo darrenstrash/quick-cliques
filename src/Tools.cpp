@@ -13,16 +13,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<assert.h>
-#include<stdio.h>
-#include<time.h>
-#include<sys/resource.h>
+#include <cassert>
+#include <cstdio>
+#include <ctime>
+//#include <csys/resource.h>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
+#include "Tools.h"
+#include <list>
+#include <vector>
+#include "MemoryManager.h"
 
-/*! \file misc.c
+using namespace std;
+
+/*! \file Tools.cpp
 
     \brief A collection of useful comparators and print functions
 
@@ -48,11 +51,11 @@
     \return -1 if <, 0 if =, and 1 if >.
 */
 
-int nodeComparator(void* node1, void* node2)
+int nodeComparator(int node1, int node2)
 {
-    if ((int)node1 < (int)node2)
+    if (node1 < node2)
         return -1;
-    if((int)node1 > (int)node2)
+    if(node1 > node2)
         return 1;
 
     return 0;
@@ -68,11 +71,11 @@ int nodeComparator(void* node1, void* node2)
     \return -1 if <, 0 if =, and 1 if >.
 */
 
-int sortComparator(void* node1, void* node2)
+int sortComparator(int node1, int node2)
 {
-    if (*(int*)node1 < *(int*)node2)
+    if (node1 < node2)
         return -1;
-    if(*(int*)node1 > *(int*)node2)
+    if(node1 > node2)
         return 1;
 
     return 0;
@@ -100,18 +103,17 @@ void printArray(int* array, int size)
     \param size the number of vertices in the graph
 */
 
-void printArrayOfLinkedLists(LinkedList** listOfLists, int size)
+void printArrayOfLinkedLists(vector<list<int>> const &arrayOfLists, int size)
 {
     // list graph contents
 
-    int i=0;
-
-    while(i<size)
+    int i = 0;
+    while (i < arrayOfLists.size())
     {
-        if(!isEmpty(listOfLists[i]))
+        if (!arrayOfLists[i].empty())
         {
             printf("%d:", i);
-            printListAbbv(listOfLists[i], &printInt);
+            printListAbbv(arrayOfLists[i], &printInt);
         }
         i++;
     }
@@ -141,9 +143,9 @@ void printClique(int* clique)
     \param integer an integer cast to a void*
 */
 
-void printInt(void* integer)
+void printInt(int integer)
 {
-    printf("%d", (int)integer);
+    printf("%d", integer);
 }
 
 /*! \brief destroy a linked list of integer arrays that have
@@ -153,29 +155,9 @@ void printInt(void* integer)
     \param cliques the linked list of integer arrays
 */
 
-void destroyCliqueResults(LinkedList* cliques)
+void destroyCliqueResults(list<list<int>> &cliques)
 {
-    Link* curr = cliques->head->next;
-    while(!isTail(curr))
-    {
-        int* clique = (int*)curr->data;
-
-#ifdef DEBUG
-        int i=0;
-        while(clique[i] != -1)
-        {
-            printf("%d", clique[i]);
-            if(clique[i+1] != -1)
-                printf(" ");
-            i++;
-        }
-        printf("\n");
-#endif
-        Free(clique);
-        curr = curr->next;
-    } 
-
-    destroyLinkedList(cliques); 
+    cliques.clear();
 }
 
 /*! \brief read in a graph from stdin and return an 
@@ -192,7 +174,7 @@ void destroyCliqueResults(LinkedList* cliques)
             representation of the graph
 */
 
-LinkedList** readInGraphAdjList(int* n, int* m)
+vector<list<int>> readInGraphAdjList(int* n, int* m)
 {
     int u, v; // endvertices, to read edges.
 
@@ -213,17 +195,9 @@ LinkedList** readInGraphAdjList(int* n, int* m)
     printf("Number of edges: %d\n", *m);
 #endif
     
-    LinkedList** adjList = Calloc(*n, sizeof(LinkedList*));
+    vector<list<int>> adjList(*n);
 
     int i = 0;
-    while(i < *n)
-    {
-        adjList[i] = createLinkedList();
-        i++;
-    }
-
-    i = 0;
-
     while(i < *m)
     {
         if(scanf("%d,%d", &u, &v)!=2)
@@ -237,7 +211,7 @@ LinkedList** readInGraphAdjList(int* n, int* m)
             printf("%d=%d\n", u, v);
         assert(u != v);
 
-        addLast(adjList[u], (void*)v);
+        adjList[u].push_back(v);
 
         i++;
     }
@@ -272,13 +246,13 @@ LinkedList** readInGraphAdjList(int* n, int* m)
 
 void runAndPrintStatsMatrix(long (*function)(char**,
                                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                             LinkedList*,
+                                             list<list<int>> &,
                                              #endif
                                              int),
                             const char* algName,
                             char** adjMatrix,
                             #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                            LinkedList* cliques,
+                            list<list<int>> const &cliques,
                             #endif
                             int n )
 {
@@ -327,17 +301,17 @@ void runAndPrintStatsMatrix(long (*function)(char**,
 
 */
 
-void runAndPrintStatsListList( long (*function)(LinkedList**, 
+void runAndPrintStatsListList( long (*function)(vector<list<int>> const &, 
                                                 int**, 
                                                 #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                LinkedList*,
+                                                list<list<int>> &,
                                                 #endif
                                                 int*, int),
                                const char* algName,
-                               LinkedList** adjListLinked,
+                               vector<list<int>> const &adjListLinked,
                                int** adjListArray,
                                #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                               LinkedList* cliques,
+                               list<list<int>> &cliques,
                                #endif
                                int* degree,
                                int n )
@@ -345,63 +319,80 @@ void runAndPrintStatsListList( long (*function)(LinkedList**,
     fprintf(stderr, "%s: ", algName);
     fflush(stderr);
 
-    clock_t start = clock();
+    clock_t const start = clock();
 
-    long cliqueCount = function(adjListLinked, 
-                                adjListArray, 
-                                #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                cliques,
-                                #endif
-                                degree, n);
+    long const cliqueCount = function(adjListLinked, 
+                                      adjListArray, 
+                                      #ifdef RETURN_CLIQUES_ONE_BY_ONE
+                                      cliques,
+                                      #endif
+                                      degree, n);
 
-    clock_t end = clock();
+    clock_t const end = clock();
 
     fprintf(stderr, "%ld maximal cliques, ", cliqueCount);
     fprintf(stderr, "in %f seconds\n", (double)(end-start)/(double)(CLOCKS_PER_SEC));
     fflush(stderr);
 }
 
-/*! \brief process a clique, which may include printing it in
-           one of several formats and/or adding the 
-           clique to a linked list.
+/*! \brief Print the items in the linked list.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
+    \param linkedList A linked list.
 
-    \param clique the clique to add to the linked list
-
+    \param printFunc A function to print the data elements in
+                     the linked list.
 */
 
-inline void processClique(
-                          #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                          LinkedList *cliques,
-                          #endif
-                          LinkedList *clique)
+void printList(list<int> const &linkedList, void (*printFunc)(int))
 {
-    #ifdef PRINT_CLIQUES_TOMITA_STYLE
-    printf("c ");
-    #endif
-
-    #ifdef PRINT_CLIQUES_ONE_BY_ONE
-    printList(clique, &printInt);
-    #endif
-
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
+#ifdef DEBUG
+    printf("printList...\n");
+#endif
+    int count = 0;
+    for (int const value : linkedList)
     {
-    int* cliqueArray = Calloc(length(clique) + 1, sizeof(int));
-    int i = 0;
-
-    Link* curr = clique->head->next;
-    while(!isTail(curr))
-    {
-        cliqueArray[i] = (int)curr->data;
-        i++;
-        curr = curr->next;
+        printFunc(value);
+        if(count != linkedList.size())
+        {
+            printf(" ");
+        }
     }
 
-    cliqueArray[i] = -1;
-
-    addLast(cliques, (void*)cliqueArray);
-    }
-    #endif
+    printf("\n");
+   
 }
+
+/*! \brief Print the first 10 items in the linked list
+
+    \param linkedList A linked list.
+
+    \param printFunc A function to print the data elements in
+                     the linked list.
+*/
+
+void printListAbbv(list<int> const &linkedList, void (*printFunc)(int))
+{
+#ifdef DEBUG
+    printf("printListAbbv...\n");
+#endif
+    int count = 0;
+
+    for (list<int>::const_iterator cit = linkedList.begin();
+         cit != linkedList.end() && count != 10; ++cit)
+    {
+        count++;
+        printFunc(*cit);
+        if(count != linkedList.size())
+        {
+            printf(" ");
+        }
+    }
+
+    if(count != linkedList.size())
+    {
+        printf("... plus %d more", linkedList.size()-10);
+    }
+
+    printf("\n");
+}
+

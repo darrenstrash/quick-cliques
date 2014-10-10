@@ -13,18 +13,22 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<limits.h>
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
+#include <limits.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
-#include"degeneracy_helper.h"
-#include"degeneracy_algorithm.h"
+#include "Tools.h"
+#include <list>
+#include <vector>
+#include "MemoryManager.h"
+#include "DegeneracyTools.h"
 
-/*! \file degeneracy_algorithm.c
+#include "DegeneracyAlgorithm.h"
+
+using namespace std;
+
+/*! \file DegeneracyAlgorithm.cpp
 
     \brief This file contains the algorithm for listing all cliques
            according to the algorithm of Eppstein et al. (ISAAC 2010/SEA 2011).
@@ -167,7 +171,7 @@ inline int findBestPivotNonNeighborsDegeneracy( int** pivotNonNeighbors, int* nu
     // we initialize enough space for all of P; this is
     // slightly space inefficient, but it results in faster
     // computation of non-neighbors.
-    *pivotNonNeighbors = Calloc(beginR-beginP, sizeof(int));
+    *pivotNonNeighbors = (int*)Calloc(beginR-beginP, sizeof(int));
     memcpy(*pivotNonNeighbors, &vertexSets[beginP], (beginR-beginP)*sizeof(int));
 
     // we will decrement numNonNeighbors as we find neighbors
@@ -305,7 +309,7 @@ inline void fillInPandXForRecursiveCallDegeneracy( int vertex, int orderNumber,
             vertexLookup[neighbor] = *pNewBeginX;
 
             Free(neighborsInP[neighbor]);
-            neighborsInP[neighbor] = Calloc(min(*pNewBeginR-*pNewBeginP,orderingArray[neighbor]->laterDegree), sizeof(int));
+            neighborsInP[neighbor] = (int*)Calloc(min(*pNewBeginR-*pNewBeginP,orderingArray[neighbor]->laterDegree), sizeof(int));
             numNeighbors[neighbor] = 0;
 
             // fill in NeighborsInP
@@ -334,7 +338,7 @@ inline void fillInPandXForRecursiveCallDegeneracy( int vertex, int orderNumber,
             int vertexInP = vertexSets[j];
             numNeighbors[vertexInP] = 0;
             Free(neighborsInP[vertexInP]);
-            neighborsInP[vertexInP]=Calloc( min( *pNewBeginR-*pNewBeginP, 
+            neighborsInP[vertexInP]=(int*)Calloc( min( *pNewBeginR-*pNewBeginP, 
                                                  orderingArray[vertexInP]->laterDegree 
                                                + orderingArray[vertexInP]->earlierDegree), sizeof(int));
 
@@ -388,23 +392,23 @@ inline void fillInPandXForRecursiveCallDegeneracy( int vertex, int orderNumber,
     \return the number of maximal cliques of the input graph.
 */
 
-long listAllMaximalCliquesDegeneracy( LinkedList** adjList, 
+long listAllMaximalCliquesDegeneracy( vector<list<int>> const &adjList, 
                                       int** adjacencyList, 
                                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                      LinkedList* cliques,
+                                      list<list<int>> &cliques,
                                       #endif
                                       int* degree, 
                                       int size)
 {
     // vertex sets are stored in an array like this:
     // |--X--|--P--|
-    int* vertexSets = Calloc(size, sizeof(int));
+    int* vertexSets = (int*)Calloc(size, sizeof(int));
 
     // vertex i is stored in vertexSets[vertexLookup[i]]
-    int* vertexLookup = Calloc(size, sizeof(int));
+    int* vertexLookup = (int*)Calloc(size, sizeof(int));
 
-    int** neighborsInP = Calloc(size, sizeof(int*));
-    int* numNeighbors = Calloc(size, sizeof(int));
+    int** neighborsInP = (int**)Calloc(size, sizeof(int*));
+    int* numNeighbors = (int*)Calloc(size, sizeof(int));
     
     // compute the degeneracy order
     NeighborListArray** orderingArray = computeDegeneracyOrderArray(adjList, size);
@@ -415,7 +419,7 @@ long listAllMaximalCliquesDegeneracy( LinkedList** adjList,
     {
         vertexLookup[i] = i;
         vertexSets[i] = i;
-        neighborsInP[i] = Calloc(1, sizeof(int));
+        neighborsInP[i] = (int*)Calloc(1, sizeof(int));
         numNeighbors[i] = 1;
         i++;
     }
@@ -426,7 +430,7 @@ long listAllMaximalCliquesDegeneracy( LinkedList** adjList,
 
     long cliqueCount = 0;
 
-    LinkedList* partialClique = createLinkedList();
+    list<int> partialClique;
 
     // for each vertex
     for(i=0;i<size;i++)
@@ -438,7 +442,7 @@ long listAllMaximalCliquesDegeneracy( LinkedList** adjList,
         #endif
 
         // add vertex to partial clique R
-        addLast(partialClique, (void*)vertex);
+        partialClique.push_back(vertex);
 
         int newBeginX, newBeginP, newBeginR;
 
@@ -468,10 +472,10 @@ long listAllMaximalCliquesDegeneracy( LinkedList** adjList,
 
         beginR = beginR + 1;
 
-        deleteLast(partialClique);
+        partialClique.pop_back();
     }
 
-    destroyLinkedList(partialClique);
+    partialClique.clear();
 
     Free(vertexSets);
     Free(vertexLookup);
@@ -479,8 +483,6 @@ long listAllMaximalCliquesDegeneracy( LinkedList** adjList,
     for(i = 0; i<size; i++)
     {
         Free(neighborsInP[i]);
-        Free(orderingArray[i]->later);
-        Free(orderingArray[i]->earlier);
         Free(orderingArray[i]);
     }
 
@@ -697,9 +699,9 @@ inline void moveFromRToXDegeneracy( int vertex,
 
 void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
                                                #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                               LinkedList* cliques,
+                                               list<list<int>> &cliques,
                                                #endif
-                                               LinkedList* partialClique, 
+                                               list<int> &partialClique, 
                                                int* vertexSets, int* vertexLookup,
                                                int** neighborsInP, int* numNeighbors,
                                                int beginX, int beginP, int beginR)
@@ -750,7 +752,7 @@ void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
         int newBeginX, newBeginP, newBeginR;
 
         // add vertex into partialClique, representing R.
-        Link* vertexLink = addLast(partialClique, (void*)vertex);
+        partialClique.push_back(vertex);
 
         // swap vertex into R and update all data structures 
         moveToRDegeneracy( vertex, 
@@ -773,8 +775,8 @@ void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
         printf("b ");
         #endif
 
-        // remove vertex from partialCliques
-        delete(vertexLink);
+        // remove vertex from partialClique
+        partialClique.pop_back();
 
         moveFromRToXDegeneracy( vertex, 
                                 vertexSets, vertexLookup,

@@ -13,15 +13,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
+#include "Tools.h"
+#include "DegeneracyTools.h"
+#include <list>
+#include <vector>
+#include "MemoryManager.h"
 
-/*! \file compdegen.c
+/*! \file compdegen.cpp
 
    \brief print the degeneracy of the input graph
 
@@ -38,6 +40,7 @@
     \endhtmlonly
 */
 
+using namespace std;
 
 int main()
 {
@@ -45,19 +48,11 @@ int main()
     int n; // number of vertices
     int m; // 2x number of edges
 
-    LinkedList** adjacencyList = readInGraphAdjList(&n,&m);
+    vector<list<int>> adjacencyList = readInGraphAdjList(&n,&m);
 
     int d = computeDegeneracy(adjacencyList, n);
 
-    int i = 0;
-
-    while(i<n)
-    {
-        destroyLinkedList(adjacencyList[i]);
-        i++;
-    }
-
-    Free(adjacencyList); 
+    adjacencyList.clear(); 
 
     fprintf(stderr, "Degeneracy is %d\n", d);
     return 0;

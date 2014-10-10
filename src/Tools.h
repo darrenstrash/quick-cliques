@@ -16,9 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include"LinkedList.h"
+#include <list>
+#include <vector>
 
-/*! \file misc.h
+/*! \file Tools.h
 
     \brief see misc.c
 
@@ -38,50 +39,78 @@
 #define max(x,y) (x > y? x:y)
 #define min(x,y) (x < y? x:y)
 
-int nodeComparator(void* node1, void* node2);
+int nodeComparator(int node1, int node2);
 
 void printArray(int* array, int size);
 
-void printArrayOfLinkedLists(LinkedList** listOfLists, int size);
+void printArrayOfLinkedLists(std::vector<std::list<int>> const &listOfLists, int size);
 
-void printInt(void* integer);
+void printInt(int integer);
 
-void destroyCliqueResults(LinkedList* cliques);
+void destroyCliqueResults(std::list<std::list<int>> &cliques);
 
-LinkedList** readInGraphAdjList(int* n, int* m);
+std::vector<std::list<int>> readInGraphAdjList(int* n, int* m);
 
 void runAndPrintStatsMatrix(long (*function)(char**,
                                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                             LinkedList*,
+                                             std::list<std::list<int>> &,
                                              #endif
                                              int),
                             const char* algName,
                             char** adjMatrix,
                             #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                            LinkedList* cliques,
+                            std::list<std::list<int>> &cliques,
                             #endif
                             int n );
 
-void runAndPrintStatsListList( long (*function)(LinkedList**, 
+void runAndPrintStatsListList( long (*function)(std::vector<std::list<int>> const &, 
                                                 int**, 
                                                 #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                LinkedList*,
+                                                std::list<std::list> &,
                                                 #endif
                                                 int*, int),
                                const char* algName,
-                               LinkedList** adjListLinked,
+                               std::vector<std::list<int>> const &adjListLinked,
                                int** adjListArray,
                                #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                               LinkedList* cliques,
+                               std::list<std::list<int>> &cliques,
                                #endif
                                int* degree,
                                int n );
 
 
+void printList(std::list<int> const &linkedList, void (*printFunc)(int));
+
+void printListAbbv(std::list<int> const &linkedList, void (*printFunc)(int));
+
+/*! \brief process a clique, which may include printing it in
+           one of several formats and/or adding the 
+           clique to a linked list.
+
+    \param cliques A linked list of cliques to return. <b>(only available when compiled 
+                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
+
+    \param clique the clique to add to the linked list
+
+*/
+
 inline void processClique(
                           #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                          LinkedList *cliques,
+                          std::list<std::list<int>> &cliques,
                           #endif
-                          LinkedList *clique);
+                          std::list<int> const &clique)
+{
+    #ifdef PRINT_CLIQUES_TOMITA_STYLE
+    printf("c ");
+    #endif
+
+    #ifdef PRINT_CLIQUES_ONE_BY_ONE
+    printList(clique, &printInt);
+    #endif
+
+    #ifdef RETURN_CLIQUES_ONE_BY_ONE
+    cliques.push_back(clique);
+    #endif
+}
 #endif
 

@@ -13,18 +13,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<limits.h>
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<time.h>
+#include <climits>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <time.h>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
-#include"tomita_algorithm.h"
+#include "Tools.h"
+#include <list>
+#include <vector>
+#include "MemoryManager.h"
+#include "TomitaAlgorithm.h"
 
-/*! \file tomita_algorithm.c
+using namespace std;
+
+/*! \file TomitaAlgorithm.cpp
 
     \brief This file contains the algorithm for listing all cliques
            according to the algorithm of Tomita et al. (TCS 2006).
@@ -77,7 +80,7 @@
 
 long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                  LinkedList* cliques,
+                                  list<list<int>> &cliques,
                                   #endif
                                   int    numVertices )
 {
@@ -86,12 +89,12 @@ long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
 
     // vertex sets are stored in an array like this:
     // |--X--|--P--|
-    int* vertexSets = Calloc(numVertices, sizeof(int));
+    int* vertexSets = (int*)Calloc(numVertices, sizeof(int));
 
     // vertex i is stored in vertexSets[vertexLookup[i]]
-    int* vertexLookup = Calloc(numVertices, sizeof(int));
+    int* vertexLookup = (int*)Calloc(numVertices, sizeof(int));
 
-    LinkedList* partialClique = createLinkedList();
+    list<int> partialClique;
 
     for(i=numVertices-1;i>-1;i--)
     {
@@ -119,7 +122,7 @@ long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
     Free(vertexSets);
     Free(vertexLookup);
 
-    destroyLinkedList(partialClique);
+    partialClique.clear();
 
     return cliqueCount;
 }
@@ -193,7 +196,7 @@ int findBestPivotNonNeighborsMatrix( int** pivotNonNeighbors, int* numNonNeighbo
     // make an array with the chosen pivot's non-neighbors
     if(beginR-beginP-maxIntersectionSize > 0)
     {
-        *pivotNonNeighbors = Calloc(beginR-beginP-maxIntersectionSize, sizeof(int));
+        *pivotNonNeighbors = (int*)Calloc(beginR-beginP-maxIntersectionSize, sizeof(int));
 
         int j = beginP;
 
@@ -370,9 +373,9 @@ inline void moveFromRToXMatrix( int vertex,
 
 void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
                                            #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                           LinkedList* cliques,
+                                           list<list<int>> &cliques,
                                            #endif
-                                           LinkedList* partialClique, 
+                                           list<int> &partialClique, 
                                            char** adjacencyMatrix,
                                            int* vertexSets, int* vertexLookup, int size,
                                            int beginX, int beginP, int beginR )
@@ -422,7 +425,9 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
         int newBeginX, newBeginP, newBeginR;
 
         // add vertex into partialClique, representing R.
-        Link* vertexLink = addLast(partialClique, (void*)vertex);
+        partialClique.push_back(vertex);
+        list<int>::iterator vertexLink = partialClique.end();
+        --vertexLink;
 
         // swap vertex into R and update all data structures 
         moveToRMatrix( vertex, 
@@ -447,7 +452,7 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
         #endif
 
         // remove vertex from partialCliques
-        delete(vertexLink);
+        partialClique.erase(vertexLink);
 
         moveFromRToXMatrix( vertex, 
                             vertexSets, vertexLookup, 

@@ -16,15 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
+#include "Tools.h"
+#include <list>
+#include "MemoryManager.h"
 
-/*! \file degeneracy_helper.h
+/*! \file DegeneracyTools.h
 
     \brief A collection of structures and functions to compute degeneracy and degeneracy order.
 
@@ -50,10 +50,15 @@
 
 struct NeighborList
 {
+    NeighborList()
+    : vertex(-1)
+    , earlier()
+    , later() {}
+
     int vertex; //!< the vertex that owns this neighbor list
-    LinkedList* earlier; //!< a linked list of neighbors that come before this vertex in the ordering
-    LinkedList* later; //!< a linked list of neighbors that come after this vertex in the ordering
-    int orderNumber; //!< the position of this verex in the ordering
+    std::list<int> earlier; //!< a linked list of neighbors that come before this vertex in the ordering
+    std::list<int> later; //!< a linked list of neighbors that come after this vertex in the ordering
+    int orderNumber; //!< the position of this vertex in the ordering
 };
 
 typedef struct NeighborList NeighborList;
@@ -69,20 +74,20 @@ typedef struct NeighborList NeighborList;
 struct NeighborListArray
 {
     int vertex; //!< the vertex that owns this neighbor list
-    int* earlier; //!< an array of neighbors that come before this vertex in an ordering
+    std::vector<int> earlier; //!< an array of neighbors that come before this vertex in an ordering
     int earlierDegree; //!< the number of neighbors in earlier
-    int* later; //!< an array of neighbors that come after this vertex in an ordering
+    std::vector<int> later; //!< an array of neighbors that come after this vertex in an ordering
     int laterDegree; //!< an array of neighbors that come after this vertex in an ordering
     int orderNumber; //!< the position of this verex in the ordering
 };
 
 typedef struct NeighborListArray NeighborListArray;
 
-int computeDegeneracy(LinkedList** list, int size);
+int computeDegeneracy(std::vector<std::list<int>> adjList, int size);
 
-NeighborList** computeDegeneracyOrderList(LinkedList** list, int size);
+NeighborList** computeDegeneracyOrderList(std::vector<std::list<int>> adjList, int size);
 
-NeighborListArray** computeDegeneracyOrderArray(LinkedList** list, int size);
+NeighborListArray** computeDegeneracyOrderArray(std::vector<std::list<int>> adjList, int size);
 
 int neighborListComparator(void* nl1, void* nl2);
 

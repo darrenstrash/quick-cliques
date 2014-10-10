@@ -13,18 +13,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<limits.h>
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
+#include <climits>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
-#include"degeneracy_helper.h"
-#include"hybrid_algorithm.h"
+#include "Tools.h"
+#include <list>
+#include <vector>
+#include "MemoryManager.h"
+#include "DegeneracyTools.h"
+#include "HybridAlgorithm.h"
 
-/*! \file hybrid_algorithm.c
+using namespace std;
+
+/*! \file HybridAlgorithm.cpp
 
     \brief This file contains an algorithm for listing all cliques
            according to the "hybrid" algorithm of Eppstein and Strash (SEA 2011).
@@ -205,7 +208,7 @@ int findBestPivotNonNeighborsHybrid( int** pivotNonNeighbors, int* numNonNeighbo
     // we initialize enough space for all of P; this is
     // slightly space inefficient, but it results in faster
     // computation of non-neighbors.
-    *pivotNonNeighbors = Calloc(beginR-beginP, sizeof(int));
+    *pivotNonNeighbors = (int*)Calloc(beginR-beginP, sizeof(int));
     memcpy(*pivotNonNeighbors, &vertexSets[beginP], (beginR-beginP)*sizeof(int));
 
     // we will decrement numNonNeighbors as we find neighbors
@@ -375,23 +378,23 @@ inline void fillInPandXForRecursiveCallHybrid( int vertex, int orderNumber,
 
 */
 
-long listAllMaximalCliquesHybrid( LinkedList** adjList, 
+long listAllMaximalCliquesHybrid( vector<list<int>> const &adjList, 
                                   int** adjacencyList, 
                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                  LinkedList* cliques,
+                                  list<list<int>> &cliques,
                                   #endif
                                   int* degree, 
                                   int size)
 {
     // vertex sets are stored in an array like this:
     // |--X--|--P--|
-    int* vertexSets = Calloc(size, sizeof(int));
+    int* vertexSets = (int*)Calloc(size, sizeof(int));
 
     // vertex i is stored in vertexSets[vertexLookup[i]]
-    int* vertexLookup = Calloc(size, sizeof(int));
+    int* vertexLookup = (int*)Calloc(size, sizeof(int));
 
     // scratch array to make pivot computation faster
-    int* scratch = Calloc(sizeof(int), size);
+    int* scratch = (int*)Calloc(sizeof(int), size);
 
     // compute the degeneracy order
     NeighborListArray** orderingArray = computeDegeneracyOrderArray(adjList, size);
@@ -411,19 +414,19 @@ long listAllMaximalCliquesHybrid( LinkedList** adjList,
 
     long cliqueCount = 0;
 
-    LinkedList* partialClique = createLinkedList();
+    list<int> partialClique;
 
     // for each vertex in order
     for(i=0;i<size;i++)
     {
-        int vertex = (int)orderingArray[i]->vertex;
+        int const vertex = orderingArray[i]->vertex;
 
         #ifdef PRINT_CLIQUES_TOMITA_STYLE
         printf("%d ", vertex);
         #endif
 
         // add vertex to partial clique R
-        addLast(partialClique, (void*)vertex);
+        partialClique.push_back(vertex);
 
         int newBeginX, newBeginP, newBeginR;
 
@@ -453,10 +456,10 @@ long listAllMaximalCliquesHybrid( LinkedList** adjList,
 
         beginR = beginR + 1;
 
-        deleteLast(partialClique);
+        partialClique.pop_back();
     }
 
-    destroyLinkedList(partialClique);
+    partialClique.clear();
 
     Free(vertexSets);
     Free(vertexLookup);
@@ -464,8 +467,6 @@ long listAllMaximalCliquesHybrid( LinkedList** adjList,
 
     for(i = 0; i<size; i++)
     {
-        Free(orderingArray[i]->later);
-        Free(orderingArray[i]->earlier);
         Free(orderingArray[i]);
     }
 
@@ -679,9 +680,9 @@ inline void moveFromRToXHybrid( int vertex,
 
 void listAllMaximalCliquesHybridRecursive( long* cliqueCount,
                                            #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                           LinkedList* cliques,
+                                           list<list<int>> &cliques,
                                            #endif
-                                           LinkedList* partialClique, 
+                                           list<int> &partialClique, 
                                            NeighborListArray** orderingArray,
                                            int* vertexSets, int* vertexLookup,
                                            int beginX, int beginP, int beginR,
@@ -734,7 +735,9 @@ void listAllMaximalCliquesHybridRecursive( long* cliqueCount,
         int newBeginX, newBeginP, newBeginR;
 
         // add vertex into partialClique, representing R.
-        Link* vertexLink = addLast(partialClique, (void*)vertex);
+        partialClique.push_back(vertex);
+        list<int>::iterator vertexLink = partialClique.end();
+        --vertexLink;
 
         // swap vertex into R and update all data structures 
         moveToRHybrid( vertex, 
@@ -759,7 +762,7 @@ void listAllMaximalCliquesHybridRecursive( long* cliqueCount,
         #endif
 
         // remove vertex from partialCliques
-        delete(vertexLink);
+        partialClique.erase(vertexLink);
 
         moveFromRToXHybrid( vertex, 
                             vertexSets, vertexLookup, 

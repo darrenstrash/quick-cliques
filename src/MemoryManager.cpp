@@ -13,14 +13,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
+#include "MemoryManager.h"
 
-/*! \file printnm.c
+/*! \file MemoryManager.cpp
 
-   \brief print the number of vertices and edges in an input
-          graph
+    \brief defines malloc and calloc wrapper functions so that we don't
+                   segfault if they return NULL
 
     \author Darren Strash (first name DOT last name AT gmail DOT com)
 
@@ -33,18 +31,13 @@
     <a href="gpl-3.0-standalone.html">See GPL 3.0 here</a>
     </center>
     \endhtmlonly
+
+    This functionality is only active if MEMORY_DEBUG is defined, to
+    make things a little faster.
+
 */
 
-int main()
-{
-    int n,m;
+#ifdef MEMORY_DEBUG
 
-    if(scanf("%d", &n)!=1)
-        exit(1);
-    fprintf(stderr, "Number of vertices: %d\n", n);
-    if(scanf("%d", &m)!=1)
-        exit(1);
-    fprintf(stderr, "Number of edges: %d\n", m/2);
 
-    return 0;
-}
+#endif

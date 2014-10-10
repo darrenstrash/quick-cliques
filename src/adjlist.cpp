@@ -13,19 +13,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<time.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <time.h>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
-#include"tomita_algorithm.h"
+#include "Tools.h"
+#include <list>
+#include "MemoryManager.h"
+#include "AdjacencyListAlgorithm.h"
 
-/*! \file tomita.c
+/*! \file adjlist.cpp
 
-   \brief Execute the tomita algorithm in tomita_algorithm.c
+   \brief Execute the adjlist algorithm in adjlist_algorithm.c
           and print the number of cliques found and wall clock
           execution time.
 
@@ -42,6 +42,8 @@
     \endhtmlonly
 */
 
+using namespace std;
+
 int main()
 {
 
@@ -52,54 +54,51 @@ int main()
     int n; // number of vertices
     int m; // 2x number of edges
 
-    LinkedList** adjacencyList = readInGraphAdjList(&n,&m);
-
-    char** adjacencyMatrix = Calloc(n, sizeof(char*));
+    vector<list<int>> adjacencyList = readInGraphAdjList(&n,&m);
 
     int i;
 
+    int** adjList = (int**)Calloc(n, sizeof(int*));
+    int* degree = (int*)Calloc(n, sizeof(int));
+
     for(i=0;i<n;i++)
     {
-        adjacencyMatrix[i] = Calloc(n, sizeof(char));
+        degree[i] = adjacencyList[i].size();
+        adjList[i] = (int*)Calloc(degree[i], sizeof(int));
         int j = 0;
-        Link* curr = adjacencyList[i]->head->next;
-
-        while(!isTail(curr))
-        {
-            adjacencyMatrix[i][(int)(curr->data)] = 1; 
-            curr = curr->next;
+        for (int const neighbor : adjacencyList[i]) {
+            adjList[i][j++] = neighbor;
         }
-
     }
 
     #ifdef RETURN_CLIQUES_ONE_BY_ONE
-    LinkedList* cliques = createLinkedList();
-    #endif
+    list<list<int>> cliqueList;
+    #endif 
 
-    runAndPrintStatsMatrix( &listAllMaximalCliquesMatrix,
-                             "tomita",
-                             adjacencyMatrix, 
-                             #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                             cliques,
-                             #endif
-                             n );
+    runAndPrintStatsListList( &listAllMaximalCliquesAdjacencyList,
+                              "tomita-adjacency-list",
+                              adjacencyList, adjList, 
+                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
+                              cliqueList,
+                              #endif
+                              degree, n);
 
     // Free up memory from adjacency list.
 
     #ifdef RETURN_CLIQUES_ONE_BY_ONE
-    destroyCliqueResults(cliques);
+    cliqueList.clear();
     #endif
 
     i = 0;
     while(i<n)
     {
-        Free(adjacencyMatrix[i]);
-        destroyLinkedList(adjacencyList[i]);
+        Free(adjList[i]);
         i++;
     }
 
-    Free(adjacencyMatrix); 
-    Free(adjacencyList); 
+    Free(degree);
+    adjacencyList.clear(); 
+    Free(adjList); 
 
     return 0;
 }

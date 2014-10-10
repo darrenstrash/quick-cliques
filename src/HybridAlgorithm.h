@@ -16,19 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
-#include"degeneracy_helper.h"
+#include "Tools.h"
+#include <list>
+#include "MemoryManager.h"
+#include "DegeneracyTools.h"
 
-/*! \file hybrid_algorithm.h
+/*! \file HybridAlgorithm.h
 
-    \brief see hybrid_algorithm.c
+    \brief see HybridAlgorithm.cpp
 
     \author Darren Strash (first name DOT last name AT gmail DOT com)
 
@@ -45,18 +45,18 @@
 
 void listAllMaximalCliquesHybridRecursive( long* cliqueCount,
                                            #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                           LinkedList* cliques,
+                                           std::list<std::list<int>> &cliques,
                                            #endif
-                                           LinkedList* partialClique, 
+                                           std::list<int> &partialClique, 
                                            NeighborListArray** orderingArray,
                                            int* vertexSets, int* vertexLookup,
                                            int beginX, int beginP, int beginR,
                                            int* scratch);
 
-long listAllMaximalCliquesHybrid( LinkedList** adjList, 
+long listAllMaximalCliquesHybrid( std::vector<std::list<int>> const &adjList, 
                                   int** adjacencyList, 
                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                  LinkedList* cliques,
+                                  std::list<std::list<int>> &cliques,
                                   #endif
                                   int* degree, 
                                   int size);

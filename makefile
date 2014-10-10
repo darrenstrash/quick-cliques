@@ -3,14 +3,13 @@ OBJECT_DIR = obj
 SRC_DIR    = src
 BIN_DIR    = bin
 
-OBJECTS  = $(OBJECT_DIR)/LinkedList.o
 OBJECTS += $(OBJECT_DIR)/MemoryManager.o
-OBJECTS += $(OBJECT_DIR)/tomita_algorithm.o
-OBJECTS += $(OBJECT_DIR)/adjlist_algorithm.o
-OBJECTS += $(OBJECT_DIR)/hybrid_algorithm.o
-OBJECTS += $(OBJECT_DIR)/degeneracy_algorithm.o
-OBJECTS += $(OBJECT_DIR)/degeneracy_helper.o
-OBJECTS += $(OBJECT_DIR)/misc.o
+OBJECTS += $(OBJECT_DIR)/TomitaAlgorithm.o
+OBJECTS += $(OBJECT_DIR)/AdjacencyListAlgorithm.o
+OBJECTS += $(OBJECT_DIR)/HybridAlgorithm.o
+OBJECTS += $(OBJECT_DIR)/DegeneracyAlgorithm.o
+OBJECTS += $(OBJECT_DIR)/DegeneracyTools.o
+OBJECTS += $(OBJECT_DIR)/Tools.o
 
 EXEC_NAMES = printnm compdegen tomita adjlist hybrid degeneracy
 
@@ -37,47 +36,44 @@ all: $(EXECS)
 clean: 
 	rm -rf $(OBJECTS) $(EXECS) $(OBJECT_DIR) $(BIN_DIR)
 
-$(BIN_DIR)/printnm: printnm.c ${OBJECTS} ${BIN_DIR}
-	gcc -O2 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/printnm.c -o $@
+$(BIN_DIR)/printnm: printnm.cpp ${OBJECTS} ${BIN_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/printnm.cpp -o $@
 
-$(BIN_DIR)/compdegen: compdegen.c ${OBJECTS} ${BIN_DIR}
-	gcc -O2 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/compdegen.c -o $@
+$(BIN_DIR)/compdegen: compdegen.cpp ${OBJECTS} ${BIN_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/compdegen.cpp -o $@
 
-$(BIN_DIR)/tomita: tomita.c ${OBJECTS} ${BIN_DIR}
-	gcc -O2 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/tomita.c -o $@
+$(BIN_DIR)/tomita: tomita.cpp ${OBJECTS} ${BIN_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/tomita.cpp -o $@
 
-$(BIN_DIR)/adjlist: adjlist.c ${OBJECTS} ${BIN_DIR}
-	gcc -O2 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/adjlist.c -o $@
+$(BIN_DIR)/adjlist: adjlist.cpp ${OBJECTS} ${BIN_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/adjlist.cpp -o $@
 
-$(BIN_DIR)/hybrid: hybrid.c ${OBJECTS} ${BIN_DIR}
-	gcc -O2 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/hybrid.c -o $@
+$(BIN_DIR)/hybrid: hybrid.cpp ${OBJECTS} ${BIN_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/hybrid.cpp -o $@
 
-$(BIN_DIR)/degeneracy: degeneracy.c ${OBJECTS} ${BIN_DIR}
-	gcc -O2 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/degeneracy.c -o $@
+$(BIN_DIR)/degeneracy: degeneracy.cpp ${OBJECTS} ${BIN_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/degeneracy.cpp -o $@
 
-$(OBJECT_DIR)/LinkedList.o: LinkedList.c LinkedList.h ${OBJECT_DIR}
-	gcc -O2 -g ${DEFINE} -c $(SRC_DIR)/LinkedList.c -o $@
+$(OBJECT_DIR)/MemoryManager.o: MemoryManager.cpp MemoryManager.h ${OBJECT_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/MemoryManager.cpp -o $@
 
-$(OBJECT_DIR)/MemoryManager.o: MemoryManager.c MemoryManager.h ${OBJECT_DIR}
-	gcc -O2 -g ${DEFINE} -c $(SRC_DIR)/MemoryManager.c -o $@
+$(OBJECT_DIR)/TomitaAlgorithm.o: TomitaAlgorithm.cpp TomitaAlgorithm.h ${OBJECT_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TomitaAlgorithm.cpp -o $@
 
-$(OBJECT_DIR)/tomita_algorithm.o: tomita_algorithm.c tomita_algorithm.h ${OBJECT_DIR}
-	gcc -O2 -g ${DEFINE} -c $(SRC_DIR)/tomita_algorithm.c -o $@
+$(OBJECT_DIR)/AdjacencyListAlgorithm.o: AdjacencyListAlgorithm.cpp AdjacencyListAlgorithm.h ${OBJECT_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/AdjacencyListAlgorithm.cpp -o $@
 
-$(OBJECT_DIR)/adjlist_algorithm.o: adjlist_algorithm.c adjlist_algorithm.h ${OBJECT_DIR}
-	gcc -O2 -g ${DEFINE} -c $(SRC_DIR)/adjlist_algorithm.c -o $@
+$(OBJECT_DIR)/HybridAlgorithm.o: HybridAlgorithm.cpp HybridAlgorithm.h ${OBJECT_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/HybridAlgorithm.cpp -o $@
 
-$(OBJECT_DIR)/hybrid_algorithm.o: hybrid_algorithm.c hybrid_algorithm.h ${OBJECT_DIR}
-	gcc -O2 -g ${DEFINE} -c $(SRC_DIR)/hybrid_algorithm.c -o $@
+$(OBJECT_DIR)/DegeneracyAlgorithm.o: DegeneracyAlgorithm.cpp DegeneracyAlgorithm.h ${OBJECT_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/DegeneracyAlgorithm.cpp -o $@
 
-$(OBJECT_DIR)/degeneracy_algorithm.o: degeneracy_algorithm.c degeneracy_algorithm.h ${OBJECT_DIR}
-	gcc -O2 -g ${DEFINE} -c $(SRC_DIR)/degeneracy_algorithm.c -o $@
+$(OBJECT_DIR)/DegeneracyTools.o: DegeneracyTools.cpp DegeneracyTools.h ${OBJECT_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/DegeneracyTools.cpp -o $@
 
-$(OBJECT_DIR)/degeneracy_helper.o: degeneracy_helper.c degeneracy_helper.h ${OBJECT_DIR}
-	gcc -O2 -g ${DEFINE} -c $(SRC_DIR)/degeneracy_helper.c -o $@
-
-$(OBJECT_DIR)/misc.o: misc.c misc.h ${OBJECT_DIR}
-	gcc -O2 -g ${DEFINE} -c $(SRC_DIR)/misc.c -o $@
+$(OBJECT_DIR)/Tools.o: Tools.cpp Tools.h ${OBJECT_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/Tools.cpp -o $@
 
  ${OBJECT_DIR}:
 	mkdir ${OBJECT_DIR}

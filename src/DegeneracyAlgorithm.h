@@ -16,19 +16,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include<assert.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-#include"misc.h"
-#include"LinkedList.h"
-#include"MemoryManager.h"
-#include"degeneracy_helper.h"
+#include "Tools.h"
+#include <list>
+#include <vector>
+#include "MemoryManager.h"
+#include "DegeneracyTools.h"
 
-/*! \file degeneracy_algorithm.h
+/*! \file DegeneracyAlgorithm.h
 
-    \brief see degeneracy_algorithm.c
+    \brief see DegeneracyAlgorithm.cpp
 
     \author Darren Strash (first name DOT last name AT gmail DOT com)
 
@@ -45,17 +46,17 @@
 
 void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
                                                #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                               LinkedList* cliques,
+                                               std::list<std::list<int> &cliques,
                                                #endif
-                                               LinkedList* partialClique, 
+                                               std::list<int> &partialClique, 
                                                int* vertexSets, int* vertexLookup,
                                                int** neighborsInP, int* numNeighbors,
                                                int beginX, int beginP, int beginR);
 
-long listAllMaximalCliquesDegeneracy( LinkedList** adjList,
+long listAllMaximalCliquesDegeneracy( std::vector<std::list<int>> const &adjList,
                                       int** adjacencyList, 
                                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                      LinkedList* cliques,
+                                      std::list<std::list<int>> &cliques,
                                       #endif
                                       int* degree, 
                                       int size );
