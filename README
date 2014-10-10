@@ -1,8 +1,4 @@
-Quick Cliques: A package to efficiently compute all maximal cliques in sparse graphs 
-
-----
-
-Author: Darren Strash (first name DOT last name AT gmail DOT com)
+Author: Darren Strash (e-mail: first name DOT last name AT gmail DOT com)
 
 Copyright (c) 2011 Darren Strash. This code is released under the GNU Public License (GPL) 3.0.
 
@@ -23,6 +19,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 ----
 
+Quick Cliques: A package to efficiently compute all maximal cliques in sparse graphs
+
+The intent of this software package is to give you the ability to reproduce the 
+experimental results from the conference paper:
+
+Listing All Maximal Cliques in Large Sparse Real-World Graphs
+D. Eppstein and D. Strash
+Proceedings of the 10th International Conference on Experimental Algorithms (SEA 2011), 
+LNCS vol. 6630, pp. 403-414.
+doi:10.1007/978-3-642-20662-7_31
+arXiv:1103.0318
+
+and the journal version of that paper:
+
+Listing All Maximal Cliques in Large Sparse Real-World Graphs in Near-Optimal Time
+D. Eppstein, M. Löffler, and D. Strash
+Journal of Experimental Algorithmics 18 (3): 3.1, 2013
+doi:10.1145/2543629
+
+This package includes:
+    o The complete C code for the four implementations compared in the paper. (see ./src)
+    o The complete doxygen-generated documentation of the code (see ./doc)
+    o The test script used to build and run the experiments exactly as in the paper. (./test.sh)
+    o A small subset of the data used in experiments (see ./data)
+      [ The full data was too large for GitHub, you can download it from here:
+        http://www.ics.uci.edu/~dstrash/data.tar.gz ]
+
 For instructions on how to use this program see doc/index.html
 
 Or, just type `make' in the terminal, and then execute test.sh.
+
+Please feel free to contact me with any questions! (My e-mail address is at the top of this file)
+
+Darren Strash (e-mail: first name DOT last name AT gmail DOT com)
