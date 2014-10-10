@@ -1,0 +1,28 @@
+Quick Cliques: A package to efficiently compute all maximal cliques in sparse graphs 
+
+----
+
+Author: Darren Strash (first name DOT last name AT gmail DOT com)
+
+Copyright (c) 2011 Darren Strash. This code is released under the GNU Public License (GPL) 3.0.
+
+To read the GPL 3.0, read the file COPYING in this directory.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+----
+
+For instructions on how to use this program see doc/index.html
+
+Or, just type `make' in the terminal, and then execute test.sh.
