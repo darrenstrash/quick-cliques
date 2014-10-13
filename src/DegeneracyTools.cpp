@@ -17,7 +17,6 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
 
 #include "Tools.h"
 #include <list>
@@ -294,7 +293,6 @@ NeighborListArray** computeDegeneracyOrderArray(vector<list<int>> adjList, int s
             {
                 if(degree[neighbor]!=-1)
                 {
-                    cout << "vertex=" << vertex << endl;
                     verticesByDegree[degree[neighbor]].erase(vertexLocator[neighbor]);
                     (vOrdering[vertex].later).push_back(neighbor);
 
