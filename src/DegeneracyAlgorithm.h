@@ -16,16 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
+// local includes
+#include "MaximalCliquesAlgorithm.h"
+#include "Tools.h"
+#include "MemoryManager.h"
+#include "DegeneracyTools.h"
+
+// system includes
+#include <list>
+#include <vector>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-
-#include "Tools.h"
-#include <list>
-#include <vector>
-#include "MemoryManager.h"
-#include "DegeneracyTools.h"
 
 /*! \file DegeneracyAlgorithm.h
 
@@ -44,6 +47,21 @@
     \endhtmlonly
 */
 
+class DegeneracyAlgorithm : public MaximalCliquesAlgorithm
+{
+public:
+    DegeneracyAlgorithm(std::vector<std::list<int>> const &adjacencyList);
+    virtual ~DegeneracyAlgorithm();
+
+    virtual long Run(std::list<std::list<int>> &cliques);
+
+    DegeneracyAlgorithm           (DegeneracyAlgorithm const &) = delete;
+    DegeneracyAlgorithm& operator=(DegeneracyAlgorithm const &) = delete;
+
+private:
+    std::vector<std::list<int>> const &m_AdjacencyList;
+};
+
 void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
                                                #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                                std::list<std::list<int> &cliques,
@@ -54,11 +72,9 @@ void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
                                                int beginX, int beginP, int beginR);
 
 long listAllMaximalCliquesDegeneracy( std::vector<std::list<int>> const &adjList,
-                                      int** adjacencyList, 
                                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                       std::list<std::list<int>> &cliques,
                                       #endif
-                                      int* degree, 
                                       int size );
 
 #endif

@@ -23,7 +23,7 @@
 #include "Tools.h"
 #include <list>
 #include <vector>
-#include "MemoryManager.h"
+#include "MaximalCliquesAlgorithm.h"
 
 /*! \file AdjacencyListAlgorithm.h
 
@@ -42,8 +42,23 @@
     \endhtmlonly
 */
 
-long listAllMaximalCliquesAdjacencyList( std::vector<std::list<int>> const &adjList, 
-                                         int** adjacencyList, 
+class AdjacencyListAlgorithm : public MaximalCliquesAlgorithm
+{
+public:
+    AdjacencyListAlgorithm(std::vector<std::vector<int>> const &adjacencyList);
+    virtual ~AdjacencyListAlgorithm();
+
+    virtual long Run(std::list<std::list<int>> &cliques);
+
+    AdjacencyListAlgorithm           (AdjacencyListAlgorithm const &) = delete;
+    AdjacencyListAlgorithm& operator=(AdjacencyListAlgorithm const &) = delete;
+
+private:
+    std::vector<std::vector<int>> const &m_AdjacencyList;
+    int *m_pDegree;
+};
+
+long listAllMaximalCliquesAdjacencyList( std::vector<std::vector<int>> const &adjacencyList, 
                                          #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                          std::list<std::list<int>> cliques,
                                          #endif
@@ -51,7 +66,7 @@ long listAllMaximalCliquesAdjacencyList( std::vector<std::list<int>> const &adjL
                                          int size);
 
 int findBestPivotNonNeighborsAdjacencyList( int** pivotNonNeighbors, int* numNonNeighbors,
-                                            int** adjacencyList, int* degree,
+                                            std::vector<std::vector<int>> const &adjacencyList, int* degree,
                                             int* vertexSets, int* vertexLookup, int size,
                                             int beginX, int beginP, int beginR);
 
@@ -60,7 +75,7 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
                                                   std::list<std::list<int>> &cliques,
                                                   #endif
                                                   std::list<int> &partialClique, 
-                                                  int** adjacencyList, int* degree,
+                                                  std::vector<std::vector<int>> const &adjacencyList, int* degree,
                                                   int* vertexSets, int* vertexLookup, int size,
                                                   int beginX, int beginR, int beginP);
 

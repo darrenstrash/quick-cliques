@@ -13,16 +13,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
+// local includes
+#include "Tools.h"
+#include "MemoryManager.h"
+#include "DegeneracyAlgorithm.h"
+
+// system includes
+#include <list>
+#include <vector>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <time.h>
-
-#include "Tools.h"
-#include <list>
-#include <vector>
-#include "MemoryManager.h"
-#include "DegeneracyAlgorithm.h"
 
 using namespace std;
 
@@ -57,28 +59,12 @@ int main()
 
     vector<list<int>> adjacencyList = readInGraphAdjList(&n,&m);
 
-    int i;
+    DegeneracyAlgorithm algorithm(adjacencyList);
 
-    int** adjList; // = Calloc(n, sizeof(int*));
-    int* degree; // = Calloc(n, sizeof(int));
-
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
     list<list<int>> cliques;
-    #endif
+    RunAndPrintStats(&algorithm, cliques);
 
-    runAndPrintStatsListList( &listAllMaximalCliquesDegeneracy,
-                              "degeneracy",
-                              adjacencyList, adjList, 
-                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                              cliques,
-                              #endif
-                              degree, n );
-
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
     cliques.clear();
-    #endif
-
-    // Free up memory from adjacency list.
     adjacencyList.clear();
 
     return 0;

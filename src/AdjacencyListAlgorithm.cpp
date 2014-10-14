@@ -21,8 +21,10 @@
 
 #include "Tools.h"
 #include <list>
+#include <vector>
 #include "MemoryManager.h"
 #include "AdjacencyListAlgorithm.h"
+#include "MaximalCliquesAlgorithm.h"
 
 using namespace std;
 
@@ -66,6 +68,33 @@ using namespace std;
 
 */
 
+AdjacencyListAlgorithm::AdjacencyListAlgorithm(vector<vector<int>> const &adjacencyList)
+ : MaximalCliquesAlgorithm("adjlist")
+ , m_AdjacencyList(adjacencyList)
+ , m_pDegree(nullptr)
+{
+    m_pDegree = new int[m_AdjacencyList.size()];
+    for (size_t i = 0; i < m_AdjacencyList.size(); ++i) {
+        m_pDegree[i] = m_AdjacencyList[i].size();
+    }
+}
+
+AdjacencyListAlgorithm::~AdjacencyListAlgorithm()
+{
+    delete[] m_pDegree;
+}
+
+long AdjacencyListAlgorithm::Run(list<list<int>> &cliques)
+{
+    return listAllMaximalCliquesAdjacencyList(
+                m_AdjacencyList,
+#ifdef RETURN_CLIQUES_ONE_BY_ONE
+                cliques,
+#endif
+                m_pDegree,
+                m_AdjacencyList.size());
+}
+
 /*! \brief List all maximal cliques in a given graph using the algorithm
            by Tomita et al. (TCS 2006), modified to use an adjacency list
            representation of the graph instead of an adjacency matrix. 
@@ -86,8 +115,7 @@ using namespace std;
     \return The number of maximal cliques of the input graph.
 */
 
-long listAllMaximalCliquesAdjacencyList( vector<list<int>> const &adjList, 
-                                         int** adjacencyList, 
+long listAllMaximalCliquesAdjacencyList( vector<vector<int>> const &adjacencyList, 
                                          #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                          list<list<int> &cliques,
                                          #endif
@@ -168,7 +196,7 @@ long listAllMaximalCliquesAdjacencyList( vector<list<int>> const &adjList,
 
 
 int findBestPivotNonNeighborsAdjacencyList( int** pivotNonNeighbors, int* numNonNeighbors,
-                                            int** adjacencyList, int* degree,
+                                            vector<vector<int>> const &adjacencyList, int* degree,
                                             int* vertexSets, int* vertexLookup, int size,
                                             int beginX, int beginP, int beginR )
 {
@@ -194,7 +222,7 @@ int findBestPivotNonNeighborsAdjacencyList( int** pivotNonNeighbors, int* numNon
             // count the number of neighbors vertex has in P.
             while(j < degree[vertex])
             {
-                int neighbor = adjacencyList[vertex][j];
+                int const neighbor = adjacencyList[vertex][j];
 
                 int neighborLocation = vertexLookup[neighbor];
 
@@ -301,7 +329,7 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
                                                   list<list<int>> &cliques,
                                                   #endif
                                                   list<int> &partialClique, 
-                                                  int** adjacencyList, int* degree,
+                                                  vector<vector<int>> const &adjacencyList, int* degree,
                                                   int* vertexSets, int* vertexLookup, int size,
                                                   int beginX, int beginP, int beginR )
 {
@@ -372,8 +400,8 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
         int j = 0;
         while(j<degree[vertex])
         {
-            int neighbor = adjacencyList[vertex][j];
-            int neighborLocation = vertexLookup[neighbor];
+            int const neighbor = adjacencyList[vertex][j];
+            int const neighborLocation = vertexLookup[neighbor];
 
             // if in X
             if(neighborLocation >= beginX && neighborLocation < beginP)

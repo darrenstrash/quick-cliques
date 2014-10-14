@@ -13,16 +13,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
+// local includes
+#include "HybridAlgorithm.h"
+#include "Tools.h"
+
+// system includes
+#include <list>
+#include <vector>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <time.h>
 
-#include "Tools.h"
-#include <list>
-#include <vector>
-#include "MemoryManager.h"
-#include "HybridAlgorithm.h"
 
 using namespace std;
 
@@ -58,13 +60,11 @@ int main()
     //TODO: use std::move, to eliminate copy
     vector<list<int>> const adjacencyList = readInGraphAdjList(&n,&m);
 
-    int** adjList = (int**)Calloc(n, sizeof(int*));
-    int* degree = (int*)Calloc(n, sizeof(int));
+    vector<vector<int>> adjList(n);
 
     for(int i = 0; i < n; i++)
     {
-        degree[i] = adjacencyList[i].size();
-        adjList[i] = (int*)Calloc(degree[i], sizeof(int));
+        adjList[i].resize(adjacencyList[i].size());
         int j = 0;
         for(int const neighbor : adjacencyList[i])
         {
@@ -72,33 +72,12 @@ int main()
         }
     }
 
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
+    HybridAlgorithm algorithm(adjacencyList, adjList);
+
     list<list<int>> cliques;
-    #endif
+    RunAndPrintStats(&algorithm, cliques);
 
-    runAndPrintStatsListList( &listAllMaximalCliquesHybrid,
-                              "hybrid",
-                              adjacencyList, adjList, 
-                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                              cliques,
-                              #endif
-                              degree, n );
-
-    // Free up memory from adjacency list.
-
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
     destroyCliqueResults(cliques);
-    #endif
-
-    int i = 0;
-    while(i < n)
-    {
-        Free(adjList[i]);
-        i++;
-    }
-
-    Free(degree);
-    Free(adjList); 
 
     return 0;
 }

@@ -86,6 +86,27 @@ using namespace std;
 
 */
 
+DegeneracyAlgorithm::DegeneracyAlgorithm(vector<list<int>> const &adjacencyList)
+ : MaximalCliquesAlgorithm("hybrid")
+ , m_AdjacencyList(adjacencyList)
+{
+}
+
+DegeneracyAlgorithm::~DegeneracyAlgorithm()
+{
+}
+
+long DegeneracyAlgorithm::Run(list<list<int>> &cliques)
+{
+    return listAllMaximalCliquesDegeneracy(
+                m_AdjacencyList,
+#ifdef RETURN_CLIQUES_ONE_BY_ONE
+                cliques,
+#endif
+                m_AdjacencyList.size());
+}
+
+
 /*! \brief Computes the vertex v in P union X that has the most neighbors in P,
            and places P \ {neighborhood of v} in an array. These are the 
            vertices to consider adding to the partial clique during the current
@@ -379,9 +400,6 @@ inline void fillInPandXForRecursiveCallDegeneracy( int vertex, int orderNumber,
     \param adjList An array of linked lists, representing the input graph in the
                    "typical" adjacency list format.
  
-    \param adjacencyList an array of arrays, representing the input graph in a more
-                         compact and cache-friendly adjacency list format. (not currently used)
-
     \param cliques A linked list of cliques to return. <b>(only available when compiled 
                    with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
 
@@ -393,11 +411,9 @@ inline void fillInPandXForRecursiveCallDegeneracy( int vertex, int orderNumber,
 */
 
 long listAllMaximalCliquesDegeneracy( vector<list<int>> const &adjList, 
-                                      int** adjacencyList, 
                                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                       list<list<int>> &cliques,
                                       #endif
-                                      int* degree, 
                                       int size)
 {
     // vertex sets are stored in an array like this:

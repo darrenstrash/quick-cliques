@@ -85,6 +85,36 @@ using namespace std;
 
 */
 
+HybridAlgorithm::HybridAlgorithm(vector<list<int>> const &adjacencyList, vector<vector<int>> const &adjacencyArray)
+ : MaximalCliquesAlgorithm("hybrid")
+ , m_AdjacencyList(adjacencyList)
+ , m_AdjacencyArray(adjacencyArray)
+ , m_pDegree(nullptr)
+{
+    m_pDegree = new int[m_AdjacencyList.size()];
+    for (size_t i = 0; i < m_AdjacencyList.size(); ++i) {
+        m_pDegree[i] = m_AdjacencyList[i].size();
+    }
+}
+
+HybridAlgorithm::~HybridAlgorithm()
+{
+    delete[] m_pDegree;
+}
+
+long HybridAlgorithm::Run(list<list<int>> &cliques)
+{
+    return listAllMaximalCliquesHybrid(
+                m_AdjacencyList,
+                m_AdjacencyArray,
+#ifdef RETURN_CLIQUES_ONE_BY_ONE
+                cliques,
+#endif
+                m_pDegree,
+                m_AdjacencyList.size());
+}
+
+
 /*! \brief Computes the vertex v in P union X that has the most neighbors in P,
            and places P \ {neighborhood of v} in an array. These are the 
            vertices to consider adding to the partial clique during the current
@@ -379,7 +409,7 @@ inline void fillInPandXForRecursiveCallHybrid( int vertex, int orderNumber,
 */
 
 long listAllMaximalCliquesHybrid( vector<list<int>> const &adjList, 
-                                  int** adjacencyList, 
+                                  vector<vector<int>> const &adjacencyList, 
                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                   list<list<int>> &cliques,
                                   #endif

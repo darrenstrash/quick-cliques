@@ -23,6 +23,7 @@
 
 #include "Tools.h"
 #include <list>
+#include "MaximalCliquesAlgorithm.h"
 #include "MemoryManager.h"
 #include "DegeneracyTools.h"
 
@@ -43,6 +44,23 @@
     \endhtmlonly
 */
 
+class HybridAlgorithm : public MaximalCliquesAlgorithm
+{
+public:
+    HybridAlgorithm(std::vector<std::list<int>> const &adjacencyList, std::vector<std::vector<int>> const &adjacencyArray);
+    virtual ~HybridAlgorithm();
+
+    virtual long Run(std::list<std::list<int>> &cliques);
+
+    HybridAlgorithm           (HybridAlgorithm const &) = delete;
+    HybridAlgorithm& operator=(HybridAlgorithm const &) = delete;
+
+private:
+    std::vector<std::list<int>>   const &m_AdjacencyList;
+    std::vector<std::vector<int>> const &m_AdjacencyArray;
+    int *m_pDegree;
+};
+
 void listAllMaximalCliquesHybridRecursive( long* cliqueCount,
                                            #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                            std::list<std::list<int>> &cliques,
@@ -54,7 +72,7 @@ void listAllMaximalCliquesHybridRecursive( long* cliqueCount,
                                            int* scratch);
 
 long listAllMaximalCliquesHybrid( std::vector<std::list<int>> const &adjList, 
-                                  int** adjacencyList, 
+                                  std::vector<std::vector<int>> const &adjacencyList, 
                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                   std::list<std::list<int>> &cliques,
                                   #endif

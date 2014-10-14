@@ -58,47 +58,25 @@ int main()
 
     int i;
 
-    int** adjList = (int**)Calloc(n, sizeof(int*));
-    int* degree = (int*)Calloc(n, sizeof(int));
-
+    vector<vector<int>> adjList(n);
     for(i=0;i<n;i++)
     {
-        degree[i] = adjacencyList[i].size();
-        adjList[i] = (int*)Calloc(degree[i], sizeof(int));
+        adjList[i].resize(adjacencyList[i].size());
         int j = 0;
         for (int const neighbor : adjacencyList[i]) {
             adjList[i][j++] = neighbor;
         }
     }
 
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
+    AdjacencyListAlgorithm algorithm(adjList);
+
     list<list<int>> cliqueList;
-    #endif 
+    RunAndPrintStats(&algorithm, cliqueList);
 
-    runAndPrintStatsListList( &listAllMaximalCliquesAdjacencyList,
-                              "tomita-adjacency-list",
-                              adjacencyList, adjList, 
-                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                              cliqueList,
-                              #endif
-                              degree, n);
-
-    // Free up memory from adjacency list.
-
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
     cliqueList.clear();
-    #endif
-
-    i = 0;
-    while(i<n)
-    {
-        Free(adjList[i]);
-        i++;
-    }
-
-    Free(degree);
     adjacencyList.clear(); 
-    Free(adjList); 
+    adjList.clear();
+    //TODO/DS: Use vector<vector<int>> instead of int* for adjList
 
     return 0;
 }
