@@ -13,17 +13,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
+// local includes
+#include "Tools.h"
+#include "MemoryManager.h"
+#include "TomitaAlgorithm.h"
+#include "MaximalCliquesAlgorithm.h"
+
+// system includes
+#include <list>
+#include <vector>
 #include <climits>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
-#include <time.h>
-
-#include "Tools.h"
-#include <list>
-#include <vector>
-#include "MemoryManager.h"
-#include "TomitaAlgorithm.h"
+#include <ctime>
 
 using namespace std;
 
@@ -64,6 +67,27 @@ using namespace std;
     Neighbors of v remain in their respective sets.
 
 */
+
+TomitaAlgorithm::TomitaAlgorithm(char **ppAdjacencyMatrix, int const numVertices)
+ : MaximalCliquesAlgorithm("tomita")
+ , m_ppAdjacencyMatrix(ppAdjacencyMatrix)
+ , m_iNumVertices(numVertices)
+{
+}
+
+TomitaAlgorithm::~TomitaAlgorithm()
+{
+}
+
+long TomitaAlgorithm::Run(list<list<int>> &cliques)
+{
+    return listAllMaximalCliquesMatrix(
+                m_ppAdjacencyMatrix,
+#ifdef RETURN_CLIQUES_ONE_BY_ONE
+                cliques,
+#endif
+                m_iNumVertices);
+}
 
 /*! \brief List all maximal cliques in a given graph using the algorithm
            by Tomita et al. (TCS 2006). 

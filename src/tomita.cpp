@@ -71,23 +71,15 @@ int main()
 
     }
 
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
-    list<list<int>> cliques;
-    #endif
 
-    runAndPrintStatsMatrix( &listAllMaximalCliquesMatrix,
-                             "tomita",
-                             adjacencyMatrix, 
-                             #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                             cliques,
-                             #endif
-                             n );
+    TomitaAlgorithm algorithm(adjacencyMatrix, n);
+
+    list<list<int>> cliques;
+    RunAndPrintStats(&algorithm, cliques);
 
     // Free up memory from adjacency list.
 
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
     cliques.clear();
-    #endif
 
     i = 0;
     while(i<n)

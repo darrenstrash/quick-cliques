@@ -16,14 +16,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
+// local includes
+#include "Tools.h"
+#include "MemoryManager.h"
+
+#include "MaximalCliquesAlgorithm.h"
+
+// system includes
+#include <list>
+#include <vector>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
-
-#include "Tools.h"
-#include <list>
-#include <vector>
-#include "MemoryManager.h"
 
 /*! \file TomitaAlgorithm.h
 
@@ -41,6 +45,19 @@
     </center>
     \endhtmlonly
 */
+
+class TomitaAlgorithm : public MaximalCliquesAlgorithm
+{
+public:
+    TomitaAlgorithm(char **ppAdjacencyMatrix, int const numVertices);
+    virtual ~TomitaAlgorithm();
+
+    virtual long Run(std::list<std::list<int>> &cliques);
+
+private:
+    char **m_ppAdjacencyMatrix;
+    int  m_iNumVertices;
+};
 
 long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -62,6 +79,5 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
                                            char** adjacencyMatrix,
                                            int* vertexSets, int* vertexLookup, int size,
                                            int beginX, int beginP, int beginR );
-
 
 #endif

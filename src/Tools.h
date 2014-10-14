@@ -18,6 +18,9 @@
 
 #include <list>
 #include <vector>
+#include <stdio.h>
+
+class MaximalCliquesAlgorithm;
 
 /*! \file Tools.h
 
@@ -36,8 +39,9 @@
     \endhtmlonly
 */
 
-#define max(x,y) (x > y? x:y)
-#define min(x,y) (x < y? x:y)
+#include <cmath>
+//#define max(x,y) (x > y? x:y)
+//#define min(x,y) (x < y? x:y)
 
 int nodeComparator(int node1, int node2);
 
@@ -62,6 +66,8 @@ void runAndPrintStatsMatrix(long (*function)(char**,
                             std::list<std::list<int>> &cliques,
                             #endif
                             int n );
+
+void RunAndPrintStats(MaximalCliquesAlgorithm* pAlgorithm, std::list<std::list<int>> &cliques);
 
 void runAndPrintStatsListList( long (*function)(std::vector<std::list<int>> const &, 
                                                 int**, 

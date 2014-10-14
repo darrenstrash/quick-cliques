@@ -22,6 +22,7 @@
 #include <list>
 #include <vector>
 #include "MemoryManager.h"
+#include "MaximalCliquesAlgorithm.h"
 
 using namespace std;
 
@@ -273,6 +274,23 @@ void runAndPrintStatsMatrix(long (*function)(char**,
     fprintf(stderr, "in %f seconds\n", (double)(end-start)/(double)(CLOCKS_PER_SEC));
     fflush(stderr);
 }
+
+void RunAndPrintStats(MaximalCliquesAlgorithm *pAlgorithm, list<list<int>> &cliques)
+{
+    fprintf(stderr, "%s: ", pAlgorithm->GetName().c_str());
+    fflush(stderr);
+
+    clock_t start = clock();
+
+    long const cliqueCount = pAlgorithm->Run(cliques);
+
+    clock_t end = clock();
+
+    fprintf(stderr, "%ld maximal cliques, ", cliqueCount);
+    fprintf(stderr, "in %f seconds\n", (double)(end-start)/(double)(CLOCKS_PER_SEC));
+    fflush(stderr);
+}
+
 
 /*! \brief execute an maximal clique listing algorithm
            that takes an adjacency list as input, time it,

@@ -4,6 +4,7 @@ SRC_DIR    = src
 BIN_DIR    = bin
 
 OBJECTS += $(OBJECT_DIR)/MemoryManager.o
+OBJECTS += $(OBJECT_DIR)/MaximalCliquesAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/TomitaAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/AdjacencyListAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/HybridAlgorithm.o
@@ -56,6 +57,9 @@ $(BIN_DIR)/degeneracy: degeneracy.cpp ${OBJECTS} ${BIN_DIR}
 
 $(OBJECT_DIR)/MemoryManager.o: MemoryManager.cpp MemoryManager.h ${OBJECT_DIR}
 	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/MemoryManager.cpp -o $@
+
+$(OBJECT_DIR)/MaximalCliquesAlgorithm.o: MaximalCliquesAlgorithm.cpp MaximalCliquesAlgorithm.h ${OBJECT_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/MaximalCliquesAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/TomitaAlgorithm.o: TomitaAlgorithm.cpp TomitaAlgorithm.h ${OBJECT_DIR}
 	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TomitaAlgorithm.cpp -o $@
