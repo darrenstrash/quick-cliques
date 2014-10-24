@@ -7,6 +7,7 @@ OBJECTS += $(OBJECT_DIR)/MemoryManager.o
 OBJECTS += $(OBJECT_DIR)/MaximalCliquesAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/TomitaAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/AdjacencyListAlgorithm.o
+OBJECTS += $(OBJECT_DIR)/TimeDelayAdjacencyListAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/HybridAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/DegeneracyAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/DegeneracyTools.o
@@ -21,7 +22,7 @@ EXECS = $(addprefix $(BIN_DIR)/, $(EXEC_NAMES))
 #DEFINE += -DRETURN_CLIQUES_ONE_BY_ONE 
 #DEFINE += -DPRINT_CLIQUES_ONE_BY_ONE 
 
-DEFINE += -DPRINT_CLIQUES_TOMITA_STYLE # used by Eppstein and Strash (2011)
+#DEFINE += -DPRINT_CLIQUES_TOMITA_STYLE # used by Eppstein and Strash (2011)
 
 #some systems handle malloc and calloc with 0 bytes strangely.
 DEFINE += -DALLOW_ALLOC_ZERO_BYTES # used by Eppstein and Strash (2011) 
@@ -69,6 +70,9 @@ $(OBJECT_DIR)/TomitaAlgorithm.o: TomitaAlgorithm.cpp TomitaAlgorithm.h ${OBJECT_
 
 $(OBJECT_DIR)/AdjacencyListAlgorithm.o: AdjacencyListAlgorithm.cpp AdjacencyListAlgorithm.h ${OBJECT_DIR}
 	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/AdjacencyListAlgorithm.cpp -o $@
+
+$(OBJECT_DIR)/TimeDelayAdjacencyListAlgorithm.o: TimeDelayAdjacencyListAlgorithm.cpp TimeDelayAdjacencyListAlgorithm.h ${OBJECT_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TimeDelayAdjacencyListAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/HybridAlgorithm.o: HybridAlgorithm.cpp HybridAlgorithm.h ${OBJECT_DIR}
 	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/HybridAlgorithm.cpp -o $@
