@@ -12,7 +12,7 @@ OBJECTS += $(OBJECT_DIR)/DegeneracyAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/DegeneracyTools.o
 OBJECTS += $(OBJECT_DIR)/Tools.o
 
-EXEC_NAMES = printnm compdegen tomita adjlist hybrid degeneracy
+EXEC_NAMES = printnm compdegen tomita adjlist hybrid degeneracy qc
 
 EXECS = $(addprefix $(BIN_DIR)/, $(EXEC_NAMES))
 
@@ -54,6 +54,9 @@ $(BIN_DIR)/hybrid: hybrid.cpp ${OBJECTS} ${BIN_DIR}
 
 $(BIN_DIR)/degeneracy: degeneracy.cpp ${OBJECTS} ${BIN_DIR}
 	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/degeneracy.cpp -o $@
+
+$(BIN_DIR)/qc: main.cpp ${OBJECTS} ${BIN_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/main.cpp -o $@
 
 $(OBJECT_DIR)/MemoryManager.o: MemoryManager.cpp MemoryManager.h ${OBJECT_DIR}
 	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/MemoryManager.cpp -o $@

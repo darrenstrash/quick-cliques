@@ -85,10 +85,9 @@ using namespace std;
 
 */
 
-HybridAlgorithm::HybridAlgorithm(vector<list<int>> const &adjacencyList, vector<vector<int>> const &adjacencyArray)
+HybridAlgorithm::HybridAlgorithm(vector<list<int>> const &adjacencyList)
  : MaximalCliquesAlgorithm("hybrid")
  , m_AdjacencyList(adjacencyList)
- , m_AdjacencyArray(adjacencyArray)
  , m_pDegree(nullptr)
 {
     m_pDegree = new int[m_AdjacencyList.size()];
@@ -106,7 +105,6 @@ long HybridAlgorithm::Run(list<list<int>> &cliques)
 {
     return listAllMaximalCliquesHybrid(
                 m_AdjacencyList,
-                m_AdjacencyArray,
 #ifdef RETURN_CLIQUES_ONE_BY_ONE
                 cliques,
 #endif
@@ -394,9 +392,6 @@ inline void fillInPandXForRecursiveCallHybrid( int vertex, int orderNumber,
     \param adjList An array of linked lists, representing the input graph in the
                    "typical" adjacency list format.
  
-    \param adjacencyList an array of arrays, representing the input graph in a more
-                         compact and cache-friendly adjacency list format. (not currently used)
-
     \param cliques A linked list of cliques to return. <b>(only available when compiled 
                    with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
 
@@ -409,7 +404,6 @@ inline void fillInPandXForRecursiveCallHybrid( int vertex, int orderNumber,
 */
 
 long listAllMaximalCliquesHybrid( vector<list<int>> const &adjList, 
-                                  vector<vector<int>> const &adjacencyList, 
                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                   list<list<int>> &cliques,
                                   #endif

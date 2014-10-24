@@ -60,19 +60,7 @@ int main()
     //TODO: use std::move, to eliminate copy
     vector<list<int>> const adjacencyList = readInGraphAdjList(&n,&m);
 
-    vector<vector<int>> adjList(n);
-
-    for(int i = 0; i < n; i++)
-    {
-        adjList[i].resize(adjacencyList[i].size());
-        int j = 0;
-        for(int const neighbor : adjacencyList[i])
-        {
-            adjList[i][j++] = neighbor;
-        }
-    }
-
-    HybridAlgorithm algorithm(adjacencyList, adjList);
+    HybridAlgorithm algorithm(adjacencyList);
 
     list<list<int>> cliques;
     RunAndPrintStats(&algorithm, cliques);

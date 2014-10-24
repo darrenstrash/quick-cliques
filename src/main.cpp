@@ -13,14 +13,23 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-#include <cassert.h>
-#include <ciostream>
-#include <ccstdlib>
-#include <cctime>
-
+// local includes
 #include "Tools.h"
-#include <list>
 #include "TomitaAlgorithm.h"
+#include "AdjacencyListAlgorithm.h"
+#include "HybridAlgorithm.h"
+#include "DegeneracyAlgorithm.h"
+
+// system includes
+#include <list>
+#include <string>
+#include <vector>
+#include <cassert>
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+
+using namespace std;
 
 /*! \file main.cpp
 
@@ -39,78 +48,92 @@
     \endhtmlonly
 */
 
-int RunTomitaAlgorithm()
+bool isValidAlgorithm(string const &name)
 {
-
-#ifdef MEMORY_DEBUG
-    fprintf(stderr, "WARNING: MEMORY_DEBUG is defined, timing will be off.\n");
-#endif
-
-    int n; // number of vertices
-    int m; // 2x number of edges
-
-    LinkedList** adjacencyList = readInGraphAdjList(&n,&m);
-
-    char** adjacencyMatrix = (char**)Calloc(n, sizeof(char*));
-
-    int i;
-
-    for(i=0;i<n;i++)
-    {
-        adjacencyMatrix[i] = (char*)Calloc(n, sizeof(char));
-        int j = 0;
-        Link* curr = adjacencyList[i]->head->next;
-
-        while(!isTail(curr))
-        {
-            adjacencyMatrix[i][(int)(curr->data)] = 1; 
-            curr = curr->next;
-        }
-
-    }
-
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
-    LinkedList* cliques = createLinkedList();
-    #endif
-
-    runAndPrintStatsMatrix( &listAllMaximalCliquesMatrix,
-                             "tomita",
-                             adjacencyMatrix, 
-                             #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                             cliques,
-                             #endif
-                             n );
-
-    // Free up memory from adjacency list.
-
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
-    destroyCliqueResults(cliques);
-    #endif
-
-    i = 0;
-    while(i<n)
-    {
-        Free(adjacencyMatrix[i]);
-        destroyLinkedList(adjacencyList[i]);
-        i++;
-    }
-
-    Free(adjacencyMatrix); 
-    Free(adjacencyList); 
-
-    return 0;
+    return (name == "tomita" || name == "adjlist" ||
+            name == "hybrid" || name == "degeneracy");
 }
 
 int main(int argc, char** argv)
 {
     int failureCode(0);
 
+    if (argc==1 || !isValidAlgorithm(argv[1])) {
+        cout << "usage: " << argv[0] << " <tomita|adjlist|hybrid|degeneracy>" << endl;
+    }
+
+    string const name(argv[1]);
+    MaximalCliquesAlgorithm *pAlgorithm(nullptr);
+
+    int n; // number of vertices
+    int m; // 2x number of edges
+
+    vector<list<int>> const adjacencyList = readInGraphAdjList(&n,&m);
+
+    bool const bComputeAdjacencyMatrix(name == "tomita");
+
+    char** adjacencyMatrix(nullptr);
+
+    if (bComputeAdjacencyMatrix) {
+        adjacencyMatrix = (char**)Calloc(n, sizeof(char*));
+
+        for(int i=0; i<n; i++) {
+            adjacencyMatrix[i] = (char*)Calloc(n, sizeof(char));
+            for(int const neighbor : adjacencyList[i]) {
+                adjacencyMatrix[i][neighbor] = 1; 
+            }
+        }
+    }
+
+    bool const bComputeAdjacencyArray(name == "adjlist");
+
+    vector<vector<int>> adjacencyArray;
+
+    if (bComputeAdjacencyArray) {
+        adjacencyArray.resize(n);
+        for (int i=0; i<n; i++) {
+            adjacencyArray[i].resize(adjacencyList[i].size());
+            int j = 0;
+            for (int const neighbor : adjacencyList[i]) {
+                adjacencyArray[i][j++] = neighbor;
+            }
+        }
+    }
+
+    if (name == "tomita") {
+        pAlgorithm = new TomitaAlgorithm(adjacencyMatrix, n);
+    } else if (name == "adjlist"){
+        pAlgorithm = new AdjacencyListAlgorithm(adjacencyArray);
+    } else if (name == "hybrid"){
+        pAlgorithm = new HybridAlgorithm(adjacencyList);
+    } else if (name == "degeneracy"){
+        pAlgorithm = new DegeneracyAlgorithm(adjacencyList);
+    } else {
+        cout << "ERROR: unrecognized algorithm name " << name << endl;
+    }
+
+    // Run algorithm
+    list<list<int>> cliques;
+    RunAndPrintStats(pAlgorithm, cliques);
+
+    cliques.clear();
+
+    if (adjacencyMatrix != nullptr) {
+        int i = 0;
+        while(i<n) {
+            Free(adjacencyMatrix[i]);
+            i++;
+        }
+        Free(adjacencyMatrix); 
+        adjacencyMatrix = nullptr;
+    }
+
+    delete pAlgorithm; pAlgorithm = nullptr;
+
     ////CommandLineOptions options = ParseCommandLineOptions(argc, argv);
 
     ////if (options.verify) {
     ////}
 
-    failureCode = RunTomitaAlgorithm();
-
-    return failureCode;
+    return 0;
 }
