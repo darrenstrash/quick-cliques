@@ -79,4 +79,6 @@ void listAllMaximalCliquesTimeDelayAdjacencyListRecursive( long* cliqueCount,
                                                   int* vertexSets, int* vertexLookup, int size,
                                                   int beginX, int beginD, int beginR, int beginP);
 
+void moveDominatedVerticesFromPtoD(std::vector<std::vector<int>> const &adjacencyList, int* vertexSets, int* vertexLookup, int size, int &beginX, int &beginD, int &beginP, int &beginR);
+
 #endif  //_DJS_TDADJLIST_ALGORITHM_H_
