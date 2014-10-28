@@ -18,6 +18,7 @@
 
 #include <list>
 #include <vector>
+#include <string>
 #include <stdio.h>
 
 class MaximalCliquesAlgorithm;
@@ -46,6 +47,8 @@ class MaximalCliquesAlgorithm;
 int nodeComparator(int node1, int node2);
 
 void printArray(int* array, int size);
+
+void printArrayWithIndexArrows(int* array, int size, int index1, int index2, int index3);
 
 void printArrayOfLinkedLists(std::vector<std::list<int>> const &listOfLists, int size);
 
@@ -118,5 +121,19 @@ inline void processClique(
     cliques.push_back(clique);
     #endif
 }
+
+void DescribeVertex(int const lineNumber, int *vertexSets, int *vertexLookup, int const size, int const vertex, int const beginX, int const beginD, int const beginP, int const beginR);
+
+void DescribeSet(std::string const &setName, int const begin, int const end);
+
+void DescribeState(int const lineNumber, int *vertexSets, int *vertexLookup, int const size, int const beginX, int const beginD, int const beginP, int const beginR);
+
+void CheckConsistency(int const lineNumber, size_t const recursionNumber, int *vertexSets, int *vertexLookup, int const size);
+
+void CheckReverseConsistency(int const lineNumber, size_t const recursionNumber, int *vertexSets, int *vertexLookup, int const size);
+
+
+
+
 #endif
 

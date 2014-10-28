@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <time.h>
+#include <iostream>
 
 #include "Tools.h"
 #include <list>
@@ -115,6 +116,10 @@ long AdjacencyListAlgorithm::Run(list<list<int>> &cliques)
     \return The number of maximal cliques of the input graph.
 */
 
+static unsigned long largestDifference(0);
+static unsigned long numLargeJumps;
+static unsigned long stepsSinceLastReportedClique(0);
+
 long listAllMaximalCliquesAdjacencyList( vector<vector<int>> const &adjacencyList, 
                                          #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                          list<list<int> &cliques,
@@ -155,7 +160,10 @@ long listAllMaximalCliquesAdjacencyList( vector<vector<int>> const &adjacencyLis
                                                  partialClique, 
                                                  adjacencyList, degree,
                                                  vertexSets, vertexLookup, size,
-                                                 beginX, beginP, beginR);
+                                                 beginX, beginP, beginR );
+
+    cout << "Largest Difference : " << largestDifference << endl;
+    cout << "Num     Differences: " << numLargeJumps << endl;
 
     Free(vertexSets);
     Free(vertexLookup);
@@ -334,10 +342,22 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
                                                   int beginX, int beginP, int beginR )
 {
 
+    stepsSinceLastReportedClique++;
+
     // if X is empty and P is empty, return partial clique as maximal
     if(beginX >= beginP && beginP >= beginR)
     {
         (*cliqueCount)++;
+
+        if (stepsSinceLastReportedClique > partialClique.size()) {
+            numLargeJumps++;
+            //cout << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
+            if (largestDifference < (stepsSinceLastReportedClique - partialClique.size())) {
+                largestDifference = stepsSinceLastReportedClique - partialClique.size();
+            }
+        }
+
+        stepsSinceLastReportedClique = 0;
 
         processClique( 
                        #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -481,4 +501,6 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
     // something will always be there (we allocated enough memory
     // for all of P, which is nonempty)
     Free(myCandidatesToIterateThrough);
+
+    stepsSinceLastReportedClique++;
 }

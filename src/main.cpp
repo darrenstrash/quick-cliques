@@ -18,6 +18,7 @@
 #include "TomitaAlgorithm.h"
 #include "AdjacencyListAlgorithm.h"
 #include "TimeDelayAdjacencyListAlgorithm.h"
+#include "TimeDelayMaxDegreeAlgorithm.h"
 #include "HybridAlgorithm.h"
 #include "DegeneracyAlgorithm.h"
 
@@ -51,7 +52,7 @@ using namespace std;
 
 bool isValidAlgorithm(string const &name)
 {
-    return (name == "tomita" || name == "adjlist" || name == "timedelay-adjlist" ||
+    return (name == "tomita" || name == "adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
             name == "hybrid" || name == "degeneracy");
 }
 
@@ -86,7 +87,7 @@ int main(int argc, char** argv)
         }
     }
 
-    bool const bComputeAdjacencyArray(name == "adjlist" || name == "timedelay-adjlist");
+    bool const bComputeAdjacencyArray(name == "adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree");
 
     vector<vector<int>> adjacencyArray;
 
@@ -107,6 +108,8 @@ int main(int argc, char** argv)
         pAlgorithm = new AdjacencyListAlgorithm(adjacencyArray);
     } else if (name == "timedelay-adjlist"){
         pAlgorithm = new TimeDelayAdjacencyListAlgorithm(adjacencyArray);
+    } else if (name == "timedelay-maxdegree"){
+        pAlgorithm = new TimeDelayMaxDegreeAlgorithm(adjacencyArray);
     } else if (name == "hybrid"){
         pAlgorithm = new HybridAlgorithm(adjacencyList);
     } else if (name == "degeneracy"){

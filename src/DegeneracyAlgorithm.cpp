@@ -17,6 +17,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 
 #include "Tools.h"
 #include <list>
@@ -87,7 +88,7 @@ using namespace std;
 */
 
 DegeneracyAlgorithm::DegeneracyAlgorithm(vector<list<int>> const &adjacencyList)
- : MaximalCliquesAlgorithm("hybrid")
+ : MaximalCliquesAlgorithm("degeneracy")
  , m_AdjacencyList(adjacencyList)
 {
 }
@@ -410,6 +411,10 @@ inline void fillInPandXForRecursiveCallDegeneracy( int vertex, int orderNumber,
     \return the number of maximal cliques of the input graph.
 */
 
+static unsigned long largestDifference(0);
+static unsigned long numLargeJumps;
+static unsigned long stepsSinceLastReportedClique(0);
+
 long listAllMaximalCliquesDegeneracy( vector<list<int>> const &adjList, 
                                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                       list<list<int>> &cliques,
@@ -490,6 +495,9 @@ long listAllMaximalCliquesDegeneracy( vector<list<int>> const &adjList,
 
         partialClique.pop_back();
     }
+
+    cout << "Largest Difference : " << largestDifference << endl;
+    cout << "Num     Differences: " << numLargeJumps << endl;
 
     partialClique.clear();
 
@@ -723,10 +731,22 @@ void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
                                                int beginX, int beginP, int beginR)
 {
 
+    stepsSinceLastReportedClique++;
+
     // if X is empty and P is empty, process partial clique as maximal
     if(beginX >= beginP && beginP >= beginR)
     {
         (*cliqueCount)++;
+
+        if (stepsSinceLastReportedClique > partialClique.size()) {
+            numLargeJumps++;
+            //cout << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
+            if (largestDifference < (stepsSinceLastReportedClique - partialClique.size())) {
+                largestDifference = stepsSinceLastReportedClique - partialClique.size();
+            }
+        }
+
+        stepsSinceLastReportedClique = 0;
 
         processClique( 
                        #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -822,4 +842,6 @@ void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
     // something will always be there (we allocated enough memory
     // for all of P, which is nonempty)
     Free(myCandidatesToIterateThrough);
+
+    stepsSinceLastReportedClique++;
 }

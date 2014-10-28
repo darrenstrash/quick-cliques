@@ -21,6 +21,8 @@
 #include "Tools.h"
 #include <list>
 #include <vector>
+#include <string>
+#include <iostream>
 #include "MemoryManager.h"
 #include "MaximalCliquesAlgorithm.h"
 
@@ -94,6 +96,25 @@ void printArray(int* array, int size)
     int i = 0;
     while(i<size)
         printf("%d ", array[i++]);
+    printf("\n");
+}
+
+void printArrayWithIndexArrows(int* array, int size, int index1, int index2, int index3)
+{
+    printArray(array, size);
+    int i = 0;
+    while (i++ < index1)
+        printf(" ");
+    printf("^");
+
+    while (i++ < index2)
+        printf(" ");
+    printf("^");
+
+    while (i++ < index3)
+        printf(" ");
+    printf("^");
+
     printf("\n");
 }
 
@@ -413,4 +434,66 @@ void printListAbbv(list<int> const &linkedList, void (*printFunc)(int))
 
     printf("\n");
 }
+
+void DescribeVertex(int const lineNumber, int *vertexSets, int *vertexLookup, int const size, int const vertex, int const beginX, int const beginD, int const beginP, int const beginR)
+{
+    int const vertexLocation(vertexLookup[vertex]);
+
+    cout << lineNumber << ": vertex " << vertex << " is in position " << vertexLocation << (vertexSets[vertexLocation] == vertex ? "(consistent)" : "(inconsistent: " + to_string(vertexSets[vertexLocation]) + " is there)" ) << " in set ";
+
+    if (vertexLocation < beginX) {
+        cout << "(before X)" << endl;
+    }
+    if (vertexLocation >= beginX && vertexLocation < beginD) {
+        cout << "X" << endl;
+    }
+    if (vertexLocation >= beginD && vertexLocation < beginP) {
+        cout << "D" << endl;
+    }
+    if (vertexLocation >= beginP && vertexLocation < beginR) {
+        cout << "P" << endl;
+    }
+    if (vertexLocation >= beginR) {
+        cout << "R" << endl;
+    }
+}
+
+void DescribeSet(string const &setName, int const begin, int const end)
+{
+    cout << " " << setName << "=[" << begin << "->" << end << "]";
+}
+
+void DescribeState(int const lineNumber, int *vertexSets, int *vertexLookup, int const size, int const beginX, int const beginD, int const beginP, int const beginR)
+{
+    cout << lineNumber << ": Size " << size;
+    DescribeSet("X", beginX, beginD-1);
+    DescribeSet("D", beginD, beginP-1);
+    DescribeSet("P", beginP, beginR-1);
+    DescribeSet("R", beginR, size-1);
+    cout << endl << flush;
+}
+
+void CheckConsistency(int const lineNumber, size_t const recursionNumber, int *vertexSets, int *vertexLookup, int const size)
+{
+    //if (recursionNumber > 2) return;
+    //cout << recursionNumber << "1 is in position " << ver
+    for (int i=0; i < size; ++i) {
+        if (vertexSets[vertexLookup[i]] != i) {
+            cout << recursionNumber << "(line " << lineNumber << ") : inconsistency -- vertex " << i  << " is supposed to be in position " << vertexLookup[i] << " but vertex " <<  vertexSets[vertexLookup[i]] << " is there." << endl;
+        }
+    }
+}
+
+void CheckReverseConsistency(int const lineNumber, size_t const recursionNumber, int *vertexSets, int *vertexLookup, int const size)
+{
+    //if (recursionNumber > 2) return;
+    //cout << recursionNumber << "1 is in position " << ver
+    for (int i=0; i < size; ++i) {
+        if (vertexLookup[vertexSets[i]] != i) {
+            cout << recursionNumber << "(line " << lineNumber << ") : inconsistency -- vertex " << vertexSets[i]  << " is supposed to be in position " << vertexLookup[vertexSets[i]] << " but it is in position " << i << "." << endl;
+        }
+    }
+}
+
+
 

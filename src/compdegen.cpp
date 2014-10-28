@@ -50,10 +50,17 @@ int main()
 
     vector<list<int>> adjacencyList = readInGraphAdjList(&n,&m);
 
+    int maximumDegree(0);
+    for (list<int> const &neighbors : adjacencyList) {
+        if (maximumDegree < neighbors.size())
+            maximumDegree = neighbors.size();
+    }
+
     int d = computeDegeneracy(adjacencyList, n);
 
     adjacencyList.clear(); 
 
     fprintf(stderr, "Degeneracy is %d\n", d);
+    fprintf(stderr, "MaxDegree  is %d\n", maximumDegree);
     return 0;
 }

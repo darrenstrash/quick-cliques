@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <iostream>
 
 using namespace std;
 
@@ -102,6 +103,9 @@ long TomitaAlgorithm::Run(list<list<int>> &cliques)
     \return the number of maximal cliques of the input graph.
 */
 
+static unsigned long largestDifference(0);
+static unsigned long numLargeJumps(0);
+
 long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                   list<list<int>> &cliques,
@@ -134,6 +138,8 @@ long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
 
     long cliqueCount = 0;
 
+    long stepsSinceLastReportedClique = 0;
+
     listAllMaximalCliquesMatrixRecursive( &cliqueCount,
                                           #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                           cliques,
@@ -141,7 +147,10 @@ long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
                                           partialClique, 
                                           adjacencyMatrix,
                                           vertexSets, vertexLookup, numVertices,
-                                          beginX, beginP, beginR );
+                                          beginX, beginP, beginR, stepsSinceLastReportedClique);
+
+    cout << "Largest Difference : " << largestDifference << endl;
+    cout << "Num     Differences: " << numLargeJumps << endl;
 
     Free(vertexSets);
     Free(vertexLookup);
@@ -402,13 +411,23 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
                                            list<int> &partialClique, 
                                            char** adjacencyMatrix,
                                            int* vertexSets, int* vertexLookup, int size,
-                                           int beginX, int beginP, int beginR )
+                                           int beginX, int beginP, int beginR , long &stepsSinceLastReportedClique)
 {
+    stepsSinceLastReportedClique++;
     // if X is empty and P is empty, return partial clique as maximal
     if(beginX >= beginP && beginP >= beginR)
     {
         (*cliqueCount)++;
 
+        if (stepsSinceLastReportedClique > partialClique.size()) {
+            numLargeJumps++;
+            //cout << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
+            if (largestDifference < (stepsSinceLastReportedClique - partialClique.size())) {
+                largestDifference = stepsSinceLastReportedClique - partialClique.size();
+            }
+        }
+
+        stepsSinceLastReportedClique = 0;
         processClique( 
                        #ifdef RETURN_CLIQUES_ONE_BY_ONE
                        cliques,
@@ -460,7 +479,6 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
                        &beginX, &beginP, &beginR, 
                        &newBeginX, &newBeginP, &newBeginR);
 
-
         // recursively compute maximal cliques with new sets R, P and X
         listAllMaximalCliquesMatrixRecursive( cliqueCount, 
                                               #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -469,7 +487,7 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
                                               partialClique,
                                               adjacencyMatrix,
                                               vertexSets, vertexLookup, size,
-                                              newBeginX, newBeginP, newBeginR );
+                                              newBeginX, newBeginP, newBeginR, stepsSinceLastReportedClique );
 
         #ifdef PRINT_CLIQUES_TOMITA_STYLE
         printf("b ");
@@ -503,4 +521,6 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
 
     Free(myCandidatesToIterateThrough);
     }
+
+    stepsSinceLastReportedClique++;
 }

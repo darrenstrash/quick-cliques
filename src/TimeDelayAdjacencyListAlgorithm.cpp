@@ -86,55 +86,6 @@ TimeDelayAdjacencyListAlgorithm::~TimeDelayAdjacencyListAlgorithm()
     delete[] m_pDegree;
 }
 
-void DescribeVertex(int const lineNumber, int *vertexSets, int *vertexLookup, int const size, int const vertex, int const beginX, int const beginD, int const beginP, int const beginR) {
-
-    int const vertexLocation(vertexLookup[vertex]);
-
-    cout << lineNumber << ": vertex " << vertex << " is in position " << vertexLocation << (vertexSets[vertexLocation] == vertex ? "(consistent)" : "(inconsistent: " + to_string(vertexSets[vertexLocation]) + " is there)" ) << " in set ";
-
-    if (vertexLocation < beginX) {
-        cout << "(before X)" << endl;
-    }
-    if (vertexLocation >= beginX && vertexLocation < beginD) {
-        cout << "X" << endl;
-    }
-    if (vertexLocation >= beginD && vertexLocation < beginP) {
-        cout << "D" << endl;
-    }
-    if (vertexLocation >= beginP && vertexLocation < beginR) {
-        cout << "P" << endl;
-    }
-    if (vertexLocation >= beginR) {
-        cout << "R" << endl;
-    }
-}
-
-void DescribeSet(string const &setName, int const begin, int const end)
-{
-    cout << " " << setName << "=[" << begin << "->" << end << "]";
-}
-
-void DescribeState(int const lineNumber, int *vertexSets, int *vertexLookup, int const size, int const beginX, int const beginD, int const beginP, int const beginR) {
-
-    cout << lineNumber << ": Size " << size;
-    DescribeSet("X", beginX, beginD-1);
-    DescribeSet("D", beginD, beginP-1);
-    DescribeSet("P", beginP, beginR-1);
-    DescribeSet("R", beginR, size-1);
-    cout << endl;
-}
-
-void CheckConsistency(int const lineNumber, size_t const recursionNumber, int *vertexSets, int *vertexLookup, int const size)
-{
-    //if (recursionNumber > 2) return;
-    //cout << recursionNumber << "1 is in position " << ver
-    for (int i=0; i < size; ++i) {
-        if (vertexSets[vertexLookup[i]] != i) {
-            cout << recursionNumber << "(line " << lineNumber << ") : inconsistency -- vertex " << i  << " is supposed to be in position " << vertexLookup[i] << " but vertex " <<  vertexSets[vertexLookup[i]] << " is there." << endl;
-        }
-    }
-}
-
 long TimeDelayAdjacencyListAlgorithm::Run(list<list<int>> &cliques)
 {
     return listAllMaximalCliquesTimeDelayAdjacencyList(
@@ -268,7 +219,7 @@ void moveDominatedVerticesFromPtoD(std::vector<std::vector<int>> const &adjacenc
 }
 
 void moveDominatedVerticesFromNonNeighborsToD(std::vector<std::vector<int>> const &adjacencyList, int* vertexSets,
-                                   int* vertexLookup, int* nonNeighbors, int &numNonNeighbors, int size, int const beginX, int const beginD, int &beginP, int &beginR, list<int> &newlyDominatedVertices)
+                                   int* vertexLookup, int* nonNeighbors, int &numNonNeighbors, int const start, int const size, int const beginX, int const beginD, int &beginP, int &beginR, list<int> &newlyDominatedVertices)
 {
 ////    cout << "beginX=" << beginX << endl << flush;
     static vector<bool> vMarkedNeighbors(size, false);
@@ -283,7 +234,7 @@ void moveDominatedVerticesFromNonNeighborsToD(std::vector<std::vector<int>> cons
         }
 
         // for each vertex p in P: check that all of p's neighbors in P are neighbors of x
-        for (int j = 0; j < numNonNeighbors; j++) {
+        for (int j = start; j < numNonNeighbors; j++) {
             int const p(nonNeighbors[j]);
             bool dominated(vMarkedNeighbors[p]);
             if (dominated) {
@@ -581,7 +532,7 @@ void listAllMaximalCliquesTimeDelayAdjacencyListRecursive( long* cliqueCount,
 
 ////    CheckConsistency(__LINE__, currentRecursionNode, vertexSets, vertexLookup, size);
 
-    moveDominatedVerticesFromNonNeighborsToD(adjacencyList, vertexSets, vertexLookup, myCandidatesToIterateThrough, numCandidatesToIterateThrough, size, beginX, beginD, beginP, beginR, newlyDominatedVertices);
+    moveDominatedVerticesFromNonNeighborsToD(adjacencyList, vertexSets, vertexLookup, myCandidatesToIterateThrough, numCandidatesToIterateThrough, 0, size, beginX, beginD, beginP, beginR, newlyDominatedVertices);
 
     if (beginP >= beginR) {
 ////        cout << __LINE__  << ": Done in node " << currentRecursionNode << endl;
@@ -820,7 +771,9 @@ void listAllMaximalCliquesTimeDelayAdjacencyListRecursive( long* cliqueCount,
 ////            cout << endl;
 ////        }
 
+
         iterator++;
+        moveDominatedVerticesFromNonNeighborsToD(adjacencyList, vertexSets, vertexLookup, myCandidatesToIterateThrough, numCandidatesToIterateThrough, iterator, size, beginX, beginD, beginP, beginR, newlyDominatedVertices);
 
 ////        CheckConsistency(__LINE__, currentRecursionNode, vertexSets, vertexLookup, size);
     }

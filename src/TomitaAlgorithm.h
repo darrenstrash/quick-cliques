@@ -78,6 +78,6 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
                                            std::list<int> &partialClique, 
                                            char** adjacencyMatrix,
                                            int* vertexSets, int* vertexLookup, int size,
-                                           int beginX, int beginP, int beginR );
+                                           int beginX, int beginP, int beginR, long& stepsSinceLastReportedClique);
 
 #endif
