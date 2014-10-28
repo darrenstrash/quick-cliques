@@ -9,6 +9,7 @@ OBJECTS += $(OBJECT_DIR)/TomitaAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/AdjacencyListAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/TimeDelayAdjacencyListAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/TimeDelayMaxDegreeAlgorithm.o
+OBJECTS += $(OBJECT_DIR)/TimeDelayDegeneracyAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/HybridAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/DegeneracyAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/DegeneracyTools.o
@@ -77,6 +78,9 @@ $(OBJECT_DIR)/TimeDelayAdjacencyListAlgorithm.o: TimeDelayAdjacencyListAlgorithm
 
 $(OBJECT_DIR)/TimeDelayMaxDegreeAlgorithm.o: TimeDelayMaxDegreeAlgorithm.cpp TimeDelayMaxDegreeAlgorithm.h ${OBJECT_DIR}
 	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TimeDelayMaxDegreeAlgorithm.cpp -o $@
+
+$(OBJECT_DIR)/TimeDelayDegeneracyAlgorithm.o: TimeDelayDegeneracyAlgorithm.cpp TimeDelayDegeneracyAlgorithm.h ${OBJECT_DIR}
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TimeDelayDegeneracyAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/HybridAlgorithm.o: HybridAlgorithm.cpp HybridAlgorithm.h ${OBJECT_DIR}
 	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/HybridAlgorithm.cpp -o $@

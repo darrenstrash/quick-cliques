@@ -19,6 +19,7 @@
 #include "AdjacencyListAlgorithm.h"
 #include "TimeDelayAdjacencyListAlgorithm.h"
 #include "TimeDelayMaxDegreeAlgorithm.h"
+#include "TimeDelayDegeneracyAlgorithm.h"
 #include "HybridAlgorithm.h"
 #include "DegeneracyAlgorithm.h"
 
@@ -53,7 +54,7 @@ using namespace std;
 bool isValidAlgorithm(string const &name)
 {
     return (name == "tomita" || name == "adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
-            name == "hybrid" || name == "degeneracy");
+            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy");
 }
 
 int main(int argc, char** argv)
@@ -114,6 +115,8 @@ int main(int argc, char** argv)
         pAlgorithm = new HybridAlgorithm(adjacencyList);
     } else if (name == "degeneracy"){
         pAlgorithm = new DegeneracyAlgorithm(adjacencyList);
+    } else if (name == "timedelay-degeneracy"){
+        pAlgorithm = new TimeDelayDegeneracyAlgorithm(adjacencyList);
     } else {
         cout << "ERROR: unrecognized algorithm name " << name << endl;
     }
