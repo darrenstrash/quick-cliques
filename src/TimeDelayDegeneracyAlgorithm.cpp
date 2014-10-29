@@ -18,9 +18,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <ctime>
 
 #include "Tools.h"
 #include <list>
+#include <set>
 #include <vector>
 #include "MemoryManager.h"
 #include "DegeneracyTools.h"
@@ -150,8 +152,8 @@ inline int findBestPivotNonNeighborsTimeDelayDegeneracy( int** pivotNonNeighbors
     // iterate over each vertex in P union X 
     // to find the vertex with the most neighbors in P.
     int j = beginX;
-    while(j<beginR)
-    {
+    while (j<beginR) {
+        if (j == beginD && j < beginP) {j = beginP; continue;} // skip vertices in D 
         int vertex = vertexSets[j];
         int numPotentialNeighbors = min(beginR - beginP, numNeighbors[vertex]);
 
@@ -277,108 +279,106 @@ inline void fillInPandXForRecursiveCallTimeDelayDegeneracy( int vertex, int orde
                                                    int* pBeginX, int *pBeginD, int *pBeginP, int *pBeginR, 
                                                    int* pNewBeginX, int* pNewBeginD, int* pNewBeginP, int *pNewBeginR)
 {
-        int vertexLocation = vertexLookup[vertex];
+    int vertexLocation = vertexLookup[vertex];
 
-        (*pBeginR)--;
-        vertexSets[vertexLocation] = vertexSets[*pBeginR];
-        vertexLookup[vertexSets[*pBeginR]] = vertexLocation;
-        vertexSets[*pBeginR] = vertex;
-        vertexLookup[vertex] = *pBeginR;
+    (*pBeginR)--;
+    vertexSets[vertexLocation] = vertexSets[*pBeginR];
+    vertexLookup[vertexSets[*pBeginR]] = vertexLocation;
+    vertexSets[*pBeginR] = vertex;
+    vertexLookup[vertex] = *pBeginR;
 
-        *pNewBeginR = *pBeginR;
-        *pNewBeginP = *pBeginR;
+    *pNewBeginR = *pBeginR;
+    *pNewBeginP = *pBeginR;
 
-        // swap later neighbors of vertex into P section of vertexSets
-        int j = 0;
-        while (j<orderingArray[orderNumber]->laterDegree) {
-            int neighbor = orderingArray[orderNumber]->later[j];
-            int neighborLocation = vertexLookup[neighbor];
+    // swap later neighbors of vertex into P section of vertexSets
+    int j = 0;
+    while (j<orderingArray[orderNumber]->laterDegree) {
+        int neighbor = orderingArray[orderNumber]->later[j];
+        int neighborLocation = vertexLookup[neighbor];
 
-            (*pNewBeginP)--;
+        (*pNewBeginP)--;
 
-            vertexSets[neighborLocation] = vertexSets[*pNewBeginP];
-            vertexLookup[vertexSets[*pNewBeginP]] = neighborLocation;
-            vertexSets[*pNewBeginP] = neighbor;
-            vertexLookup[neighbor] = *pNewBeginP;
+        vertexSets[neighborLocation] = vertexSets[*pNewBeginP];
+        vertexLookup[vertexSets[*pNewBeginP]] = neighborLocation;
+        vertexSets[*pNewBeginP] = neighbor;
+        vertexLookup[neighbor] = *pNewBeginP;
 
-            j++; 
-        }
+        j++; 
+    }
 
-        *pNewBeginX = *pNewBeginP;
+    *pNewBeginX = *pNewBeginP;
 
-        // swap earlier neighbors of vertex into X section of vertexSets
-        j = 0;
-        while (j<orderingArray[orderNumber]->earlierDegree) {
-            int neighbor = orderingArray[orderNumber]->earlier[j];
-            int neighborLocation = vertexLookup[neighbor];
+    // swap earlier neighbors of vertex into X section of vertexSets
+    j = 0;
+    while (j<orderingArray[orderNumber]->earlierDegree) {
+        int neighbor = orderingArray[orderNumber]->earlier[j];
+        int neighborLocation = vertexLookup[neighbor];
 
-            (*pNewBeginX)--;
-            vertexSets[neighborLocation] = vertexSets[*pNewBeginX];
-            vertexLookup[vertexSets[*pNewBeginX]] = neighborLocation;
-            vertexSets[*pNewBeginX] = neighbor;
-            vertexLookup[neighbor] = *pNewBeginX;
+        (*pNewBeginX)--;
+        vertexSets[neighborLocation] = vertexSets[*pNewBeginX];
+        vertexLookup[vertexSets[*pNewBeginX]] = neighborLocation;
+        vertexSets[*pNewBeginX] = neighbor;
+        vertexLookup[neighbor] = *pNewBeginX;
 
-            Free(neighborsInP[neighbor]);
-            neighborsInP[neighbor] = (int*)Calloc(min(*pNewBeginR-*pNewBeginP,orderingArray[neighbor]->laterDegree), sizeof(int));
-            numNeighbors[neighbor] = 0;
+        Free(neighborsInP[neighbor]);
+        neighborsInP[neighbor] = (int*)Calloc(min(*pNewBeginR-*pNewBeginP,orderingArray[neighbor]->laterDegree), sizeof(int));
+        numNeighbors[neighbor] = 0;
 
-            // fill in NeighborsInP
-            int k = 0;
-            while (k<orderingArray[neighbor]->laterDegree) {
-                int laterNeighbor = orderingArray[neighbor]->later[k];
-                int laterNeighborLocation = vertexLookup[laterNeighbor];
-                if(laterNeighborLocation >= *pNewBeginP && laterNeighborLocation < *pNewBeginR)
-                {
-                    neighborsInP[neighbor][numNeighbors[neighbor]] = laterNeighbor;
-                    numNeighbors[neighbor]++;
-                }
-
-                k++;
-            }
-
-            j++; 
-
-        }
-
-        // reset numNeighbors and neighborsInP for this vertex
-        j = *pNewBeginP;
-        while (j<*pNewBeginR) {
-            int vertexInP = vertexSets[j];
-            numNeighbors[vertexInP] = 0;
-            Free(neighborsInP[vertexInP]);
-            neighborsInP[vertexInP]=(int*)Calloc( min( *pNewBeginR-*pNewBeginP, 
-                                                 orderingArray[vertexInP]->laterDegree 
-                                               + orderingArray[vertexInP]->earlierDegree), sizeof(int));
-
-            j++;
-        }
-
-        // count neighbors in P, and fill in array of neighbors
-        // in P
-        j = *pNewBeginP;
-        while(j<*pNewBeginR)
-        {
-            int vertexInP = vertexSets[j];
-
-            int k = 0;
-            while(k<orderingArray[vertexInP]->laterDegree)
+        // fill in NeighborsInP
+        int k = 0;
+        while (k<orderingArray[neighbor]->laterDegree) {
+            int laterNeighbor = orderingArray[neighbor]->later[k];
+            int laterNeighborLocation = vertexLookup[laterNeighbor];
+            if(laterNeighborLocation >= *pNewBeginP && laterNeighborLocation < *pNewBeginR)
             {
-                int laterNeighbor = orderingArray[vertexInP]->later[k];
-                int laterNeighborLocation = vertexLookup[laterNeighbor];
-
-                if(laterNeighborLocation >= *pNewBeginP && laterNeighborLocation < *pNewBeginR)
-                {
-                    neighborsInP[vertexInP][numNeighbors[vertexInP]] = laterNeighbor;
-                    numNeighbors[vertexInP]++;
-                    neighborsInP[laterNeighbor][numNeighbors[laterNeighbor]] = vertexInP;
-                    numNeighbors[laterNeighbor]++;
-                }
-
-                k++;
+                neighborsInP[neighbor][numNeighbors[neighbor]] = laterNeighbor;
+                numNeighbors[neighbor]++;
             }
 
-            j++;
+            k++;
         }
+
+        j++; 
+    }
+
+    // reset numNeighbors and neighborsInP for this vertex
+    j = *pNewBeginP;
+    while (j<*pNewBeginR) {
+        int vertexInP = vertexSets[j];
+        numNeighbors[vertexInP] = 0;
+        Free(neighborsInP[vertexInP]);
+        neighborsInP[vertexInP]=(int*)Calloc( min( *pNewBeginR-*pNewBeginP, 
+                    orderingArray[vertexInP]->laterDegree 
+                    + orderingArray[vertexInP]->earlierDegree), sizeof(int));
+
+        j++;
+    }
+
+    // count neighbors in P, and fill in array of neighbors
+    // in P
+    j = *pNewBeginP;
+    while (j<*pNewBeginR) {
+        int vertexInP = vertexSets[j];
+
+        int k = 0;
+        while (k<orderingArray[vertexInP]->laterDegree) {
+            int laterNeighbor = orderingArray[vertexInP]->later[k];
+            int laterNeighborLocation = vertexLookup[laterNeighbor];
+
+            if (laterNeighborLocation >= *pNewBeginP && laterNeighborLocation < *pNewBeginR) {
+                neighborsInP[vertexInP][numNeighbors[vertexInP]] = laterNeighbor;
+                numNeighbors[vertexInP]++;
+                neighborsInP[laterNeighbor][numNeighbors[laterNeighbor]] = vertexInP;
+                numNeighbors[laterNeighbor]++;
+            }
+
+            k++;
+        }
+
+        j++;
+    }
+
+    *pNewBeginD = *pNewBeginP;
 }
 
 /*! \brief List all maximal cliques in a given graph using the algorithm
@@ -400,6 +400,8 @@ inline void fillInPandXForRecursiveCallTimeDelayDegeneracy( int vertex, int orde
 static unsigned long largestDifference(0);
 static unsigned long numLargeJumps;
 static unsigned long stepsSinceLastReportedClique(0);
+static vector<bool> vMarkedNeighbors;
+static clock_t       timeTestingDominancy(0);
 
 long listAllMaximalCliquesTimeDelayDegeneracy( vector<list<int>> const &adjList, 
                                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -420,9 +422,11 @@ long listAllMaximalCliquesTimeDelayDegeneracy( vector<list<int>> const &adjList,
     // compute the degeneracy order
     NeighborListArray** orderingArray = computeDegeneracyOrderArray(adjList, size);
 
+    vMarkedNeighbors.resize(size, false);
+
     int i = 0;
 
-    while(i<size) {
+    while (i<size) {
         vertexLookup[i] = i;
         vertexSets[i] = i;
         neighborsInP[i] = (int*)Calloc(1, sizeof(int));
@@ -481,16 +485,16 @@ long listAllMaximalCliquesTimeDelayDegeneracy( vector<list<int>> const &adjList,
         partialClique.pop_back();
     }
 
-    cout << "Largest Difference : " << largestDifference << endl;
-    cout << "Num     Differences: " << numLargeJumps << endl;
+    cout << "Largest    Difference : " << largestDifference << endl;
+    cout << "Num        Differences: " << numLargeJumps << endl;
+    cout << "Time Testing Dominance: " << ((double)(timeTestingDominancy)/(double)(CLOCKS_PER_SEC)) << endl;
 
     partialClique.clear();
 
     Free(vertexSets);
     Free(vertexLookup);
 
-    for(i = 0; i<size; i++)
-    {
+    for (i = 0; i<size; i++) {
         Free(neighborsInP[i]);
         Free(orderingArray[i]);
     }
@@ -541,103 +545,93 @@ inline void moveToRTimeDelayDegeneracy( int vertex,
                                int* pBeginX, int *pBeginD, int *pBeginP, int *pBeginR, 
                                int* pNewBeginX, int *pNewBeginD, int* pNewBeginP, int *pNewBeginR)
 {
+    int vertexLocation = vertexLookup[vertex];
 
-        int vertexLocation = vertexLookup[vertex];
+    (*pBeginR)--;
+    vertexSets[vertexLocation] = vertexSets[*pBeginR];
+    vertexLookup[vertexSets[*pBeginR]] = vertexLocation;
+    vertexSets[*pBeginR] = vertex;
+    vertexLookup[vertex] = *pBeginR;
 
-        (*pBeginR)--;
-        vertexSets[vertexLocation] = vertexSets[*pBeginR];
-        vertexLookup[vertexSets[*pBeginR]] = vertexLocation;
-        vertexSets[*pBeginR] = vertex;
-        vertexLookup[vertex] = *pBeginR;
+    // this is not a typo, initially newX is empty
+    *pNewBeginX = *pBeginD;
+    *pNewBeginP = *pBeginP;
+    *pNewBeginR = *pBeginP;
 
-        // this is not a typo, initially newX is empty
-        *pNewBeginX = *pBeginP;
-        *pNewBeginP = *pBeginP;
-        *pNewBeginR = *pBeginP;
+    int sizeOfP = *pBeginR - *pBeginP;
 
-        int sizeOfP = *pBeginR - *pBeginP;
+    int j = *pBeginX;
+    while (j<*pNewBeginX) {
+        int neighbor = vertexSets[j];
+        int neighborLocation = j;
 
-        int j = *pBeginX;
-        while(j<*pNewBeginX)
-        {
-            int neighbor = vertexSets[j];
-            int neighborLocation = j;
+        int incrementJ = 1;
 
-            int incrementJ = 1;
+        int numPotentialNeighbors = min(sizeOfP, numNeighbors[neighbor]);
 
-            int numPotentialNeighbors = min(sizeOfP, numNeighbors[neighbor]);
-
-            int k = 0;
-            while(k<numPotentialNeighbors)
-            {
-                if(neighborsInP[neighbor][k] == vertex)
-                {
-                    (*pNewBeginX)--;
-                    vertexSets[neighborLocation] = vertexSets[(*pNewBeginX)];
-                    vertexLookup[vertexSets[(*pNewBeginX)]] = neighborLocation;
-                    vertexSets[(*pNewBeginX)] = neighbor;
-                    vertexLookup[neighbor] = (*pNewBeginX);
-                    incrementJ=0;
-                }
-                
-                k++;
+        int k = 0;
+        while (k<numPotentialNeighbors) {
+            if (neighborsInP[neighbor][k] == vertex) {
+                (*pNewBeginX)--;
+                vertexSets[neighborLocation] = vertexSets[(*pNewBeginX)];
+                vertexLookup[vertexSets[(*pNewBeginX)]] = neighborLocation;
+                vertexSets[(*pNewBeginX)] = neighbor;
+                vertexLookup[neighbor] = (*pNewBeginX);
+                incrementJ=0;
             }
 
-            if(incrementJ) j++;
+            k++;
         }
 
-        j = (*pBeginP);
-        while(j<(*pBeginR))
-        {
-            int neighbor = vertexSets[j];
-            int neighborLocation = j;
+        if (incrementJ) j++;
+    }
 
-            int numPotentialNeighbors = min(sizeOfP, numNeighbors[neighbor]);
+    j = (*pBeginP);
+    while (j<(*pBeginR)) {
+        int neighbor = vertexSets[j];
+        int neighborLocation = j;
 
-            int k = 0;
-            while(k<numPotentialNeighbors)
-            {
-                if(neighborsInP[neighbor][k] == vertex)
-                {
-                    vertexSets[neighborLocation] = vertexSets[(*pNewBeginR)];
-                    vertexLookup[vertexSets[(*pNewBeginR)]] = neighborLocation;
-                    vertexSets[(*pNewBeginR)] = neighbor;
-                    vertexLookup[neighbor] = (*pNewBeginR);
-                    (*pNewBeginR)++;
-                }
+        int numPotentialNeighbors = min(sizeOfP, numNeighbors[neighbor]);
 
-                k++;
+        int k = 0;
+        while (k<numPotentialNeighbors) {
+            if (neighborsInP[neighbor][k] == vertex) {
+                vertexSets[neighborLocation] = vertexSets[(*pNewBeginR)];
+                vertexLookup[vertexSets[(*pNewBeginR)]] = neighborLocation;
+                vertexSets[(*pNewBeginR)] = neighbor;
+                vertexLookup[neighbor] = (*pNewBeginR);
+                (*pNewBeginR)++;
             }
 
-            j++;
+            k++;
         }
 
-        j = (*pNewBeginX);
+        j++;
+    }
 
-        while(j < *pNewBeginR)
-        {
-            int thisVertex = vertexSets[j];
+    j = (*pNewBeginX);
 
-            int numPotentialNeighbors = min(sizeOfP, numNeighbors[thisVertex]);
+    while (j < *pNewBeginR) {
+        int thisVertex = vertexSets[j];
 
-            int numNeighborsInP = 0;
+        int numPotentialNeighbors = min(sizeOfP, numNeighbors[thisVertex]);
 
-            int k = 0;
-            while(k < numPotentialNeighbors)
-            {
-                int neighbor = neighborsInP[thisVertex][k];
-                int neighborLocation = vertexLookup[neighbor];
-                if(neighborLocation >= *pNewBeginP && neighborLocation < *pNewBeginR)
-                {
-                    neighborsInP[thisVertex][k] = neighborsInP[thisVertex][numNeighborsInP];
-                    neighborsInP[thisVertex][numNeighborsInP] = neighbor;
-                    numNeighborsInP++;
-                }
-                k++;
+        int numNeighborsInP = 0;
+
+        int k = 0;
+        while (k < numPotentialNeighbors) {
+            int neighbor = neighborsInP[thisVertex][k];
+            int neighborLocation = vertexLookup[neighbor];
+            if (neighborLocation >= *pNewBeginP && neighborLocation < *pNewBeginR) {
+                neighborsInP[thisVertex][k] = neighborsInP[thisVertex][numNeighborsInP];
+                neighborsInP[thisVertex][numNeighborsInP] = neighbor;
+                numNeighborsInP++;
             }
-
-            j++;
+            k++;
         }
+
+        j++;
+    }
 }
 
 /*! \brief Move a vertex from the set R to the set X, and update all necessary pointers
@@ -660,19 +654,115 @@ inline void moveToRTimeDelayDegeneracy( int vertex,
 
 inline void moveFromRToXTimeDelayDegeneracy( int vertex, 
                                     int* vertexSets, int* vertexLookup, 
-                                    int* pBeginX, int *pBeginD, int* pBeginP, int* pBeginR )
+                                    int const beginX, int &beginD, int &beginP, int &beginR )
 {
-    int vertexLocation = vertexLookup[vertex];
+    int const firstVertexFromR(vertexSets[beginR]);
+    int const firstVertexFromD(vertexSets[beginD]);
+    int const firstVertexFromP(vertexSets[beginP]);
+    int const dIsEmpty(beginD == beginP);
+    int const pIsEmpty(beginP == beginR);
+    int const vertexLocation(vertexLookup[vertex]);
 
-    //swap vertex into X and increment beginP and beginR
-    vertexSets[vertexLocation] = vertexSets[*pBeginP];
-    vertexLookup[vertexSets[*pBeginP]] = vertexLocation;
-    vertexSets[*pBeginP] = vertex;
-    vertexLookup[vertex] = *pBeginP;
+    // move first element in R to fill space of vertex moving to X.
 
-    *pBeginP = *pBeginP + 1;
-    *pBeginR = *pBeginR + 1;
+    vertexSets[vertexLocation] = firstVertexFromR; vertexLookup[firstVertexFromR] = vertexLocation;
+
+    // move first element in P to end, to fill hole in R.
+    if (!pIsEmpty) {
+        vertexSets[beginR] = firstVertexFromP; vertexLookup[firstVertexFromP] = beginR;
+    }
+
+    beginR++;
+
+    // next, move first vertex from D to end, to fill hole in P, then increase D so that it contains this vertex.
+    if (!dIsEmpty) {
+        vertexSets[beginP] = firstVertexFromD; vertexLookup[firstVertexFromD] = beginP;
+    }
+
+    beginP++;
+
+    // move vertex into X
+    vertexSets[beginD] = vertex; vertexLookup[vertex] = beginD;
+
+    beginD++;
 }
+
+
+
+// TODO/DS Optimize.
+void moveDominatedVerticesFromNonNeighborstoDMaxDegreeDegeneracy(
+        int** neighborsInP, int* numNeighbors, 
+        int* vertexSets, int* vertexLookup,
+        int* nonNeighbors, int &numNonNeighbors, int const start,
+        int const beginX, int const beginD, int &beginP, int const beginR,
+        list<int> &newlyDominatedVertices)
+{
+////        clock_t clockStart = clock();
+        
+////    cout << "X=" << beginD-beginX << ", P=" << beginR-beginP << endl;
+    // for each vertex x in X
+
+////    bool lookForDominatedNodes(true);
+////    while (lookForDominatedNodes) {
+    for (int i = beginX; i < beginD; i++) {
+////        lookForDominatedNodes = false;
+
+        // mark neighbors in an array
+        int const x(vertexSets[i]);
+        int const potentialNeighborsOfX = min(beginR - beginP, numNeighbors[x]); // TODO/DS: optimize. Can we stop at the first one that isn't in P?
+        for (int j = 0; j < potentialNeighborsOfX; ++j) {
+            int const neighborOfX(neighborsInP[x][j]);
+            ////int const neighborLocation(vertexLookup[neighborOfX]);
+            ////if (beginP <= neighborLocation && neighborLocation <= beginR)
+            vMarkedNeighbors[neighborOfX] = true;
+        }
+
+        // for each vertex p in P: check that all of p's neighbors in P are neighbors of x
+        for (int j = start; j < numNonNeighbors; j++) {
+            int const p(nonNeighbors[j]);
+            bool dominated(vMarkedNeighbors[p]);
+            if (dominated) {
+                int const potentialNeighborsOfP = min(beginR - beginP, numNeighbors[p]); // TODO/DS: optimize. Can we stop at the first one that isn't in P?
+                for (int k = 0; k < potentialNeighborsOfP; ++k) { // TODO/DS: optimize this... Can we stop at the first one that isn't in P?
+                    int const neighborOfP(neighborsInP[p][k]);
+                    int const neighborLocation(vertexLookup[neighborOfP]);
+                    if (neighborLocation >= beginP && neighborLocation < beginR) { // in P
+                        dominated = vMarkedNeighbors[neighborOfP];
+                        if (!dominated) break;
+                    }
+                } // for neighbors of p
+            }
+
+            if (dominated) {
+////                lookForDominatedNodes = true;
+                // swap p from P to D
+                vertexSets[vertexLookup[p]] = vertexSets[beginP]; vertexLookup[vertexSets[beginP]] = vertexLookup[p]; // move vertex in beginning of P to p's position
+                vertexSets[beginP] = p; vertexLookup[p] = beginP; // move p to beginning of P
+                beginP++; // move boundary, now D contains p
+                newlyDominatedVertices.push_back(p);
+                numNonNeighbors--;
+                nonNeighbors[j] = nonNeighbors[numNonNeighbors];
+                j--; // evaluate this position again
+////                cout << "Found dominated non-neighbor" << endl;
+            }
+
+        } // for vertices p in P
+
+        // unmark neighbors in the array
+        for (int j = 0; j < numNeighbors[x]; ++j) {
+            int const neighborOfX(neighborsInP[x][j]);
+            ////int const neighborLocation(vertexLookup[neighborOfX]);
+            ////if (beginP <= neighborLocation && neighborLocation <= beginR)
+            vMarkedNeighbors[neighborOfX] = false;
+        }
+    } // for x in X
+////    } // while looking for dominated nodes
+
+////    clock_t clockEnd = clock();
+////
+////    timeTestingDominancy += (clockEnd-clockStart);
+}
+
 
 /*! \brief Recursively list all maximal cliques containing all of
            all vertices in R, some vertices in P and no vertices in X.
@@ -719,8 +809,7 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
     stepsSinceLastReportedClique++;
 
     // if X is empty and P is empty, process partial clique as maximal
-    if(beginX >= beginP && beginP >= beginR)
-    {
+    if (beginX >= beginD && beginP >= beginR) {
         (*cliqueCount)++;
 
         if (stepsSinceLastReportedClique > partialClique.size()) {
@@ -743,7 +832,7 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
     }
 
     // avoid work if P is empty.
-    if(beginP >= beginR)
+    if (beginP >= beginR)
         return;
 
     int* myCandidatesToIterateThrough;
@@ -756,13 +845,35 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
                                          neighborsInP, numNeighbors,
                                          beginX, beginD, beginP, beginR);
 
+    list<int> newlyDominatedVertices;
+
+    moveDominatedVerticesFromNonNeighborstoDMaxDegreeDegeneracy(
+                neighborsInP, numNeighbors, 
+                vertexSets, vertexLookup, 
+                myCandidatesToIterateThrough, numCandidatesToIterateThrough, 0, 
+                beginX, beginD, beginP, beginR, 
+                newlyDominatedVertices);
+
+////    cout << "Orig. dominated: ";
+////    for (int i = beginD; i < beginP; ++i) {
+////        cout << vertexSets[i] << " ";
+////    }
+////    cout << endl;
+////    cout << "Newly dominated: ";
+////    for (int vertex : newlyDominatedVertices) {
+////        cout << vertex << " ";
+////    }
+////    cout << endl;
+////    cout << endl;
+
+    if (beginP >= beginR)
+        return;
+
     // add candiate vertices to the partial clique one at a time and 
     // search for maximal cliques
-    if(numCandidatesToIterateThrough != 0)
-    {
+    if (numCandidatesToIterateThrough != 0) {
     int iterator = 0;
-    while(iterator < numCandidatesToIterateThrough)
-    {
+    while (iterator < numCandidatesToIterateThrough) {
         // vertex to be added to the partial clique
         int vertex = myCandidatesToIterateThrough[iterator];
 
@@ -770,7 +881,7 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
         printf("%d ", vertex);
         #endif
 
-        int newBeginX(0), newBeginD(0), newBeginP(0), newBeginR(0);
+        int newBeginX(0), newBeginD(beginD), newBeginP(0), newBeginR(0);
 
         // add vertex into partialClique, representing R.
         partialClique.push_back(vertex);
@@ -782,6 +893,11 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
                            &beginX, &beginD, &beginP, &beginR, 
                            &newBeginX, &newBeginD, &newBeginP, &newBeginR);
 
+////        set<int> DominatedVerticesBeforeRecursion;
+////        for (int i = beginD; i < beginP; ++i) {
+////            DominatedVerticesBeforeRecursion.insert(vertexSets[i]);
+////        }
+
         // recursively compute maximal cliques with new sets R, P and X
         listAllMaximalCliquesTimeDelayDegeneracyRecursive( cliqueCount,
                                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -792,6 +908,26 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
                                                   neighborsInP, numNeighbors,
                                                   newBeginX, newBeginD, newBeginP, newBeginR);
 
+////        set<int> DominatedVerticesAfterRecursion;
+////        for (int i = beginD; i < beginP; ++i) {
+////            DominatedVerticesAfterRecursion.insert(vertexSets[i]);
+////        }
+////
+////        cout << "Before Recursion: ";
+////        for (int vertex : DominatedVerticesBeforeRecursion) {
+////            cout << vertex << " ";
+////        }
+////
+////        cout << endl;
+////
+////        cout << "After  Recursion: ";
+////        for (int vertex : DominatedVerticesAfterRecursion) {
+////            cout << vertex << " ";
+////        }
+////
+////        cout << endl;
+////        cout << endl;
+
         #ifdef PRINT_CLIQUES_TOMITA_STYLE
         printf("b ");
         #endif
@@ -801,24 +937,47 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
 
         moveFromRToXTimeDelayDegeneracy( vertex, 
                                 vertexSets, vertexLookup,
-                                &beginX, &beginD, &beginP, &beginR );
+                                beginX, beginD, beginP, beginR );
+
+
+////        moveDominatedVerticesFromNonNeighborstoDMaxDegreeDegeneracy(
+////                    neighborsInP, numNeighbors, 
+////                    vertexSets, vertexLookup, 
+////                    myCandidatesToIterateThrough, numCandidatesToIterateThrough, iterator, 
+////                    beginX, beginD, beginP, beginR, 
+////                    newlyDominatedVertices);
 
         iterator++;
     }
 
-    // swap vertices that were moved to X back into P, for higher recursive calls.
-    iterator = 0;
-    while (iterator < numCandidatesToIterateThrough) {
-        int vertex = myCandidatesToIterateThrough[iterator];
-        int vertexLocation = vertexLookup[vertex];
-
+    for (int const dominatedVertex : newlyDominatedVertices) {
+        int const dominatedVertexLocation(vertexLookup[dominatedVertex]);
         beginP--;
-        vertexSets[vertexLocation] = vertexSets[beginP];
-        vertexSets[beginP] = vertex;
-        vertexLookup[vertex] = beginP;
-        vertexLookup[vertexSets[vertexLocation]] = vertexLocation;
+        // swap last element in D to fill in hole in D left by removing dominated vertex.
+        vertexSets[dominatedVertexLocation] = vertexSets[beginP]; vertexLookup[vertexSets[dominatedVertexLocation]] = dominatedVertexLocation;
+        vertexSets[beginP] = dominatedVertex; vertexLookup[dominatedVertex] = beginP; // swap previously dominated vertex into P
+    }
 
-        iterator++;
+    // swap vertices that were moved to X back into P, for higher recursive calls.
+    for (int i=0; i < numCandidatesToIterateThrough; ++i) {
+        int const vertexInX = myCandidatesToIterateThrough[i];
+        beginD--;
+        beginP--;
+
+        int const lastElementOfD(vertexSets[beginP]);
+        int const lastElementofX(vertexSets[beginD]);
+        int const vertexLocationInX = vertexLookup[vertexInX];
+        bool const dIsEmpty(beginD == beginP);
+
+        vertexSets[vertexLocationInX] = lastElementofX; vertexLookup[lastElementofX] = vertexLocationInX; // move last element of X into the hole in X...
+
+        // move last element of D into the beginning of D.
+        if (!dIsEmpty) {
+            vertexSets[beginD] = lastElementOfD;
+            vertexLookup[lastElementOfD] = beginD;
+        }
+
+        vertexSets[beginP] = vertexInX; vertexLookup[vertexInX] = beginP; // move vertex in X into P.
     }
     }
 

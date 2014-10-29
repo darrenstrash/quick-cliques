@@ -732,7 +732,7 @@ void listAllMaximalCliquesTimeDelayAdjacencyListRecursive( long* cliqueCount,
 ////            DescribeVertex(__LINE__, vertexSets, vertexLookup, size, 3716, beginX, beginD, beginP, beginR);
 ////            DescribeState(__LINE__, vertexSets, vertexLookup, size, beginX, beginD, beginP, beginR);
 
-            vertexSets[beginR] = firstVertexFromP; vertexLookup[vertexSets[vertexLocation]] = vertexLocation;
+            vertexSets[beginR] = firstVertexFromP; vertexLookup[firstVertexFromP] = beginR;
         }
 
         beginR++;

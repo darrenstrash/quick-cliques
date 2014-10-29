@@ -248,6 +248,9 @@ long listAllMaximalCliquesTimeDelayMaxDegree( vector<vector<int>> const &adjacen
 void moveDominatedVerticesFromPtoDMaxDegree(std::vector<std::vector<int>> const &adjacencyList, int* vertexSets,
                                    int* vertexLookup, int size, int const beginX, int const beginD, int &beginP, int &beginR, list<int> &newlyDominatedVertices)
 {
+////    bool lookForDominated(true);
+////    while (lookForDominated) {
+////        lookForDominated = false;
     // for each vertex x in X
     for (int i = beginX; i < beginD; i++) {
 
@@ -271,6 +274,7 @@ void moveDominatedVerticesFromPtoDMaxDegree(std::vector<std::vector<int>> const 
             }
 
             if (dominated) {
+////                lookForDominated = true; // should do another round of domination checking
                 // swap p from P to D
                 vertexSets[j] = vertexSets[beginP]; vertexLookup[vertexSets[beginP]] = j; // move vertex in beginning of P to p's position
                 vertexSets[beginP] = p;             vertexLookup[p] = beginP; // move p to beginning of P
@@ -286,6 +290,7 @@ void moveDominatedVerticesFromPtoDMaxDegree(std::vector<std::vector<int>> const 
         }
         
     } // for x in X
+////    } // while looking for dominated vertices
 }
 
 void moveDominatedVerticesFromNonNeighborstoDMaxDegree(std::vector<std::vector<int>> const &adjacencyList, int* vertexSets,
@@ -530,9 +535,6 @@ void listAllMaximalCliquesTimeDelayMaxDegreeRecursive( long* cliqueCount,
                        #endif
                        partialClique );
 
-////        CheckConsistency(__LINE__, currentRecursionNode, vertexSets, vertexLookup, size);
-        CheckReverseConsistency(__LINE__, currentRecursionNode, vertexSets, vertexLookup, size);
-
 ////        cout << __LINE__  << ": Done in node " << currentRecursionNode << endl;
         return;
     }
@@ -551,8 +553,6 @@ void listAllMaximalCliquesTimeDelayMaxDegreeRecursive( long* cliqueCount,
     //moveDominatedVerticesFromPtoDMaxDegree(adjacencyList, vertexSets, vertexLookup, size, beginX, beginD, beginP, beginR, newlyDominatedVertices);
     //if (beginP >= beginR) return;
 
-////    DescribeVertex(__LINE__, vertexSets, vertexLookup, size, 1206, beginX, beginD, beginP, beginR);
-
     // get the candidates to add to R to make a maximal clique
     findBestPivotNonNeighborsTimeDelayMaxDegree( &myCandidatesToIterateThrough,
                                             &numCandidatesToIterateThrough,
@@ -563,7 +563,6 @@ void listAllMaximalCliquesTimeDelayMaxDegreeRecursive( long* cliqueCount,
 
     if (beginP >= beginR) {
         //cout << __LINE__  << ": Done in node " << currentRecursionNode << endl;
-        CheckReverseConsistency(__LINE__, currentRecursionNode, vertexSets, vertexLookup, size);
         return;
     }
 
@@ -665,7 +664,7 @@ void listAllMaximalCliquesTimeDelayMaxDegreeRecursive( long* cliqueCount,
 
         // move first element in P to end, to fill hole in R.
         if (!pIsEmpty) {
-            vertexSets[beginR] = firstVertexFromP; vertexLookup[vertexSets[newVertexLocation]] = newVertexLocation;
+            vertexSets[beginR] = firstVertexFromP; vertexLookup[firstVertexFromP] = beginR;
         }
 
         beginR++;
@@ -721,8 +720,6 @@ void listAllMaximalCliquesTimeDelayMaxDegreeRecursive( long* cliqueCount,
 
         vertexSets[beginP] = vertexInX; vertexLookup[vertexInX] = beginP; // move vertex in X into P.
     }
-
-////    CheckReverseConsistency(__LINE__, currentRecursionNode, vertexSets, vertexLookup, size);
 
     // don't need to check for emptiness before freeing, since
     // something will always be there (we allocated enough memory
