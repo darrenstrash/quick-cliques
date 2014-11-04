@@ -22,6 +22,7 @@
 #include "TimeDelayDegeneracyAlgorithm.h"
 #include "HybridAlgorithm.h"
 #include "DegeneracyAlgorithm.h"
+#include "FasterDegeneracyAlgorithm.h"
 
 // system includes
 #include <list>
@@ -54,16 +55,18 @@ using namespace std;
 bool isValidAlgorithm(string const &name)
 {
     return (name == "tomita" || name == "adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
-            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy");
+            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy");
 }
 
 int main(int argc, char** argv)
 {
     int failureCode(0);
 
-    if (argc==1 || !isValidAlgorithm(argv[1])) {
-        cout << "usage: " << argv[0] << " <tomita|adjlist|hybrid|degeneracy>" << endl;
+    if (argc <= 1 || !isValidAlgorithm(argv[1])) {
+        cout << "usage: " << argv[0] << " <tomita|adjlist|hybrid|degeneracy|*> [--latex]" << endl;
     }
+
+    bool const outputLatex(argc >= 3 && string(argv[2]) == "--latex");
 
     string const name(argv[1]);
     MaximalCliquesAlgorithm *pAlgorithm(nullptr);
@@ -71,7 +74,7 @@ int main(int argc, char** argv)
     int n; // number of vertices
     int m; // 2x number of edges
 
-    vector<list<int>> const adjacencyList = readInGraphAdjList(&n,&m);
+    vector<list<int>> adjacencyList = readInGraphAdjList(&n,&m);
 
     bool const bComputeAdjacencyMatrix(name == "tomita");
 
@@ -88,7 +91,7 @@ int main(int argc, char** argv)
         }
     }
 
-    bool const bComputeAdjacencyArray(name == "adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree");
+    bool const bComputeAdjacencyArray(name == "adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy");
 
     vector<vector<int>> adjacencyArray;
 
@@ -101,6 +104,7 @@ int main(int argc, char** argv)
                 adjacencyArray[i][j++] = neighbor;
             }
         }
+        adjacencyList.clear(); // does this free up memory? probably some...
     }
 
     if (name == "tomita") {
@@ -115,6 +119,8 @@ int main(int argc, char** argv)
         pAlgorithm = new HybridAlgorithm(adjacencyList);
     } else if (name == "degeneracy"){
         pAlgorithm = new DegeneracyAlgorithm(adjacencyList);
+    } else if (name == "faster-degeneracy"){
+        pAlgorithm = new FasterDegeneracyAlgorithm(adjacencyArray);
     } else if (name == "timedelay-degeneracy"){
         pAlgorithm = new TimeDelayDegeneracyAlgorithm(adjacencyList);
     } else {
@@ -123,7 +129,7 @@ int main(int argc, char** argv)
 
     // Run algorithm
     list<list<int>> cliques;
-    RunAndPrintStats(pAlgorithm, cliques);
+    RunAndPrintStats(pAlgorithm, cliques, outputLatex);
 
     cliques.clear();
 

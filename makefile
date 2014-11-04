@@ -12,6 +12,7 @@ OBJECTS += $(OBJECT_DIR)/TimeDelayMaxDegreeAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/TimeDelayDegeneracyAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/HybridAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/DegeneracyAlgorithm.o
+OBJECTS += $(OBJECT_DIR)/FasterDegeneracyAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/DegeneracyTools.o
 OBJECTS += $(OBJECT_DIR)/Tools.o
 
@@ -41,58 +42,49 @@ clean:
 	rm -rf $(OBJECTS) $(EXECS) $(OBJECT_DIR) $(BIN_DIR)
 
 $(BIN_DIR)/printnm: printnm.cpp ${OBJECTS} ${BIN_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/printnm.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/printnm.cpp -o $@
 
 $(BIN_DIR)/compdegen: compdegen.cpp ${OBJECTS} ${BIN_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/compdegen.cpp -o $@
-
-$(BIN_DIR)/tomita: tomita.cpp ${OBJECTS} ${BIN_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/tomita.cpp -o $@
-
-$(BIN_DIR)/adjlist: adjlist.cpp ${OBJECTS} ${BIN_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/adjlist.cpp -o $@
-
-$(BIN_DIR)/hybrid: hybrid.cpp ${OBJECTS} ${BIN_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/hybrid.cpp -o $@
-
-$(BIN_DIR)/degeneracy: degeneracy.cpp ${OBJECTS} ${BIN_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/degeneracy.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/compdegen.cpp -o $@
 
 $(BIN_DIR)/qc: main.cpp ${OBJECTS} ${BIN_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/main.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} ${OBJECTS} $(SRC_DIR)/main.cpp -o $@
 
 $(OBJECT_DIR)/MemoryManager.o: MemoryManager.cpp MemoryManager.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/MemoryManager.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/MemoryManager.cpp -o $@
 
 $(OBJECT_DIR)/MaximalCliquesAlgorithm.o: MaximalCliquesAlgorithm.cpp MaximalCliquesAlgorithm.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/MaximalCliquesAlgorithm.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/MaximalCliquesAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/TomitaAlgorithm.o: TomitaAlgorithm.cpp TomitaAlgorithm.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TomitaAlgorithm.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TomitaAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/AdjacencyListAlgorithm.o: AdjacencyListAlgorithm.cpp AdjacencyListAlgorithm.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/AdjacencyListAlgorithm.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/AdjacencyListAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/TimeDelayAdjacencyListAlgorithm.o: TimeDelayAdjacencyListAlgorithm.cpp TimeDelayAdjacencyListAlgorithm.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TimeDelayAdjacencyListAlgorithm.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TimeDelayAdjacencyListAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/TimeDelayMaxDegreeAlgorithm.o: TimeDelayMaxDegreeAlgorithm.cpp TimeDelayMaxDegreeAlgorithm.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TimeDelayMaxDegreeAlgorithm.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TimeDelayMaxDegreeAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/TimeDelayDegeneracyAlgorithm.o: TimeDelayDegeneracyAlgorithm.cpp TimeDelayDegeneracyAlgorithm.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TimeDelayDegeneracyAlgorithm.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/TimeDelayDegeneracyAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/HybridAlgorithm.o: HybridAlgorithm.cpp HybridAlgorithm.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/HybridAlgorithm.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/HybridAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/DegeneracyAlgorithm.o: DegeneracyAlgorithm.cpp DegeneracyAlgorithm.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/DegeneracyAlgorithm.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/DegeneracyAlgorithm.cpp -o $@
+
+$(OBJECT_DIR)/FasterDegeneracyAlgorithm.o: FasterDegeneracyAlgorithm.cpp FasterDegeneracyAlgorithm.h ${OBJECT_DIR}
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/FasterDegeneracyAlgorithm.cpp -o $@
 
 $(OBJECT_DIR)/DegeneracyTools.o: DegeneracyTools.cpp DegeneracyTools.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/DegeneracyTools.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/DegeneracyTools.cpp -o $@
 
 $(OBJECT_DIR)/Tools.o: Tools.cpp Tools.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/Tools.cpp -o $@
+	g++ -O0 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/Tools.cpp -o $@
 
  ${OBJECT_DIR}:
 	mkdir ${OBJECT_DIR}
