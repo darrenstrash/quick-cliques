@@ -53,7 +53,8 @@ struct NeighborList
     NeighborList()
     : vertex(-1)
     , earlier()
-    , later() {}
+    , later()
+    , orderNumber(-1) {}
 
     int vertex; //!< the vertex that owns this neighbor list
     std::list<int> earlier; //!< a linked list of neighbors that come before this vertex in the ordering
@@ -71,8 +72,17 @@ typedef struct NeighborList NeighborList;
     This version of the NeighborList structure is more cache efficient.
 */
 
-struct NeighborListArray
+class NeighborListArray
 {
+public:
+    NeighborListArray()
+    : vertex(-1)
+    , earlier()
+    , earlierDegree(-1)
+    , later()
+    , laterDegree(-1)
+    , orderNumber(-1) {}
+
     int vertex; //!< the vertex that owns this neighbor list
     std::vector<int> earlier; //!< an array of neighbors that come before this vertex in an ordering
     int earlierDegree; //!< the number of neighbors in earlier
@@ -83,11 +93,14 @@ struct NeighborListArray
 
 typedef struct NeighborListArray NeighborListArray;
 
-int computeDegeneracy(std::vector<std::list<int>> adjList, int size);
+int computeDegeneracy(std::vector<std::list<int>> const &adjList, int size);
 
-NeighborList** computeDegeneracyOrderList(std::vector<std::list<int>> adjList, int size);
+NeighborList** computeDegeneracyOrderList(std::vector<std::list<int>> const &adjList, int size);
 
-NeighborListArray** computeDegeneracyOrderArray(std::vector<std::list<int>> adjList, int size);
+NeighborListArray** computeDegeneracyOrderArray(std::vector<std::list<int>> const &adjList, int size);
+
+std::vector<NeighborListArray> computeDegeneracyOrderArray(std::vector<std::vector<int>> &adjArray, int size);
+std::vector<NeighborListArray> computeDegeneracyOrderArrayWithArrays(std::vector<std::vector<int>> &adjArray, int size);
 
 int neighborListComparator(void* nl1, void* nl2);
 

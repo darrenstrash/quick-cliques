@@ -447,3 +447,180 @@ vector<NeighborListArray> computeDegeneracyOrderArray(vector<vector<int>> &adjAr
 
     return vOrderingArray;
 }
+
+vector<NeighborListArray> computeDegeneracyOrderArrayWithArrays(vector<vector<int>> &adjArray, int size)
+{
+    // array of vertices, ordered by degree
+    vector<int> verticesOrderedByDegree(size);
+
+    // array of indices, indexed by degree
+    // in index[d], stores first index  that vertex with degree d appears
+    vector<int> firstIndexWithDegree(size);
+
+    // array of lists of vertices, indexed by degree
+    vector<int> vertexLocator(size);
+
+    vector<int> degree(size);
+
+    // fill each cell of degree lookup table
+    // then use that degree to populate the 
+    // lists of vertices indexed by degree
+
+    // (temporary) array of lists of vertices, indexed by degree
+    {
+        vector<list<int>> verticesByDegree(size);
+
+        for (int i=0; i<size; i++) {
+            degree[i] = adjArray[i].size();
+            verticesByDegree[degree[i]].push_back(i);
+        }
+
+        int vertexInsertionCount(0);
+        // transfer from linked lists to single array ordered by degree
+        for (int i = 0; i < size; ++i) {
+            int const startingIndex(vertexInsertionCount);
+            bool printDebug(false);
+            for (int const vertex : verticesByDegree[i]) {
+                verticesOrderedByDegree[vertexInsertionCount] = vertex;
+                vertexLocator[vertex] = vertexInsertionCount++;
+
+////                if (vertex == 607) {
+////                    printDebug = true;
+////                    cout << __LINE__ << ": vertex " << vertex << " has degree " << degree[vertex] << " and location " << vertexLocator[vertex] << endl;
+////                }
+            }
+
+            if (startingIndex != vertexInsertionCount) {
+                firstIndexWithDegree[i] = startingIndex;
+            } else {
+                firstIndexWithDegree[i] = -1;
+            }
+
+////            if (printDebug) {
+////                cout << __LINE__ << ": vertex " << 607 << " has degree " << degree[607] << ", but firstDegree is " << firstIndexWithDegree[i] << "!" << endl;
+////            }
+        }
+
+
+        // free memory used by linked lists
+        verticesByDegree.clear();
+    }
+
+    vector<NeighborListArray> vOrderingArray(size);
+
+    for (int currentVertexIndex = 0; currentVertexIndex < size; currentVertexIndex++) {
+        int const vertex = verticesOrderedByDegree[currentVertexIndex];
+        int const currentDegree(degree[vertex]);
+
+////        cout << "Moving vertex " << vertex << " with degree " << currentDegree << " to ordering " << endl;
+
+        if (currentVertexIndex != size-1) {
+            int const nextVertexDegree(degree[verticesOrderedByDegree[currentVertexIndex+1]]);
+            if (nextVertexDegree == currentDegree) {
+                firstIndexWithDegree[currentDegree] = currentVertexIndex+1;
+            } else {
+                firstIndexWithDegree[currentDegree] = -1;
+            }
+
+////            if (currentDegree == 1) {
+////                cout << __LINE__ << ": vertex " << vertex << " with degree " << currentDegree << ", changed firstDegree to " << firstIndexWithDegree[currentDegree] << "!" << endl;
+////            }
+        }
+
+        vOrderingArray[vertex].vertex = vertex;
+        vOrderingArray[vertex].orderNumber = currentVertexIndex;
+
+        degree[vertex] = -1;
+
+        // will swap later neighbors to end of neighbor list
+        vector<int> &neighborList = adjArray[vertex];
+
+        int splitPoint(neighborList.size());
+////        cout << "Evaluating neighbors: " << endl;
+        for (int i=0; i < splitPoint; ++i) {
+            int const neighbor(neighborList[i]);
+////            cout << neighbor << " ";
+            // if later neighbor, swap to end of neighborList (there are few of these)
+            if (degree[neighbor] != -1) {
+                int const firstIndexWithSameDegree(firstIndexWithDegree[degree[neighbor]]);
+////                if (neighbor == 607) {
+////                    cout << __LINE__ << ": neighbor " << neighbor << " has degree " << degree[neighbor] << ", but firstDegree is " << firstIndexWithSameDegree << "!" << endl;
+////                }
+
+                if (vertexLocator[neighbor] != firstIndexWithSameDegree) {
+                    // swap vertex to beginning of continguous block of vertices with same degrees
+                    int const indexOfNeighbor(vertexLocator[neighbor]);
+                    int const firstVertexWithSameDegree(verticesOrderedByDegree[firstIndexWithSameDegree]);
+
+                    verticesOrderedByDegree[firstIndexWithSameDegree] = neighbor;
+                    vertexLocator[neighbor] = firstIndexWithSameDegree;
+
+                    verticesOrderedByDegree[indexOfNeighbor] = firstVertexWithSameDegree;
+                    vertexLocator[firstVertexWithSameDegree] = indexOfNeighbor;
+                }
+                 
+                if (firstIndexWithSameDegree == (size - 1) || degree[verticesOrderedByDegree[firstIndexWithSameDegree+1]] != degree[neighbor]) {
+                    // remove vertex from contiguous block, it is now empty
+                    firstIndexWithDegree[degree[neighbor]] = -1;
+                } else {
+                    // remove vertex from contiguous block
+                    firstIndexWithDegree[degree[neighbor]] = firstIndexWithSameDegree + 1;
+                }
+
+////                if (degree[neighbor] == 1) {
+////                    cout << __LINE__ << ": neighbor " << neighbor << " with degree " << degree[neighbor] << ", changed firstDegree to " << firstIndexWithDegree[degree[neighbor]] << "!" << endl;
+////                }
+
+                neighborList[i] = neighborList[--splitPoint];
+                neighborList[splitPoint] = neighbor;
+                i--;
+
+                // decrease degree of neighbor and update firstVertexWithDegree if this is the only vertex with this new degree
+                degree[neighbor]--;
+////                if (neighbor == 607) {
+////                    cout << __LINE__ << ": neighbor " << neighbor << " has degree " << degree[neighbor] << ", but firstDegree is " << firstIndexWithDegree[degree[neighbor]] << "!" << endl;
+////                }
+
+                if (degree[neighbor] != -1 && firstIndexWithDegree[degree[neighbor]] == -1) {
+                    firstIndexWithDegree[degree[neighbor]] = vertexLocator[neighbor];
+////                    if (degree[neighbor] == 1) {
+////                        cout << __LINE__ << ": neighbor " << neighbor << " with degree " << degree[neighbor] << ", changed firstDegree to " << firstIndexWithDegree[degree[neighbor]] << "!" << endl;
+////                    }
+                }
+
+
+////                if (neighbor == 607) {
+////                    cout << __LINE__ << ": neighbor " << neighbor << " has degree " << degree[neighbor] << ", but firstDegree is " << firstIndexWithDegree[degree[neighbor]] << "!" << endl;
+////                }
+            }
+            // else it is an earlier neighbor, do nothing.
+        }
+
+        // create space for later neighbors to ordering
+        vOrderingArray[vertex].laterDegree = neighborList.size() - splitPoint;
+        vOrderingArray[vertex].later.resize(neighborList.size() - splitPoint);
+
+        // create space for earlier neighbors to ordering
+        vOrderingArray[vertex].earlierDegree = splitPoint;
+        vOrderingArray[vertex].earlier.resize(splitPoint);
+
+        // fill in earlier and later neighbors
+        for (int i = 0; i < splitPoint; ++i) {
+            ////            cout << "earlier: " << vOrderingArray[vertex].earlier.size() << endl;
+            ////            cout << "split  : " << splitPoint << endl;
+            ////            cout << "earlier[" << i << "]" << endl;
+            vOrderingArray[vertex].earlier[i] = neighborList[i];
+        }
+
+        for (int i = splitPoint; i < neighborList.size(); ++i) {
+            ////            cout << "later  : " << vOrderingArray[vertex].later.size() << endl;
+            ////            cout << "split  : " << splitPoint << endl;
+            ////            cout << "later [" << i - splitPoint << "]" << endl;
+            vOrderingArray[vertex].later[i-splitPoint] = neighborList[i];
+        }
+
+////        cout << endl;
+    }
+
+    return vOrderingArray;
+}
