@@ -68,7 +68,7 @@ void listAllMaximalCliquesFasterDegeneracyRecursive( long* cliqueCount,
                                                #endif
                                                std::list<int> &partialClique, 
                                                int* vertexSets, int* vertexLookup,
-                                               int** neighborsInP, int* numNeighbors,
+                                               std::vector<std::vector<int>> &neighborsInP, int* numNeighbors,
                                                int beginX, int beginP, int beginR);
 
 long listAllMaximalCliquesFasterDegeneracy( std::vector<std::vector<int>> &adjArray,
