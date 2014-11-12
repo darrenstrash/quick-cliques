@@ -296,7 +296,7 @@ void runAndPrintStatsMatrix(long (*function)(char**,
     fflush(stderr);
 }
 
-void RunAndPrintStats(MaximalCliquesAlgorithm *pAlgorithm, list<list<int>> &cliques)
+void RunAndPrintStats(MaximalCliquesAlgorithm *pAlgorithm, list<list<int>> &cliques, bool const outputLatex)
 {
     fprintf(stderr, "%s: ", pAlgorithm->GetName().c_str());
     fflush(stderr);
@@ -307,8 +307,12 @@ void RunAndPrintStats(MaximalCliquesAlgorithm *pAlgorithm, list<list<int>> &cliq
 
     clock_t end = clock();
 
-    fprintf(stderr, "%ld maximal cliques, ", cliqueCount);
-    fprintf(stderr, "in %f seconds\n", (double)(end-start)/(double)(CLOCKS_PER_SEC));
+    if (!outputLatex) {
+        fprintf(stderr, "%ld maximal cliques, ", cliqueCount);
+        fprintf(stderr, "in %f seconds\n", (double)(end-start)/(double)(CLOCKS_PER_SEC));
+    } else {
+        printf("%.2f", (double)(end-start)/(double)(CLOCKS_PER_SEC));
+    }
     fflush(stderr);
 }
 

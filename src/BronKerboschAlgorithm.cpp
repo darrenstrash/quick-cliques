@@ -24,12 +24,12 @@
 #include <list>
 #include <vector>
 #include "MemoryManager.h"
-#include "AdjacencyListAlgorithmShell.h"
+#include "BronKerboschAlgorithm.h"
 #include "MaximalCliquesAlgorithm.h"
 
 using namespace std;
 
-/*! \file AdjacencyListAlgorithmShell.cpp
+/*! \file BronKerboschAlgorithm.cpp
 
     \brief This file contains the main algorithm for listing all cliques
            according to the algorithm of Tomita et al. (TCS 2006) with one
@@ -73,14 +73,15 @@ static unsigned long largestDifference(0);
 static unsigned long numLargeJumps;
 static unsigned long stepsSinceLastReportedClique(0);
 
-AdjacencyListAlgorithmShell::AdjacencyListAlgorithmShell(AdjacencyListVertexSets &sets)
- : MaximalCliquesAlgorithm("shell-adjlist")
- , m_Sets(sets)
+BronKerboschAlgorithm::BronKerboschAlgorithm(VertexSets *pSets)
+ : MaximalCliquesAlgorithm(pSets->GetName())
+ , m_pSets(pSets)
 {
 }
 
-AdjacencyListAlgorithmShell::~AdjacencyListAlgorithmShell()
+BronKerboschAlgorithm::~BronKerboschAlgorithm()
 {
+    delete m_pSets; m_pSets = nullptr;
 }
 
 /*! \brief List all maximal cliques in a given graph using the algorithm
@@ -93,12 +94,16 @@ AdjacencyListAlgorithmShell::~AdjacencyListAlgorithmShell()
     \return The number of maximal cliques of the input graph.
 */
 
-long AdjacencyListAlgorithmShell::Run(list<list<int>> &cliques)
+long BronKerboschAlgorithm::Run(list<list<int>> &cliques)
 {
     long cliqueCount = 0;
     list<int> partialClique;
 
-    RunRecursive(cliqueCount, cliques, partialClique);
+    m_pSets->Initialize();
+
+    while (m_pSets->GetNextTopLevelPartition()) {
+        RunRecursive(cliqueCount, cliques, partialClique);
+    }
 
     cerr << "Largest Difference : " << largestDifference << endl;
     cerr << "Num     Differences: " << numLargeJumps << endl;
@@ -121,7 +126,7 @@ long AdjacencyListAlgorithmShell::Run(list<list<int>> &cliques)
 
 static unsigned long recursionNode(0);
 
-void AdjacencyListAlgorithmShell::RunRecursive(long &cliqueCount, list<list<int>> &cliques, list<int> &partialClique)
+void BronKerboschAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cliques, list<int> &partialClique)
 {
 ////    int const currentRecursionNode(recursionNode++);
 ////
@@ -132,7 +137,7 @@ void AdjacencyListAlgorithmShell::RunRecursive(long &cliqueCount, list<list<int>
     stepsSinceLastReportedClique++;
 
     // if X is empty and P is empty, return partial clique as maximal
-    if (m_Sets.XAndPAreEmpty()) {
+    if (m_pSets->XAndPAreEmpty()) {
         cliqueCount++;
 
         if (stepsSinceLastReportedClique > partialClique.size()) {
@@ -155,16 +160,16 @@ void AdjacencyListAlgorithmShell::RunRecursive(long &cliqueCount, list<list<int>
     }
 
     // avoid work if P is empty.
-    if (m_Sets.PIsEmpty())
+    if (m_pSets->PIsEmpty())
         return;
 
-    vector<int> vNonNeighborsOfPivot = std::move(m_Sets.ChoosePivot());
+    vector<int> vNonNeighborsOfPivot = std::move(m_pSets->ChoosePivot());
 
     // add candiate vertices to the partial clique one at a time and 
     // search for maximal cliques
     if (!vNonNeighborsOfPivot.empty()) {
         for (int const vertex : vNonNeighborsOfPivot) {
-            m_Sets.MoveFromPToR(vertex);
+            m_pSets->MoveFromPToR(vertex);
 
             // add vertex into partialClique, representing R.
             partialClique.push_back(vertex);
@@ -176,7 +181,7 @@ void AdjacencyListAlgorithmShell::RunRecursive(long &cliqueCount, list<list<int>
 #endif
 
             // recursively compute maximal cliques with new sets R, P and X
-            RunRecursive( cliqueCount, cliques, partialClique);
+            RunRecursive(cliqueCount, cliques, partialClique);
 
 #ifdef PRINT_CLIQUES_TOMITA_STYLE
             printf("b ");
@@ -184,11 +189,11 @@ void AdjacencyListAlgorithmShell::RunRecursive(long &cliqueCount, list<list<int>
 
             // remove vertex from partialCliques
             partialClique.erase(vertexLink);
-            m_Sets.MoveFromRToX(vertex);
+            m_pSets->MoveFromRToX(vertex);
         }
 
         // swap vertices that were moved to X back into P, for higher recursive calls.
-        m_Sets.ReturnVerticesToP(vNonNeighborsOfPivot);
+        m_pSets->ReturnVerticesToP(vNonNeighborsOfPivot);
     }
 
     stepsSinceLastReportedClique++;

@@ -70,7 +70,7 @@ void runAndPrintStatsMatrix(long (*function)(char**,
                             #endif
                             int n );
 
-void RunAndPrintStats(MaximalCliquesAlgorithm* pAlgorithm, std::list<std::list<int>> &cliques);
+void RunAndPrintStats(MaximalCliquesAlgorithm* pAlgorithm, std::list<std::list<int>> &cliques, bool const outputLatex);
 
 void runAndPrintStatsListList( long (*function)(std::vector<std::list<int>> const &, 
                                                 int**, 

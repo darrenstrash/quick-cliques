@@ -1,23 +1,35 @@
 #ifndef VERTEX_SETS_H
+#define VERTEX_SETS_H
 
 #include <vector>
 #include <list>
 #include <vector>
+#include <string>
 
 class VertexSets {
 public:
-    VertexSets();
-    ~VertexSets();
+    VertexSets(std::string const &name) : m_bDoneWithTopLevelPartitions(false), m_sName(name) {}
+    virtual ~VertexSets() {}
 
-    void Recurse();
-    void Backtrack();
+    VertexSets           (VertexSets const &sets) = delete;
+    VertexSets& operator=(VertexSets const &sets) = delete;
 
-    void MoveFromPToX(int const vertexInP);
-    void MoveFromPToR(int const vertexInP);
-    void MoveFromRToX(int const vertexInP);
+    virtual void MoveFromPToR(int const vertexInP) __attribute__((always_inline)) = 0;
+    virtual void MoveFromRToX(int const vertexInP) __attribute__((always_inline)) = 0;
 
-    int  ChoosePivot(std::list<int> &pivotNonNeighbors) const;
-    bool InP(int const vertex) const;
+    virtual void ReturnVerticesToP(std::vector<int> const &vVertices) __attribute__((always_inline)) = 0;
+
+    virtual std::vector<int> ChoosePivot() const __attribute__((always_inline)) = 0;
+    virtual bool InP(int const vertex) const __attribute__((always_inline)) = 0;
+
+    virtual bool PIsEmpty() const __attribute__((always_inline)) = 0;
+    virtual bool XAndPAreEmpty() const __attribute__((always_inline)) = 0;
+
+    virtual void Initialize() = 0;
+
+    virtual bool GetNextTopLevelPartition() = 0;
+
+    std::string GetName() { return m_sName; }
 
 protected:
     class SetDelineator {
@@ -28,9 +40,10 @@ protected:
         int m_BeginR;
     };
 
-private: // members
-    std::vector<int> m_VertexSets;
-    std::vector<int> m_VertexLocation;
+    bool m_bDoneWithTopLevelPartitions;
+
+private:
+    std::string m_sName;
 };
 
 #endif //VERTEX_SETS_H

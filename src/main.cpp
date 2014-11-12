@@ -17,12 +17,17 @@
 #include "Tools.h"
 #include "TomitaAlgorithm.h"
 #include "AdjacencyListAlgorithm.h"
+#include "BronKerboschAlgorithm.h"
 #include "TimeDelayAdjacencyListAlgorithm.h"
 #include "TimeDelayMaxDegreeAlgorithm.h"
 #include "TimeDelayDegeneracyAlgorithm.h"
 #include "HybridAlgorithm.h"
 #include "DegeneracyAlgorithm.h"
 #include "FasterDegeneracyAlgorithm.h"
+
+#include "AdjacencyListVertexSets.h"
+#include "DegeneracyVertexSets.h"
+#include "CacheEfficientDegeneracyVertexSets.h"
 
 // system includes
 #include <list>
@@ -54,8 +59,8 @@ using namespace std;
 
 bool isValidAlgorithm(string const &name)
 {
-    return (name == "tomita" || name == "adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
-            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy");
+    return (name == "tomita" || name == "adjlist" || name == "generic-adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
+            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy");
 }
 
 int main(int argc, char** argv)
@@ -91,7 +96,7 @@ int main(int argc, char** argv)
         }
     }
 
-    bool const bComputeAdjacencyArray(name == "adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy");
+    bool const bComputeAdjacencyArray(name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy");
 
     vector<vector<int>> adjacencyArray;
 
@@ -109,22 +114,32 @@ int main(int argc, char** argv)
 
     if (name == "tomita") {
         pAlgorithm = new TomitaAlgorithm(adjacencyMatrix, n);
-    } else if (name == "adjlist"){
+    } else if (name == "adjlist") {
         pAlgorithm = new AdjacencyListAlgorithm(adjacencyArray);
-    } else if (name == "timedelay-adjlist"){
+    } else if (name == "generic-adjlist") {
+        AdjacencyListVertexSets *pSets = new AdjacencyListVertexSets(adjacencyArray);
+        pAlgorithm = new BronKerboschAlgorithm(pSets);
+    } else if (name == "generic-degeneracy") {
+        DegeneracyVertexSets *pSets = new DegeneracyVertexSets(adjacencyArray);
+        pAlgorithm = new BronKerboschAlgorithm(pSets);
+    } else if (name == "timedelay-adjlist") {
         pAlgorithm = new TimeDelayAdjacencyListAlgorithm(adjacencyArray);
-    } else if (name == "timedelay-maxdegree"){
+    } else if (name == "timedelay-maxdegree") {
         pAlgorithm = new TimeDelayMaxDegreeAlgorithm(adjacencyArray);
-    } else if (name == "hybrid"){
+    } else if (name == "hybrid") {
         pAlgorithm = new HybridAlgorithm(adjacencyList);
-    } else if (name == "degeneracy"){
+    } else if (name == "degeneracy") {
         pAlgorithm = new DegeneracyAlgorithm(adjacencyList);
-    } else if (name == "faster-degeneracy"){
+    } else if (name == "faster-degeneracy") {
         pAlgorithm = new FasterDegeneracyAlgorithm(adjacencyArray);
-    } else if (name == "timedelay-degeneracy"){
+    } else if (name == "cache-degeneracy") {
+        CacheEfficientDegeneracyVertexSets *pSets = new CacheEfficientDegeneracyVertexSets(adjacencyArray);
+        pAlgorithm = new BronKerboschAlgorithm(pSets);
+    } else if (name == "timedelay-degeneracy") {
         pAlgorithm = new TimeDelayDegeneracyAlgorithm(adjacencyList);
     } else {
         cout << "ERROR: unrecognized algorithm name " << name << endl;
+        return 1;
     }
 
     // Run algorithm

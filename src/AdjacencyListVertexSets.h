@@ -26,7 +26,11 @@ public:
     bool PIsEmpty() const __attribute__((always_inline));
     bool XAndPAreEmpty() const __attribute__((always_inline));
 
+    void Initialize();
+
     void PrintSummary(int const line) const;
+
+    bool GetNextTopLevelPartition();
 
 private: // members
     int beginX;

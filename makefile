@@ -3,9 +3,10 @@ OBJECT_DIR = obj
 SRC_DIR    = src
 BIN_DIR    = bin
 
-OBJECTS += $(OBJECT_DIR)/VertexSets.o
+OBJECTS += $(OBJECT_DIR)/CacheEfficientDegeneracyVertexSets.o
+OBJECTS += $(OBJECT_DIR)/DegeneracyVertexSets.o
 OBJECTS += $(OBJECT_DIR)/AdjacencyListVertexSets.o
-OBJECTS += $(OBJECT_DIR)/AdjacencyListAlgorithmShell.o
+OBJECTS += $(OBJECT_DIR)/BronKerboschAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/MemoryManager.o
 OBJECTS += $(OBJECT_DIR)/MaximalCliquesAlgorithm.o
 OBJECTS += $(OBJECT_DIR)/TomitaAlgorithm.o
@@ -80,6 +81,9 @@ $(OBJECT_DIR)/HybridAlgorithm.o: HybridAlgorithm.cpp HybridAlgorithm.h ${OBJECT_
 $(OBJECT_DIR)/DegeneracyAlgorithm.o: DegeneracyAlgorithm.cpp DegeneracyAlgorithm.h ${OBJECT_DIR}
 	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/DegeneracyAlgorithm.cpp -o $@
 
+$(OBJECT_DIR)/CacheEfficientDegeneracyVertexSets.o: CacheEfficientDegeneracyVertexSets.cpp CacheEfficientDegeneracyVertexSets.h ${OBJECT_DIR}
+	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/CacheEfficientDegeneracyVertexSets.cpp -o $@
+
 $(OBJECT_DIR)/FasterDegeneracyAlgorithm.o: FasterDegeneracyAlgorithm.cpp FasterDegeneracyAlgorithm.h ${OBJECT_DIR}
 	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/FasterDegeneracyAlgorithm.cpp -o $@
 
@@ -89,14 +93,14 @@ $(OBJECT_DIR)/DegeneracyTools.o: DegeneracyTools.cpp DegeneracyTools.h ${OBJECT_
 $(OBJECT_DIR)/Tools.o: Tools.cpp Tools.h ${OBJECT_DIR}
 	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/Tools.cpp -o $@
 
-$(OBJECT_DIR)/VertexSets.o: VertexSets.cpp VertexSets.h ${OBJECT_DIR}
-	g++ -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/VertexSets.cpp -o $@
-
 $(OBJECT_DIR)/AdjacencyListVertexSets.o: AdjacencyListVertexSets.cpp AdjacencyListVertexSets.h ${OBJECT_DIR}
 	g++ -Winline -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/AdjacencyListVertexSets.cpp -o $@
 
-$(OBJECT_DIR)/AdjacencyListAlgorithmShell.o: AdjacencyListAlgorithmShell.cpp AdjacencyListAlgorithmShell.h ${OBJECT_DIR}
-	g++ -Winline -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/AdjacencyListAlgorithmShell.cpp -o $@
+$(OBJECT_DIR)/DegeneracyVertexSets.o: DegeneracyVertexSets.cpp DegeneracyVertexSets.h ${OBJECT_DIR}
+	g++ -Winline -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/DegeneracyVertexSets.cpp -o $@
+
+$(OBJECT_DIR)/BronKerboschAlgorithm.o: BronKerboschAlgorithm.cpp BronKerboschAlgorithm.h ${OBJECT_DIR}
+	g++ -Winline -O2 -std=c++11 -g ${DEFINE} -c $(SRC_DIR)/BronKerboschAlgorithm.cpp -o $@
 
  ${OBJECT_DIR}:
 	mkdir ${OBJECT_DIR}

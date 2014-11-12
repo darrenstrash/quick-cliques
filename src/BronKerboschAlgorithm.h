@@ -1,5 +1,5 @@
-#ifndef _DJS_ADJLIST_ALGORITHM_SHELL_H_
-#define _DJS_ADJLIST_ALGORITHM_SHELL_H_
+#ifndef _DJS_BRON_KERBOSCH_ALGORITHM_H_
+#define _DJS_BRON_KERBOSCH_ALGORITHM_H_
 /* 
     This program is free software: you can redistribute it and/or modify 
     it under the terms of the GNU General Public License as published by 
@@ -15,9 +15,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
-/*! \file AdjacencyListAlgorithmShell.h
+/*! \file BronKerboschAlgorithm.h
 
-    \brief see AdjacencyListAlgorithmShell.cpp
+    \brief see BronKerboschAlgorithm.cpp
 
     \author Darren Strash (first name DOT last name AT gmail DOT com)
 
@@ -34,7 +34,7 @@
 
 // local includes
 #include "MaximalCliquesAlgorithm.h"
-#include "AdjacencyListVertexSets.h"
+#include "VertexSets.h"
 #include "Tools.h"
 
 // system includes
@@ -45,21 +45,21 @@
 #include <list>
 #include <vector>
 
-class AdjacencyListAlgorithmShell : public MaximalCliquesAlgorithm
+class BronKerboschAlgorithm : public MaximalCliquesAlgorithm
 {
 public:
-    AdjacencyListAlgorithmShell(AdjacencyListVertexSets &sets);
-    virtual ~AdjacencyListAlgorithmShell();
+    BronKerboschAlgorithm(VertexSets *pSets);
+    virtual ~BronKerboschAlgorithm();
 
     virtual long Run(std::list<std::list<int>> &cliques);
 
     virtual void RunRecursive(long &cliqueCount, std::list<std::list<int>> &cliques, std::list<int> &partialClique);
 
-    AdjacencyListAlgorithmShell           (AdjacencyListAlgorithmShell const &) = delete;
-    AdjacencyListAlgorithmShell& operator=(AdjacencyListAlgorithmShell const &) = delete;
+    BronKerboschAlgorithm           (BronKerboschAlgorithm const &) = delete;
+    BronKerboschAlgorithm& operator=(BronKerboschAlgorithm const &) = delete;
 
 private:
-    AdjacencyListVertexSets &m_Sets;
+    VertexSets *m_pSets;
 };
 
-#endif
+#endif // _DJS_BRON_KERBOSCH_ALGORITHM_H_
