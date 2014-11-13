@@ -70,7 +70,7 @@ public:
 
     void PrintSummary(int const line) const;
 
-    int GetIndexOfVertexInP(int const vertex) const;
+    int GetIndexForNeighbors(int const vertex) const;
 
     bool GetNextTopLevelPartition();
 
@@ -129,7 +129,7 @@ inline void CacheEfficientDegeneracyVertexSets::MoveFromPToR(int const vertex)
         int neighbor = vertexSets[j];
         int neighborLocation = j;
 
-        std::tuple<int,int,int> const &nodeAndIndices(neighborsIndex[GetIndexOfVertexInP(neighbor)]);
+        std::tuple<int,int,int> const &nodeAndIndices(neighborsIndex[GetIndexForNeighbors(neighbor)]);
 ////        std::cout << thisVertex << "?= " << (std::get<0>(nodeAndIndices)) << std::endl;
         int const startIndex(std::get<1>(nodeAndIndices));
         int const endIndex  (std::get<2>(nodeAndIndices));
@@ -175,7 +175,7 @@ inline void CacheEfficientDegeneracyVertexSets::MoveFromPToR(int const vertex)
         int neighbor = vertexSets[j];
         int neighborLocation = j;
 
-        std::tuple<int,int,int> const &nodeAndIndices(neighborsIndex[GetIndexOfVertexInP(neighbor)]);
+        std::tuple<int,int,int> const &nodeAndIndices(neighborsIndex[GetIndexForNeighbors(neighbor)]);
 ////        std::cout << thisVertex << "?= " << (std::get<0>(nodeAndIndices)) << std::endl;
         int const startIndex(std::get<1>(nodeAndIndices));
         int const endIndex  (std::get<2>(nodeAndIndices));
@@ -205,7 +205,7 @@ inline void CacheEfficientDegeneracyVertexSets::MoveFromPToR(int const vertex)
     while(j < newBeginR) {
         int const thisVertex = vertexSets[j];
 
-        std::tuple<int,int,int> const &nodeAndIndices(neighborsIndex[GetIndexOfVertexInP(thisVertex)]);
+        std::tuple<int,int,int> const &nodeAndIndices(neighborsIndex[GetIndexForNeighbors(thisVertex)]);
 ////        std::cout << thisVertex << "?= " << (std::get<0>(nodeAndIndices)) << std::endl;
         int const startIndex(std::get<1>(nodeAndIndices));
         int const endIndex  (std::get<2>(nodeAndIndices));
@@ -314,7 +314,7 @@ inline std::vector<int> CacheEfficientDegeneracyVertexSets::ChoosePivot() const
     {
         int vertex = vertexSets[j];
 
-        std::tuple<int,int,int> const &nodeAndIndices(neighborsIndex[GetIndexOfVertexInP(vertex)]);
+        std::tuple<int,int,int> const &nodeAndIndices(neighborsIndex[GetIndexForNeighbors(vertex)]);
 ////        std::cout << vertex << "?= " << (std::get<0>(nodeAndIndices)) << std::endl;
         int const startIndex(std::get<1>(nodeAndIndices));
         int const endIndex  (std::get<2>(nodeAndIndices));
@@ -361,7 +361,7 @@ inline std::vector<int> CacheEfficientDegeneracyVertexSets::ChoosePivot() const
     // we will decrement numNonNeighbors as we find neighbors
     int newNumNonNeighbors = beginR-beginP;
 
-    std::tuple<int,int,int> const &nodeAndIndices(neighborsIndex[GetIndexOfVertexInP(pivot)]);
+    std::tuple<int,int,int> const &nodeAndIndices(neighborsIndex[GetIndexForNeighbors(pivot)]);
 ////    std::cout << vertex << "?= " << (std::get<0>(nodeAndIndices)) << std::endl;
     int const startIndex(std::get<1>(nodeAndIndices));
     int const endIndex  (std::get<2>(nodeAndIndices));

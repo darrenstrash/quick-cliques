@@ -119,6 +119,8 @@ void CacheEfficientDegeneracyVertexSets::Initialize()
     vertexSets  .resize(m_AdjacencyList.size(), 0);
     vertexLookup.resize(m_AdjacencyList.size(), 0);
 
+    neighborsIndex.resize(m_AdjacencyList.size());
+
     orderingArray = std::move(computeDegeneracyOrderArray(m_AdjacencyList, m_AdjacencyList.size()));
 
     // indices indicating where each set P, X, R starts in 
@@ -134,13 +136,23 @@ void CacheEfficientDegeneracyVertexSets::PrintSummary(int const line) const
     cout << line << ": X[size=" << beginP-beginX << "], P[size=" << beginR-beginP << "]" << endl; 
 }
 
-int CacheEfficientDegeneracyVertexSets::GetIndexOfVertexInP(int const vertex) const
+int CacheEfficientDegeneracyVertexSets::GetIndexForNeighbors(int const vertex) const
 {
-    for (int i = 0; i < neighborsIndex.size(); ++i) {
-        if (std::get<0>(neighborsIndex[i]) == vertex)
-            return i;
-    }
-    return -1;
+////    vector<tuple<int,int,int>>::const_iterator cit = std::lower_bound(neighborsIndex.begin(), neighborsIndex.end(), make_tuple(vertex, -1, -1),
+////                                                                      [] (tuple<int,int,int> const &left, tuple<int,int,int> const &right) { return get<0>(left) < get<0>(right);});
+////
+////    if (cit != neighborsIndex.end()) return distance(neighborsIndex.begin(), cit);
+////    return -1;
+////    for (int i = 0; i < neighborsIndex.size(); ++i) {
+////        if (std::get<0>(neighborsIndex[i]) == vertex) {
+////////            cout << "Found <" << std::get<0>(neighborsIndex[i]) << "," << std::get<1>(neighborsIndex[i]) << "," << std::get<2>(neighborsIndex[i]) << ">" << endl; 
+////            return i;
+////        }
+////    }
+////////    cout << "Didn't find " << vertex << endl;
+////    return -1;
+
+    return vertex;
 };
 
 bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
@@ -197,8 +209,8 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
     vertexSets[beginR] = vertex;
     vertexLookup[vertex] = beginR;
 
-    neighborsIndex.clear();
-    neighborsIndex.reserve(orderingArray[vertex].laterDegree + orderingArray[vertex].earlierDegree);
+////    neighborsIndex.clear();
+////    neighborsIndex.reserve(orderingArray[vertex].laterDegree + orderingArray[vertex].earlierDegree);
 
     for (int const neighbor : orderingArray[orderNumber].earlier) {
         lastNeighborOfPIndex = currentNeighborOfPIndex;
@@ -211,7 +223,9 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
             }
         }
 
-        neighborsIndex.push_back(make_tuple(neighbor, lastNeighborOfPIndex, currentNeighborOfPIndex));
+////        neighborsIndex.push_back(make_tuple(neighbor, lastNeighborOfPIndex, currentNeighborOfPIndex));
+        neighborsIndex[neighbor] = make_tuple(neighbor, lastNeighborOfPIndex, currentNeighborOfPIndex);
+////        cout << "Inserting <" << neighbor << ", " << lastNeighborOfPIndex << "," << currentNeighborOfPIndex << ">" << endl;
     }
 
 ////    cout << "Actual used for X later neighbors: " << currentNeighborOfPIndex << endl << flush;
@@ -226,18 +240,18 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
     while (j<beginR) {
 ////        cout << "Size of neighborsIndex: " << neighborsIndex.size() << endl;
         int const vertexInP = vertexSets[j];
-        neighborsIndex.push_back(make_tuple(vertexInP, j - beginP, -1));
+////        neighborsIndex.push_back(make_tuple(vertexInP, j - beginP, -1));
+        neighborsIndex[vertexInP] = make_tuple(vertexInP, j - beginP, -1);
+
 ////        cout << "Inserting <" << vertexInP << "," << j - beginP << "," << -1 << ">" << endl; 
         vvTemp[j-beginP].reserve(beginR-beginP);
         j++;
     }
 
-
     // count neighbors in P, and fill in array of neighbors in P
     j = beginP;
     while (j<beginR) {
         int const vertexInP = vertexSets[j];
-        int const vertexIndex(j-beginP);
 
         int k = 0;
         while (k<orderingArray[vertexInP].laterDegree) {
@@ -246,7 +260,7 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
 
             if (laterNeighborLocation >= beginP && laterNeighborLocation < beginR) {
 ////                cout << __LINE__ << " : Index of " << vertexInP << "=" << vertexIndex << " in vvTemp" << endl;
-                vvTemp[vertexIndex].push_back(laterNeighbor);
+                vvTemp[j-beginP].push_back(laterNeighbor);
                 vvTemp[laterNeighborLocation - beginP].push_back(vertexInP);
 ////                cout << __LINE__ << " : Index of " << laterNeighbor << "=" << GetIndexOfVertexInP(laterNeighbor) << " in vvTemp"  << endl;
 ////                cout << __LINE__ << " : Inserting edges (" << std::get<0>(neighborsIndex[vertexIndex + startOfPInNeighborsIndex]) << "," << std::get<0>(neighborsIndex[GetIndexOfVertexInP(laterNeighbor)]) << ")" << endl;
@@ -259,6 +273,7 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
     }
 
     for (int i = 0; i < vvTemp.size(); ++i) {
+        int const vertex(vertexSets[beginP + i]);
         lastNeighborOfPIndex = currentNeighborOfPIndex;
         for (int const neighbor : vvTemp[i]) {
 ////            if (sizeOfNeighborsInP <= currentNeighborOfPIndex)
@@ -268,10 +283,12 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
 ////            cout << __LINE__ << " : Inserting edge " << std::get<0>(neighborsIndex[startOfPInNeighborsIndex + i]) << "->" << neighbor << "" << endl;
         }
 
-        std::get<1>(neighborsIndex[startOfPInNeighborsIndex + i]) = lastNeighborOfPIndex;
-        std::get<2>(neighborsIndex[startOfPInNeighborsIndex + i]) = currentNeighborOfPIndex;
+        std::get<1>(neighborsIndex[vertex]) = lastNeighborOfPIndex;
+        std::get<2>(neighborsIndex[vertex]) = currentNeighborOfPIndex;
     }
 
+    // sorting needs to come after updating, otherwise we don't know the location of vertices in the neighbor index.
+////    sort(neighborsIndex.begin(), neighborsIndex.end(), [] (tuple<int,int,int> const &left, tuple<int,int,int> const &right) { return get<0>(left) < get<0>(right); });
 
 ////    cout << "Actual used for P later neighbors: " << currentNeighborOfPIndex - savedActualXLaterNeighbors << endl << flush;
 
