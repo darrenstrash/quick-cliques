@@ -23,6 +23,10 @@
 #include "Tools.h"
 #include <list>
 #include <vector>
+#include <set>
+#include <utility>
+#include <tuple>
+#include <algorithm>
 #include "MemoryManager.h"
 #include "DegeneracyTools.h"
 
@@ -148,12 +152,40 @@ long FasterDegeneracyAlgorithm::Run(list<list<int>> &cliques)
 
 inline int findBestPivotNonNeighborsFasterDegeneracy( int** pivotNonNeighbors, int* numNonNeighbors,
                                                 int* vertexSets, int* vertexLookup,
-                                                vector<vector<int>> const &neighborsInP, int* numNeighbors,
+                                                vector<vector<int>> &neighborsInP, int* numNeighbors,
                                                 int beginX, int beginP, int beginR)
 {
     clock_t clockStart = clock();
     int pivot = -1;
     int maxIntersectionSize = -1;
+
+////    set<tuple<int,int,int>> uniqueEdges;
+////    int totalEdges(0);
+////    for (int i = beginX; i < beginP; i++) {
+////        for (int j = 0; j < neighborsInP[vertexSets[i]].size(); ++j) {
+////            totalEdges++;
+////            if (vertexLookup[neighborsInP[vertexSets[i]][j]] < beginP || vertexLookup[neighborsInP[vertexSets[i]][j]] >= beginR || (j == neighborsInP[vertexSets[i]].size() -1)) {
+////                sort(neighborsInP[vertexSets[i]].begin(), neighborsInP[vertexSets[i]].begin() + j);
+////                for (int k = 0; k < j-1; ++k) {
+////                    if (k == 0)
+////                        uniqueEdges.insert(make_tuple(k, neighborsInP[vertexSets[i]][k], neighborsInP[vertexSets[i]][k+1]));
+////                    else 
+////                        uniqueEdges.insert(make_tuple(1, neighborsInP[vertexSets[i]][k], neighborsInP[vertexSets[i]][k+1]));
+////                }
+////                if (vertexLookup[neighborsInP[vertexSets[i]][j-1]] >= beginP && vertexLookup[neighborsInP[vertexSets[i]][j]] < beginR) {
+////                    if (j == 0)
+////                        uniqueEdges.insert(make_tuple(0, neighborsInP[vertexSets[i]][j], -1));
+////                    else if (j == 1)
+////                        uniqueEdges.insert(make_tuple(0, neighborsInP[vertexSets[i]][j-1], neighborsInP[vertexSets[i]][j]));
+////                    else
+////                        uniqueEdges.insert(make_tuple(1, neighborsInP[vertexSets[i]][j-1], neighborsInP[vertexSets[i]][j]));
+////                }
+////                break;
+////            }
+////        }
+////    }
+////
+////    cout << "total: " << totalEdges << "(from " << (beginP - beginX) << " vertices), unique: " << uniqueEdges.size() << endl;
 
     // iterate over each vertex in P union X 
     // to find the vertex with the most neighbors in P.
@@ -603,7 +635,6 @@ long listAllMaximalCliquesFasterDegeneracy( vector<vector<int>> &adjArray,
     cerr << "Time Making X and P : " << ((double)(timeFillInPX)/(double)(CLOCKS_PER_SEC)) << endl;
     cerr << "Time Degeneracy Ordr: " << ((double)(timeDegeneracyOrder)/(double)(CLOCKS_PER_SEC)) << endl;
 
-
     Free(vertexSets);
     Free(vertexLookup);
 
@@ -710,7 +741,6 @@ inline void moveToRFasterDegeneracy( int vertex,
 
         if(incrementJ) j++;
     }
-////    cout << endl;
 
     j = (*pBeginP);
     while(j<(*pBeginR))
@@ -851,9 +881,8 @@ void listAllMaximalCliquesFasterDegeneracyRecursive( long* cliqueCount,
                                                vector<vector<int>> &neighborsInP, int* numNeighbors,
                                                int beginX, int beginP, int beginR)
 {
-////    int const currentRecursionNode(recursionNode++);
-////
-////    cout << currentRecursionNode << ": X[";
+    int const currentRecursionNode(recursionNode++);
+
 ////    for (int i = beginX; i < beginP; ++i) {
 ////        cout << vertexSets[i] << " ";
 ////    }
@@ -900,13 +929,17 @@ void listAllMaximalCliquesFasterDegeneracyRecursive( long* cliqueCount,
                        cliques,
                        #endif
                        partialClique );
-
+////    cout << currentRecursionNode << ": " << endl; // <<  "X[";
         return;
     }
 
     // avoid work if P is empty.
-    if(beginP >= beginR)
+    if(beginP >= beginR) {
+////    cout << currentRecursionNode << ": " << endl; // <<  "X[";
         return;
+    }
+
+////    cout << currentRecursionNode << ": "; // <<  "X[";
 
     int* myCandidatesToIterateThrough;
     int numCandidatesToIterateThrough;

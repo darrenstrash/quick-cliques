@@ -72,7 +72,7 @@ void ProcessCommandLineArgs(int argc, char** argv, map<string,string> &mapComman
         if (positionOfEquals != string::npos) {
             string const key  (argument.substr(0,positionOfEquals));
             string const value(argument.substr(positionOfEquals+1));
-            cout << "Parsed: " << key << "=" << value << endl;
+////            cout << "Parsed: " << key << "=" << value << endl;
             mapCommandLineArgs[key] = value;
         } else {
             mapCommandLineArgs[argument] = "";
@@ -84,9 +84,6 @@ int main(int argc, char** argv)
 {
     int failureCode(0);
 
-    if (argc <= 1 || !isValidAlgorithm(argv[1])) {
-        cout << "usage: " << argv[0] << " <tomita|adjlist|hybrid|degeneracy|*> [--latex]" << endl;
-    }
 
     map<string,string> mapCommandLineArgs;
 
@@ -106,6 +103,10 @@ int main(int argc, char** argv)
         cout << "ERROR: Missing algorithm" << endl;
         // ShowUsageMessage();
         // return 1; // TODO/DS
+    }
+
+    if (argc <= 1 || !isValidAlgorithm(algorithm)) {
+        cout << "usage: " << argv[0] << " <tomita|adjlist|hybrid|degeneracy|*> [--latex]" << endl;
     }
 
     string const name(algorithm);
