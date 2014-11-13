@@ -30,6 +30,7 @@
 #include "CacheEfficientDegeneracyVertexSets.h"
 
 // system includes
+#include <map>
 #include <list>
 #include <string>
 #include <vector>
@@ -63,6 +64,22 @@ bool isValidAlgorithm(string const &name)
             name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy");
 }
 
+void ProcessCommandLineArgs(int argc, char** argv, map<string,string> &mapCommandLineArgs)
+{
+    for (int i = 1; i < argc; ++i) {
+        string const argument(argv[i]);
+        size_t const positionOfEquals(argument.find_first_of('='));
+        if (positionOfEquals != string::npos) {
+            string const key  (argument.substr(0,positionOfEquals));
+            string const value(argument.substr(positionOfEquals+1));
+            cout << "Parsed: " << key << "=" << value << endl;
+            mapCommandLineArgs[key] = value;
+        } else {
+            mapCommandLineArgs[argument] = "";
+        }
+    }
+}
+
 int main(int argc, char** argv)
 {
     int failureCode(0);
@@ -71,15 +88,33 @@ int main(int argc, char** argv)
         cout << "usage: " << argv[0] << " <tomita|adjlist|hybrid|degeneracy|*> [--latex]" << endl;
     }
 
-    bool const outputLatex(argc >= 3 && string(argv[2]) == "--latex");
+    map<string,string> mapCommandLineArgs;
 
-    string const name(argv[1]);
+    ProcessCommandLineArgs(argc, argv, mapCommandLineArgs);
+
+    bool   const outputLatex(mapCommandLineArgs.find("--latex") != mapCommandLineArgs.end());
+    string const inputFile((mapCommandLineArgs.find("--input-file") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--input-file"] : "");
+    string const algorithm((mapCommandLineArgs.find("--algorithm") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--algorithm"] : "");
+
+    if (inputFile.empty()) {
+        cout << "ERROR: Missing input file " << endl;
+        // ShowUsageMessage();
+        // return 1; // TODO/DS
+    }
+
+    if (algorithm.empty()) {
+        cout << "ERROR: Missing algorithm" << endl;
+        // ShowUsageMessage();
+        // return 1; // TODO/DS
+    }
+
+    string const name(algorithm);
     MaximalCliquesAlgorithm *pAlgorithm(nullptr);
 
     int n; // number of vertices
     int m; // 2x number of edges
 
-    vector<list<int>> adjacencyList = readInGraphAdjList(&n,&m);
+    vector<list<int>> adjacencyList = readInGraphAdjList(n, m, inputFile);
 
     bool const bComputeAdjacencyMatrix(name == "tomita");
 

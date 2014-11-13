@@ -16,6 +16,7 @@
 #include <cassert>
 #include <cstdio>
 #include <ctime>
+#include <fstream> // ifstream
 //#include <csys/resource.h>
 
 #include "Tools.h"
@@ -244,6 +245,64 @@ vector<list<int>> readInGraphAdjList(int* n, int* m)
 
     return adjList;
 }
+
+vector<list<int>> readInGraphAdjList(int &n, int &m, string const &fileName)
+{
+
+    ifstream instream(fileName.c_str(), std::ifstream::binary);
+
+    if (instream.good() && !instream.eof())
+        instream >> n;
+    else {
+        fprintf(stderr, "problem with line 1 in input file\n");
+        exit(1);
+    }
+
+
+    if (instream.good() && !instream.eof())
+        instream >> m;
+    else {
+
+        fprintf(stderr, "problem with line 2 in input file\n");
+        exit(1);
+    }
+
+#ifdef DEBUG
+    printf("Number of vertices: %d\n", n);
+    printf("Number of edges: %d\n", m);
+#endif
+    
+    vector<list<int>> adjList(n);
+
+    int u, v; // endvertices, to read edges.
+    int i = 0;
+    while(i < m)
+    {
+        char comma;
+        if (instream.good() && !instream.eof()) {
+            instream >> u >> comma >> v;
+        } else {
+            fprintf(stderr, "problem with line %d in input file\n", i+2);
+            exit(1);
+        }
+        assert(u < n && u > -1);
+        assert(v < n && v > -1);
+        if(u==v)
+            fprintf(stderr, "Detexted loop %d->%d\n", u, v);
+        assert(u != v);
+
+        adjList[u].push_back(v);
+
+        i++;
+    }
+
+#ifdef DEBUG
+    printArrayOfLinkedLists(adjList, n);
+#endif
+
+    return adjList;
+}
+
 
 /*! \brief execute an maximal clique listing algorithm
            that takes an adjacency matrix as input, time it,

@@ -247,7 +247,7 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
             if (laterNeighborLocation >= beginP && laterNeighborLocation < beginR) {
 ////                cout << __LINE__ << " : Index of " << vertexInP << "=" << vertexIndex << " in vvTemp" << endl;
                 vvTemp[vertexIndex].push_back(laterNeighbor);
-                vvTemp[GetIndexOfVertexInP(laterNeighbor) - startOfPInNeighborsIndex].push_back(vertexInP);
+                vvTemp[laterNeighborLocation - beginP].push_back(vertexInP);
 ////                cout << __LINE__ << " : Index of " << laterNeighbor << "=" << GetIndexOfVertexInP(laterNeighbor) << " in vvTemp"  << endl;
 ////                cout << __LINE__ << " : Inserting edges (" << std::get<0>(neighborsIndex[vertexIndex + startOfPInNeighborsIndex]) << "," << std::get<0>(neighborsIndex[GetIndexOfVertexInP(laterNeighbor)]) << ")" << endl;
             }

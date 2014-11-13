@@ -58,6 +58,8 @@ void destroyCliqueResults(std::list<std::list<int>> &cliques);
 
 std::vector<std::list<int>> readInGraphAdjList(int* n, int* m);
 
+std::vector<std::list<int>> readInGraphAdjList(int &n, int &m, std::string const &fileName);
+
 void runAndPrintStatsMatrix(long (*function)(char**,
                                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
                                              std::list<std::list<int>> &,
