@@ -165,6 +165,10 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
         sizeOfNeighborsInP += min(orderingArray[neighbor].laterDegree,orderingArray[vertex].laterDegree);
     }
 
+////    cout << "Reserved    for X later neighbors: " << sizeOfNeighborsInP << endl << flush;
+////
+////    int const savedXLaterNeighbors(sizeOfNeighborsInP);
+
     beginR = beginP;
 
     int index(0);
@@ -175,8 +179,12 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
             vertexLookup[vertexSets[beginR]] = -1; // make sure no one else claims this position.
         vertexSets[beginR] = neighbor;
         vertexLookup[neighbor] = (beginR)++;
-        sizeOfNeighborsInP += min(orderingArray[neighbor].laterDegree+index,orderingArray[vertex].laterDegree);
+////        sizeOfNeighborsInP += min(orderingArray[neighbor].laterDegree+index,orderingArray[vertex].laterDegree);
+        sizeOfNeighborsInP += orderingArray[vertex].laterDegree;
+        index++;
     }
+
+////    cout << "Reserved    for P later neighbors: " << sizeOfNeighborsInP - savedXLaterNeighbors << endl << flush;
 
     newNeighborsInP.resize(sizeOfNeighborsInP, -1);
 
@@ -205,6 +213,10 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
 
         neighborsIndex.push_back(make_tuple(neighbor, lastNeighborOfPIndex, currentNeighborOfPIndex));
     }
+
+////    cout << "Actual used for X later neighbors: " << currentNeighborOfPIndex << endl << flush;
+////
+////    int const savedActualXLaterNeighbors(currentNeighborOfPIndex);
 
     //TODO/DS: Sort to make finding elements faster
     vector<vector<int>> vvTemp(orderingArray[vertex].laterDegree);
@@ -249,6 +261,9 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
     for (int i = 0; i < vvTemp.size(); ++i) {
         lastNeighborOfPIndex = currentNeighborOfPIndex;
         for (int const neighbor : vvTemp[i]) {
+////            if (sizeOfNeighborsInP <= currentNeighborOfPIndex)
+////                cout << "Current cnt for P later neighbors: " << currentNeighborOfPIndex - savedActualXLaterNeighbors << endl << flush;
+
             newNeighborsInP[currentNeighborOfPIndex++] = neighbor;
 ////            cout << __LINE__ << " : Inserting edge " << std::get<0>(neighborsIndex[startOfPInNeighborsIndex + i]) << "->" << neighbor << "" << endl;
         }
@@ -256,6 +271,9 @@ bool CacheEfficientDegeneracyVertexSets::GetNextTopLevelPartition()
         std::get<1>(neighborsIndex[startOfPInNeighborsIndex + i]) = lastNeighborOfPIndex;
         std::get<2>(neighborsIndex[startOfPInNeighborsIndex + i]) = currentNeighborOfPIndex;
     }
+
+
+////    cout << "Actual used for P later neighbors: " << currentNeighborOfPIndex - savedActualXLaterNeighbors << endl << flush;
 
     m_bDoneWithTopLevelPartitions = (m_iCurrentTopLevelIndex == m_AdjacencyList.size());
 
