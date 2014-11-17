@@ -28,6 +28,9 @@
 #include "AdjacencyListVertexSets.h"
 #include "DegeneracyVertexSets.h"
 #include "CacheEfficientDegeneracyVertexSets.h"
+#include "IndependentSets.h"
+#include "DegeneracyIndependentSets.h"
+#include "MaximumCliqueAlgorithm.h"
 
 // system includes
 #include <map>
@@ -61,7 +64,7 @@ using namespace std;
 bool isValidAlgorithm(string const &name)
 {
     return (name == "tomita" || name == "adjlist" || name == "generic-adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
-            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy");
+            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis");
 }
 
 void ProcessCommandLineArgs(int argc, char** argv, map<string,string> &mapCommandLineArgs)
@@ -110,12 +113,17 @@ int main(int argc, char** argv)
     }
 
     string const name(algorithm);
-    MaximalCliquesAlgorithm *pAlgorithm(nullptr);
+    Algorithm *pAlgorithm(nullptr);
 
     int n; // number of vertices
     int m; // 2x number of edges
 
-    vector<list<int>> adjacencyList = readInGraphAdjList(n, m, inputFile);
+    vector<list<int>> adjacencyList;
+    if (inputFile.find(".graph") != string::npos) {
+        adjacencyList = readInGraphAdjListEdgesPerLine(n, m, inputFile);
+    } else {
+        adjacencyList = readInGraphAdjList(n, m, inputFile);
+    }
 
     bool const bComputeAdjacencyMatrix(name == "tomita");
 
@@ -132,7 +140,7 @@ int main(int argc, char** argv)
         }
     }
 
-    bool const bComputeAdjacencyArray(name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy");
+    bool const bComputeAdjacencyArray(name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis");
 
     vector<vector<int>> adjacencyArray;
 
@@ -170,6 +178,12 @@ int main(int argc, char** argv)
         pAlgorithm = new FasterDegeneracyAlgorithm(adjacencyArray);
     } else if (name == "cache-degeneracy") {
         CacheEfficientDegeneracyVertexSets *pSets = new CacheEfficientDegeneracyVertexSets(adjacencyArray);
+        pAlgorithm = new BronKerboschAlgorithm(pSets);
+    } else if (name == "mis") {
+        IndependentSets *pSets = new IndependentSets(adjacencyArray);
+        pAlgorithm = new BronKerboschAlgorithm(pSets);
+    } else if (name == "degeneracy-mis") {
+        DegeneracyIndependentSets *pSets = new DegeneracyIndependentSets(adjacencyArray);
         pAlgorithm = new BronKerboschAlgorithm(pSets);
     } else if (name == "timedelay-degeneracy") {
         pAlgorithm = new TimeDelayDegeneracyAlgorithm(adjacencyList);

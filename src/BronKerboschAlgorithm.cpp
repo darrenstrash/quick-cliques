@@ -25,7 +25,7 @@
 #include <vector>
 #include "MemoryManager.h"
 #include "BronKerboschAlgorithm.h"
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 
 using namespace std;
 
@@ -74,7 +74,7 @@ static unsigned long numLargeJumps;
 static unsigned long stepsSinceLastReportedClique(0);
 
 BronKerboschAlgorithm::BronKerboschAlgorithm(VertexSets *pSets)
- : MaximalCliquesAlgorithm(pSets->GetName())
+ : Algorithm(pSets->GetName())
  , m_pSets(pSets)
 {
 }
@@ -128,17 +128,22 @@ static unsigned long recursionNode(0);
 
 void BronKerboschAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cliques, list<int> &partialClique)
 {
-////    int const currentRecursionNode(recursionNode++);
-////
-////    cout << currentRecursionNode << endl;
+    int const currentRecursionNode(recursionNode++);
 
-////    m_Sets.PrintSummary(__LINE__);
+////    cout << currentRecursionNode << endl;
+////    if (partialClique.empty()) {
+////        cout << "Another vertex down...only " << m_pSets->SizeOfP() << " more to go" << endl;
+////    }
+
+////    m_pSets->PrintSummary(__LINE__);
 
     stepsSinceLastReportedClique++;
 
     // if X is empty and P is empty, return partial clique as maximal
     if (m_pSets->XAndPAreEmpty()) {
         cliqueCount++;
+////        if (cliqueCount %50 == 0)
+////            cout << "Found clique #" << cliqueCount << endl;
 
         if (stepsSinceLastReportedClique > partialClique.size()) {
             numLargeJumps++;

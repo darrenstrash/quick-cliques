@@ -33,7 +33,7 @@
 */
 
 // local includes
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 #include "VertexSets.h"
 #include "Tools.h"
 
@@ -45,7 +45,7 @@
 #include <list>
 #include <vector>
 
-class BronKerboschAlgorithm : public MaximalCliquesAlgorithm
+class BronKerboschAlgorithm : public Algorithm
 {
 public:
     BronKerboschAlgorithm(VertexSets *pSets);
