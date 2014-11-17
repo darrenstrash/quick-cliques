@@ -278,6 +278,8 @@ inline void DegeneracyIndependentSets::MoveFromRToX(int const vertex)
   P \ {neighborhood of v} when this function completes.
  */
 
+#define DJS_PIVOT_DONE
+
 inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
 {
     clock_t clockStart = clock();
@@ -319,7 +321,7 @@ inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
     while(j<beginR)
     {
         int vertex = vertexSets[j];
-        int numPotentialNeighbors = std::min(beginR - beginP, numNeighbors[vertex]);
+        int const numPotentialNeighbors = std::min(beginR - beginP, numNeighbors[vertex]);
 
         int numNeighborsInP = 0;
 
@@ -339,9 +341,9 @@ inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
             k++;
         }
 
-        if(numNeighborsInP > maxIntersectionSize) {
+        if((beginR - beginP - numNeighborsInP) > maxIntersectionSize) {
             pivot = vertex;
-            maxIntersectionSize = numNeighborsInP;
+            maxIntersectionSize = beginR - beginP - numNeighborsInP;
         }
 
         j++;
@@ -356,22 +358,21 @@ inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
     // we initialize enough space for all of P; this is
     // slightly space inefficient, but it results in faster
     // computation of non-neighbors.
-    std::vector<int> pivotNonNeighbors(beginR-beginP,0);
-    memcpy(&pivotNonNeighbors[0], &vertexSets[beginP], (beginR-beginP)*sizeof(int));
+    int numPivotNeighbors = std::min(beginR - beginP, numNeighbors[pivot]);
+////    int numPivotNeighbors = beginR - beginP;
+    std::vector<int> pivotNonNeighbors(numPivotNeighbors+1,0);
 
     // we will decrement numNonNeighbors as we find neighbors
-    int numNonNeighbors = beginR-beginP;
-
-    int numPivotNeighbors = std::min(beginR - beginP, numNeighbors[pivot]);
+    int numNonNeighbors = 0;
 
     // mark the neighbors of pivot that are in P.
     j = 0;
     while(j<numPivotNeighbors) {
-        int neighbor = neighborsInP[pivot][j];
-        int neighborLocation = vertexLookup[neighbor];
+        int const neighbor = neighborsInP[pivot][j];
+        int const neighborLocation = vertexLookup[neighbor];
 
         if(neighborLocation >= beginP && neighborLocation < beginR) {
-            pivotNonNeighbors[neighborLocation-beginP] = -1;
+            pivotNonNeighbors[numNonNeighbors++] = neighbor;
         } else {
             break;
         }
@@ -379,23 +380,7 @@ inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
         j++;
     }
 
-    // move non-neighbors of pivot in P to the beginning of
-    // pivotNonNeighbors and set numNonNeighbors appriopriately.
-
-    // if a vertex is marked as a neighbor, the we move it
-    // to the end of pivotNonNeighbors and decrement numNonNeighbors.
-    j = 0;
-    while (j<numNonNeighbors) {
-        int const vertex = pivotNonNeighbors[j];
-
-        if (vertex == -1) {
-            numNonNeighbors--;
-            pivotNonNeighbors[j] = pivotNonNeighbors[numNonNeighbors];
-            continue;
-        }
-
-        j++;
-    }
+    if (InP(pivot)) pivotNonNeighbors[numNonNeighbors++] = pivot;
 
     pivotNonNeighbors.resize(numNonNeighbors);
 

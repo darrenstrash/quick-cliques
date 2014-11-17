@@ -343,7 +343,8 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
 
     m_bDoneWithTopLevelPartitions = (m_iCurrentTopLevelIndex == m_AdjacencyList.size());
 
-    return VerifyStartConfiguration();
+////    return VerifyStartConfiguration();
+    return true;
 }
 
 bool DegeneracyIndependentSets::VerifyStartConfiguration() const
