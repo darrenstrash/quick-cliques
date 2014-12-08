@@ -407,12 +407,10 @@ NeighborListArray** computeDegeneracyOrderArray(vector<list<int>> const &adjList
 
         orderingArray[i]->laterDegree = vOrdering[i].later.size();
         orderingArray[i]->later.resize(orderingArray[i]->laterDegree);
-        cout << "Allocating space for " << orderingArray[i]->later.size() << " later neighbors" << endl;
 
         int j=0;
         for(int const laterNeighbor : vOrdering[i].later)
         {
-            cout << "Filling in later neighbor " << laterNeighbor << " in position " << j << endl;
             orderingArray[i]->later[j++] = laterNeighbor;
         }
 

@@ -77,18 +77,18 @@ bool isValidAlgorithm(string const &name)
 void ProcessCommandLineArgs(int const argc, char** argv, map<string,string> &mapCommandLineArgs)
 {
     for (int i = 1; i < argc; ++i) {
-        cout << "Processing argument " << i << endl;
+////        cout << "Processing argument " << i << endl;
         string const argument(argv[i]);
-        cout << "    Argument is " << argument << endl;
+////        cout << "    Argument is " << argument << endl;
         size_t const positionOfEquals(argument.find_first_of("="));
-        cout << "    Position of = " << positionOfEquals << endl;
+////        cout << "    Position of = " << positionOfEquals << endl;
         if (positionOfEquals != string::npos) {
             string const key  (argument.substr(0,positionOfEquals));
             string const value(argument.substr(positionOfEquals+1));
-            cout << "    Parsed1: " << key << "=" << value << endl;
+////            cout << "    Parsed1: " << key << "=" << value << endl;
             mapCommandLineArgs[key] = value;
         } else {
-            cout << "    Parsed2: " << argument << endl;
+////            cout << "    Parsed2: " << argument << endl;
             mapCommandLineArgs[argument] = "";
         }
     }
@@ -100,7 +100,7 @@ void PrintExperimentalWarning()
     cout << "WARNING: " << endl;
     cout << "WARNING: Proceed with caution: this software is currently in an experimental state." << endl;
     cout << "WARNING: This software may be slow, the algorithm may be unstable and the results may be incorrect." << endl;
-    cout << "WARNING: Please consider using version 1.0 of this software, which has been more thoroughly tested." << endl;
+    cout << "WARNING: If you care about this sort of thing, please consider using version 1.0 of this software, which has been more thoroughly tested." << endl;
 }
 
 int main(int argc, char** argv)
