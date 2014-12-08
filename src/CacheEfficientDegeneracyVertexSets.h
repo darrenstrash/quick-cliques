@@ -66,6 +66,11 @@ public:
     bool PIsEmpty() const __attribute__((always_inline));
     bool XAndPAreEmpty() const __attribute__((always_inline));
 
+    virtual size_t SizeOfX() const { return beginP - beginX; }
+    virtual size_t SizeOfP() const { return beginR - beginP; }
+
+    virtual size_t GetGraphSize() const { return m_AdjacencyList.size(); }
+
     void Initialize();
 
     void PrintSummary(int const line) const;
@@ -73,6 +78,12 @@ public:
     int GetIndexForNeighbors(int const vertex) const;
 
     bool GetNextTopLevelPartition();
+
+    void GetTopLevelPartialClique(std::list<int> &partialClique)  const {
+        if (m_iCurrentTopLevelIndex == 0) return;
+        int const vertex(orderingArray[m_iCurrentTopLevelIndex-1].vertex);
+        partialClique.push_back(vertex);
+    }
 
 private: // members
     int beginX;

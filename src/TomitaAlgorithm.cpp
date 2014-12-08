@@ -17,7 +17,7 @@
 #include "Tools.h"
 #include "MemoryManager.h"
 #include "TomitaAlgorithm.h"
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 
 // system includes
 #include <list>
@@ -70,7 +70,7 @@ using namespace std;
 */
 
 TomitaAlgorithm::TomitaAlgorithm(char **ppAdjacencyMatrix, int const numVertices)
- : MaximalCliquesAlgorithm("tomita")
+ : Algorithm("tomita")
  , m_ppAdjacencyMatrix(ppAdjacencyMatrix)
  , m_iNumVertices(numVertices)
 {
@@ -103,8 +103,8 @@ long TomitaAlgorithm::Run(list<list<int>> &cliques)
     \return the number of maximal cliques of the input graph.
 */
 
-static unsigned long largestDifference(0);
-static unsigned long numLargeJumps(0);
+////static unsigned long largestDifference(0);
+////static unsigned long numLargeJumps(0);
 
 long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
                                   #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -149,8 +149,8 @@ long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
                                           vertexSets, vertexLookup, numVertices,
                                           beginX, beginP, beginR, stepsSinceLastReportedClique);
 
-    cout << "Largest Difference : " << largestDifference << endl;
-    cout << "Num     Differences: " << numLargeJumps << endl;
+////    cout << "Largest Difference : " << largestDifference << endl;
+////    cout << "Num     Differences: " << numLargeJumps << endl;
 
     Free(vertexSets);
     Free(vertexLookup);
@@ -413,21 +413,21 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
                                            int* vertexSets, int* vertexLookup, int size,
                                            int beginX, int beginP, int beginR , long &stepsSinceLastReportedClique)
 {
-    stepsSinceLastReportedClique++;
+////    stepsSinceLastReportedClique++;
     // if X is empty and P is empty, return partial clique as maximal
     if(beginX >= beginP && beginP >= beginR)
     {
         (*cliqueCount)++;
 
-        if (stepsSinceLastReportedClique > partialClique.size()) {
-            numLargeJumps++;
-            //cout << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
-            if (largestDifference < (stepsSinceLastReportedClique - partialClique.size())) {
-                largestDifference = stepsSinceLastReportedClique - partialClique.size();
-            }
-        }
-
-        stepsSinceLastReportedClique = 0;
+////        if (stepsSinceLastReportedClique > partialClique.size()) {
+////            numLargeJumps++;
+////            //cout << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
+////            if (largestDifference < (stepsSinceLastReportedClique - partialClique.size())) {
+////                largestDifference = stepsSinceLastReportedClique - partialClique.size();
+////            }
+////        }
+////
+////        stepsSinceLastReportedClique = 0;
         processClique( 
                        #ifdef RETURN_CLIQUES_ONE_BY_ONE
                        cliques,

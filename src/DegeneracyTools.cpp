@@ -13,17 +13,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/> 
 */
 
+// local includes
+#include "Tools.h"
+#include "MemoryManager.h"
+#include "DegeneracyTools.h"
+
+// system includes
 #include <climits>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
-
-#include "Tools.h"
 #include <list>
 #include <vector>
-#include "MemoryManager.h"
-#include "DegeneracyTools.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -125,6 +128,80 @@ int computeDegeneracy(vector<list<int>> const &adjList, int size)
 
     return degeneracy;
 }
+
+int computeDegeneracy(vector<vector<int>> const &adjList, int size)
+{
+    int i = 0;
+
+    int degeneracy = 0;
+    
+    // array of lists of vertices, indexed by degree
+    vector<list<int>> verticesByDegree(size);
+
+    // array of lists of vertices, indexed by degree
+    vector<std::list<int>::iterator> vertexLocator(size);
+
+    vector<int> degree(size);
+
+    // fill each cell of degree lookup table
+    // then use that degree to populate the 
+    // lists of vertices indexed by degree
+
+    for(i=0; i<size; i++)
+    {
+        degree[i] = adjList[i].size();
+        verticesByDegree[degree[i]].push_front(i);
+        vertexLocator[i] = verticesByDegree[degree[i]].begin();
+    }
+    
+    int currentDegree = 0;
+
+    int numVerticesRemoved = 0;
+
+    while(numVerticesRemoved < size)
+    {
+        if(!verticesByDegree[currentDegree].empty())
+        {
+            degeneracy = max(degeneracy,currentDegree);
+            
+            int const vertex = verticesByDegree[currentDegree].front();
+
+            verticesByDegree[currentDegree].erase(vertexLocator[vertex]);
+
+            degree[vertex] = -1;
+
+            vector<int> const &neighborList = adjList[vertex];
+
+            for(int const neighbor : neighborList)
+            {
+                if(degree[neighbor]!=-1)
+                {
+                    verticesByDegree[degree[neighbor]].erase(vertexLocator[neighbor]);
+
+                    degree[neighbor]--;
+
+                    if(degree[neighbor] != -1)
+                    {
+                        verticesByDegree[degree[neighbor]].push_front(neighbor);
+                        vertexLocator[neighbor] = verticesByDegree[degree[neighbor]].begin();
+                    }
+                }
+            }
+
+            numVerticesRemoved++;
+            currentDegree = 0;
+        }
+        else
+        {
+            currentDegree++;
+        }
+    }
+
+    verticesByDegree.clear();
+
+    return degeneracy;
+}
+
 
 /*! \brief
 
@@ -324,16 +401,18 @@ NeighborListArray** computeDegeneracyOrderArray(vector<list<int>> const &adjList
 
     for(i = 0; i<size;i++)
     {
-        orderingArray[i] = (NeighborListArray*)Malloc(sizeof(NeighborListArray));
+        orderingArray[i] = new NeighborListArray();
         orderingArray[i]->vertex = vOrdering[i].vertex;
         orderingArray[i]->orderNumber = vOrdering[i].orderNumber;
 
         orderingArray[i]->laterDegree = vOrdering[i].later.size();
         orderingArray[i]->later.resize(orderingArray[i]->laterDegree);
+        cout << "Allocating space for " << orderingArray[i]->later.size() << " later neighbors" << endl;
 
         int j=0;
         for(int const laterNeighbor : vOrdering[i].later)
         {
+            cout << "Filling in later neighbor " << laterNeighbor << " in position " << j << endl;
             orderingArray[i]->later[j++] = laterNeighbor;
         }
 
@@ -348,6 +427,104 @@ NeighborListArray** computeDegeneracyOrderArray(vector<list<int>> const &adjList
     }
 
     return orderingArray;
+}
+
+// there is a problem with this algorithm
+vector<NeighborListArray> computeMaximumLaterOrderArray(vector<vector<int>> &adjArray, int size)
+{
+    int i = 0;
+
+    // array of lists of vertices, indexed by degree
+    vector<list<int>> verticesByDegree(size);
+
+    // array of lists of vertices, indexed by degree
+    vector<list<int>::iterator> vertexLocator(size);
+
+    vector<int> degree(size);
+
+    // fill each cell of degree lookup table
+    // then use that degree to populate the 
+    // lists of vertices indexed by degree
+
+    for(i=0; i<size; i++)
+    {
+        degree[i] = adjArray[i].size();
+        verticesByDegree[degree[i]].push_front(i);
+        vertexLocator[i] = verticesByDegree[degree[i]].begin();
+    }
+
+    int currentDegree = size-1;
+
+    int numVerticesRemoved = 0;
+
+    vector<NeighborListArray> vOrderingArray(size);
+
+    while (numVerticesRemoved < size) {
+        if (!verticesByDegree[currentDegree].empty()) {
+            int const vertex = verticesByDegree[currentDegree].front();
+            verticesByDegree[currentDegree].pop_front();
+
+            vOrderingArray[vertex].vertex = vertex;
+            vOrderingArray[vertex].orderNumber = numVerticesRemoved;
+
+            degree[vertex] = -1;
+
+            // will swap later neighbors to end of neighbor list
+            vector<int> &neighborList = adjArray[vertex];
+
+            int splitPoint(neighborList.size());
+            for(int i=0; i < splitPoint; ++i) {
+                int const neighbor(neighborList[i]);
+                // if later neighbor, swap to end of neighborList (there are few of these)
+                if(degree[neighbor]!=-1) {
+                    verticesByDegree[degree[neighbor]].erase(vertexLocator[neighbor]);
+
+                    neighborList[i] = neighborList[--splitPoint];
+                    neighborList[splitPoint] = neighbor;
+                    i--;
+
+                    degree[neighbor]--;
+
+                    if (degree[neighbor] != -1)
+                    {
+                        verticesByDegree[degree[neighbor]].push_front(neighbor);
+                        vertexLocator[neighbor] = verticesByDegree[degree[neighbor]].begin();
+                    }
+                }
+                // earlier neighbor, do nothing.
+            }
+
+            // create space for later neighbors to ordering
+            vOrderingArray[vertex].laterDegree = neighborList.size() - splitPoint;
+            vOrderingArray[vertex].later.resize(neighborList.size() - splitPoint);
+
+            // create space for earlier neighbors to ordering
+            vOrderingArray[vertex].earlierDegree = splitPoint;
+            vOrderingArray[vertex].earlier.resize(splitPoint);
+
+            // fill in earlier and later neighbors
+            for (int i = 0; i < splitPoint; ++i) {
+////            cout << "earlier: " << vOrderingArray[vertex].earlier.size() << endl;
+////            cout << "split  : " << splitPoint << endl;
+////            cout << "earlier[" << i << "]" << endl;
+                vOrderingArray[vertex].earlier[i] = neighborList[i];
+            }
+
+            for (int i = splitPoint; i < neighborList.size(); ++i) {
+////            cout << "later  : " << vOrderingArray[vertex].later.size() << endl;
+////            cout << "split  : " << splitPoint << endl;
+////            cout << "later [" << i - splitPoint << "]" << endl;
+                vOrderingArray[vertex].later[i-splitPoint] = neighborList[i];
+            }
+
+            numVerticesRemoved++;
+        }
+        else {
+            currentDegree--;
+        }
+    }
+
+    return vOrderingArray;
 }
 
 vector<NeighborListArray> computeDegeneracyOrderArray(vector<vector<int>> &adjArray, int size)
@@ -624,3 +801,106 @@ vector<NeighborListArray> computeDegeneracyOrderArrayWithArrays(vector<vector<in
 
     return vOrderingArray;
 }
+
+vector<NeighborListArray> computeDegeneracyOrderArrayForReverse(vector<vector<int>> &adjArray, int size)
+{
+    int i = 0;
+
+    // array of lists of vertices, indexed by degree
+    vector<list<int>> verticesByDegree(size);
+
+    // array of lists of vertices, indexed by degree
+    vector<list<int>::iterator> vertexLocator(size);
+
+    vector<int> degree(size);
+
+    // fill each cell of degree lookup table
+    // then use that degree to populate the 
+    // lists of vertices indexed by degree
+
+    for(i=0; i<size; i++)
+    {
+        degree[i] = adjArray[i].size();
+        verticesByDegree[degree[i]].push_front(i);
+        vertexLocator[i] = verticesByDegree[degree[i]].begin();
+    }
+
+    int currentDegree = 0;
+
+    int numVerticesRemoved = 0;
+
+    vector<NeighborListArray> vOrderingArray(size);
+
+    while (numVerticesRemoved < size) {
+        if (!verticesByDegree[currentDegree].empty()) {
+            int const vertex = verticesByDegree[currentDegree].front();
+            verticesByDegree[currentDegree].pop_front();
+
+            vOrderingArray[vertex].vertex = vertex;
+            vOrderingArray[vertex].orderNumber = numVerticesRemoved;
+
+            degree[vertex] = -1;
+
+            // will swap later neighbors to end of neighbor list
+            vector<int> &neighborList = adjArray[vertex];
+
+            int splitPoint(neighborList.size());
+            for(int i=0; i < splitPoint; ++i) {
+                int const neighbor(neighborList[i]);
+                // if later neighbor, swap to end of neighborList (there are few of these)
+                if(degree[neighbor]!=-1) {
+                    verticesByDegree[degree[neighbor]].erase(vertexLocator[neighbor]);
+
+                    neighborList[i] = neighborList[--splitPoint];
+                    neighborList[splitPoint] = neighbor;
+                    i--;
+
+                    degree[neighbor]--;
+
+                    if (degree[neighbor] != -1)
+                    {
+                        verticesByDegree[degree[neighbor]].push_front(neighbor);
+                        vertexLocator[neighbor] = verticesByDegree[degree[neighbor]].begin();
+                    }
+                }
+                // earlier neighbor, do nothing.
+            }
+
+            // create space for later neighbors to ordering
+            vOrderingArray[vertex].laterDegree = neighborList.size() - splitPoint;
+            vOrderingArray[vertex].later.resize(neighborList.size() - splitPoint);
+
+            // create space for earlier neighbors to ordering
+            vOrderingArray[vertex].earlierDegree = splitPoint;
+            vOrderingArray[vertex].earlier.resize(splitPoint);
+
+            // fill in earlier and later neighbors
+            for (int i = 0; i < splitPoint; ++i) {
+////            cout << "earlier: " << vOrderingArray[vertex].earlier.size() << endl;
+////            cout << "split  : " << splitPoint << endl;
+////            cout << "earlier[" << i << "]" << endl;
+                vOrderingArray[vertex].earlier[i] = neighborList[i];
+            }
+
+            for (int i = splitPoint; i < neighborList.size(); ++i) {
+////            cout << "later  : " << vOrderingArray[vertex].later.size() << endl;
+////            cout << "split  : " << splitPoint << endl;
+////            cout << "later [" << i - splitPoint << "]" << endl;
+                vOrderingArray[vertex].later[i-splitPoint] = neighborList[i];
+            }
+
+            auto compareOrderNumber = [&vOrderingArray] (int const left, int const right) { return vOrderingArray[left].orderNumber < vOrderingArray[right].orderNumber; };
+
+            sort(vOrderingArray[vertex].earlier.begin(), vOrderingArray[vertex].earlier.end(), compareOrderNumber);
+
+            numVerticesRemoved++;
+            currentDegree = 0;
+        }
+        else {
+            currentDegree++;
+        }
+    }
+
+    return vOrderingArray;
+}
+

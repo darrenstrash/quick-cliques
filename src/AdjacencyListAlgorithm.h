@@ -23,7 +23,7 @@
 #include "Tools.h"
 #include <list>
 #include <vector>
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 
 /*! \file AdjacencyListAlgorithm.h
 
@@ -42,7 +42,7 @@
     \endhtmlonly
 */
 
-class AdjacencyListAlgorithm : public MaximalCliquesAlgorithm
+class AdjacencyListAlgorithm : public Algorithm
 {
 public:
     AdjacencyListAlgorithm(std::vector<std::vector<int>> const &adjacencyList);

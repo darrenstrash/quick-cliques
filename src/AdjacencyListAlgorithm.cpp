@@ -25,7 +25,7 @@
 #include <vector>
 #include "MemoryManager.h"
 #include "AdjacencyListAlgorithm.h"
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 
 using namespace std;
 
@@ -70,7 +70,7 @@ using namespace std;
 */
 
 AdjacencyListAlgorithm::AdjacencyListAlgorithm(vector<vector<int>> const &adjacencyList)
- : MaximalCliquesAlgorithm("adjlist")
+ : Algorithm("adjlist")
  , m_AdjacencyList(adjacencyList)
  , m_pDegree(nullptr)
 {
@@ -116,9 +116,9 @@ long AdjacencyListAlgorithm::Run(list<list<int>> &cliques)
     \return The number of maximal cliques of the input graph.
 */
 
-static unsigned long largestDifference(0);
-static unsigned long numLargeJumps;
-static unsigned long stepsSinceLastReportedClique(0);
+////static unsigned long largestDifference(0);
+////static unsigned long numLargeJumps;
+////static unsigned long stepsSinceLastReportedClique(0);
 
 long listAllMaximalCliquesAdjacencyList( vector<vector<int>> const &adjacencyList, 
                                          #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -162,8 +162,8 @@ long listAllMaximalCliquesAdjacencyList( vector<vector<int>> const &adjacencyLis
                                                  vertexSets, vertexLookup, size,
                                                  beginX, beginP, beginR );
 
-    cout << "Largest Difference : " << largestDifference << endl;
-    cout << "Num     Differences: " << numLargeJumps << endl;
+////    cerr << "Largest Difference : " << largestDifference << endl;
+////    cerr << "Num     Differences: " << numLargeJumps << endl;
 
     Free(vertexSets);
     Free(vertexLookup);
@@ -341,23 +341,22 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
                                                   int* vertexSets, int* vertexLookup, int size,
                                                   int beginX, int beginP, int beginR )
 {
-
-    stepsSinceLastReportedClique++;
+////    stepsSinceLastReportedClique++;
 
     // if X is empty and P is empty, return partial clique as maximal
     if(beginX >= beginP && beginP >= beginR)
     {
         (*cliqueCount)++;
 
-        if (stepsSinceLastReportedClique > partialClique.size()) {
-            numLargeJumps++;
-            //cout << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
-            if (largestDifference < (stepsSinceLastReportedClique - partialClique.size())) {
-                largestDifference = stepsSinceLastReportedClique - partialClique.size();
-            }
-        }
-
-        stepsSinceLastReportedClique = 0;
+////        if (stepsSinceLastReportedClique > partialClique.size()) {
+////            numLargeJumps++;
+////            //cout << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
+////            if (largestDifference < (stepsSinceLastReportedClique - partialClique.size())) {
+////                largestDifference = stepsSinceLastReportedClique - partialClique.size();
+////            }
+////        }
+////
+////        stepsSinceLastReportedClique = 0;
 
         processClique( 
                        #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -502,5 +501,5 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
     // for all of P, which is nonempty)
     Free(myCandidatesToIterateThrough);
 
-    stepsSinceLastReportedClique++;
+////    stepsSinceLastReportedClique++;
 }

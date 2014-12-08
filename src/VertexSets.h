@@ -25,11 +25,26 @@ public:
     virtual bool PIsEmpty() const __attribute__((always_inline)) = 0;
     virtual bool XAndPAreEmpty() const __attribute__((always_inline)) = 0;
 
+    virtual size_t SizeOfX() const = 0;
+    virtual size_t SizeOfP() const = 0;
+
+    virtual size_t RemainingSizeEstimate() const { return SizeOfP(); }
+
     virtual void Initialize() = 0;
+
+    virtual void PrintSummary(int const /*lineNumber*/) const {}
 
     virtual bool GetNextTopLevelPartition() = 0;
 
+    virtual void GetTopLevelPartialClique(std::list<int> &/*partialClique*/) const = 0;
+
+    virtual void RemoveDominatedVertices(std::vector<int> &dominatedVertices) {}
+
+    virtual void ReturnDominatedVertices(std::vector<int> const &dominatedVertices) {}
+
     std::string GetName() { return m_sName; }
+
+    virtual size_t GetGraphSize() const = 0;
 
 protected:
     class SetDelineator {

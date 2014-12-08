@@ -74,6 +74,7 @@
 // local includes
 #include "DegeneracyIndependentSets.h"
 #include "DegeneracyTools.h"
+#include "CliqueTools.h"
 #include "Tools.h"
 
 // system includes
@@ -122,6 +123,75 @@ void DegeneracyIndependentSets::Initialize()
 
     orderingArray = std::move(computeDegeneracyOrderArray(m_AdjacencyList, m_AdjacencyList.size()));
 
+    {
+        int dumbGuess(0);
+        cout << "Dumb guess: <Maximum independent set>" << flush;
+
+        vector<bool> vMarkedVertices(m_AdjacencyList.size(), false);
+
+        for (int orderNumber = 0; orderNumber < orderingArray.size(); ++orderNumber) {
+            int vertex(-1);
+            for (int i = 0; i < orderingArray.size(); ++i) {
+                if (orderingArray[i].orderNumber == orderNumber) {
+                    vertex = orderingArray[i].vertex;
+                    break;
+                }
+            }
+
+            if (!vMarkedVertices[vertex]) {
+                vMarkedVertices[vertex] = true;
+                dumbGuess++;
+                for (int const neighbor : orderingArray[vertex].later) {
+                    vMarkedVertices[neighbor] = true;
+                }
+            }
+        }
+        cout << dumbGuess << endl << flush;
+    }
+
+#if 0
+    {
+        vector<bool> vMarkedVertices(m_AdjacencyList.size(), false);
+
+        int dumbGuess(0);
+        cout << "Dumb guess: (upper bound) <Maximum independent set>" << flush;
+        vector<vector<int>> cliques;
+        CliqueTools::DecomposeIntoDisjointCliques(m_AdjacencyList, cliques);
+
+        cout << cliques.size() << endl << flush;
+    }
+#endif
+
+
+#if 0
+    {
+        vector<NeighborListArray> maximumOrderingArray = std::move(computeMaximumLaterOrderArray(m_AdjacencyList, m_AdjacencyList.size()));
+        int dumbGuess(0);
+        cout << "Dumb guess: <Minimum independent set>" << flush;
+
+        vector<bool> vMarkedVertices(m_AdjacencyList.size(), false);
+
+        for (int orderNumber = 0; orderNumber < maximumOrderingArray.size(); ++orderNumber) {
+            int vertex(-1);
+            for (int i = 0; i < orderingArray.size(); ++i) {
+                if (maximumOrderingArray[i].orderNumber == orderNumber) {
+                    vertex = maximumOrderingArray[i].vertex;
+                    break;
+                }
+            }
+
+            if (!vMarkedVertices[vertex]) {
+                vMarkedVertices[vertex] = true;
+                dumbGuess++;
+                for (int const neighbor : maximumOrderingArray[vertex].later) {
+                    vMarkedVertices[neighbor] = true;
+                }
+            }
+        }
+        cout << dumbGuess << endl << flush;
+    }
+#endif
+
     for (int i = 0; i < neighborsInP.size(); ++i) {
         neighborsInP[i].resize(orderingArray[i].laterDegree);
     }
@@ -146,7 +216,7 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
 
     //TODO/DS: Compute next top level partition
     int const orderNumber(m_iCurrentTopLevelIndex++);
-    int vertex(0);
+    int vertex(-1);
     for (int i = 0; i < orderingArray.size(); ++i) {
         if (orderingArray[i].orderNumber == orderNumber) {
             vertex = orderingArray[i].vertex;
@@ -154,7 +224,15 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
         }
     }
 
-    cout << "Evaluating another toplevel vertex...only " << orderingArray.size() - orderNumber << " more to go." << endl;
+    if (vertex == -1) {
+        cout << __LINE__ << ": ERROR: a vertex could not be selected with order number " << orderNumber << endl;
+        m_bDoneWithTopLevelPartitions = true;
+        return false;
+    }
+
+////    cout << "Evaluating another top level vertex: " << vertex << endl;
+
+////    cout << "Evaluating another toplevel vertex...only " << orderingArray.size() - orderNumber << " more to go." << endl;
 
     beginX = 0;
     beginP = 0;
@@ -215,9 +293,12 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
 
 ////    cout << __LINE__ << ": numNeighbors[11]=" << numNeighbors[11] << endl;
 
+////    cout << "Filling in later neighbors of X" << endl;
+
     int j = beginX;
     while (j < beginP) { // int const neighbor : orderingArray[orderNumber].earlier) {
         int const neighbor(vertexSets[j]);
+////        cout << "Evaluating vertex: " << neighbor << endl;
 
 ////        cout << __LINE__ << " : evaluating earlier nonneighbor " << neighbor << endl;
         int const numNeighborsNeeded(min(beginR-beginP, orderingArray[neighbor].laterDegree));
@@ -231,6 +312,7 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
 
         // fill in NeighborsInP
         for (int const laterNeighbor : orderingArray[neighbor].later) {
+////            cout << "     evaluating later neighbor: " << laterNeighbor << endl;
 ////            cout << __LINE__ << " : vertex " << 75 << " in neighborsOfP[11]?=" << (find(neighborsInP[11].begin(), neighborsInP[11].begin() + numNeighbors[11] + 1, 75) != neighborsInP[11].begin() + numNeighbors[11] + 1) << "InP?=" << InP(75) << endl;
 ////        if ((neighbor == 11 || laterNeighbor == 11) /*&& ( neighbor == 75 || laterNeighbor == 75)*/)
 ////            cout << __LINE__ << ": evaluating vertex 11" << endl;
@@ -249,9 +331,14 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
 
         j++;
 
+////        if (numNeighbors[neighbor] == 0) {
+////            cout << "Could have pruined this recursion." << endl;
+////        }
+
 ////        cout << __LINE__ << " : vertex " << 75 << " in P?=" << InP(75) << endl;
     }
 
+////    cout << "Filling in later neighbors of P" << endl;
     // reset numNeighbors and neighborsInP for this vertex
     j = beginP;
     while (j<beginR) {
@@ -261,6 +348,13 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
         int const numNeighborsNeeded(min( beginR-beginP, 
                     orderingArray[vertexInP].laterDegree 
                     + orderingArray[vertexInP].earlierDegree));
+
+////        if (vertexInP==11) {
+////            cout << "Computing size for 11: " << numNeighborsNeeded << endl;
+////            cout << "Size of P: " << beginR-beginP << endl;
+////            cout << "Size of Neighbors of 11: " << (orderingArray[vertexInP].laterDegree + orderingArray[vertexInP].earlierDegree) << endl;
+////        }
+
 
 ////        cout << "vertex in P " << vertexInP << endl << flush;
 
@@ -273,20 +367,34 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
 ////        cout << __LINE__ << " : vertex " << 75 << " in P?=" << InP(75) << endl;
     }
 
+////    cout << "#slots reserved for 11: " << neighborsInP[11].size() << endl;
+
 ////    cout << __LINE__ << ": numNeighbors[11]=" << numNeighbors[11] << endl;
+
+////    cout << __LINE__ << " : P:";
+////    for (int i = beginP; i < beginR; i++) {
+////        cout << vertexSets[i] << " ";
+////    }
+////    cout << endl;
+////
+////    cout << "Neighbors of 11 in P : " << endl;
 
     // count neighbors in P, and fill in array of neighbors in P
     j = beginP;
     while (j<beginR) {
         int const vertexInP = vertexSets[j];
+////        cout << "Evaluating vertex: " << vertexInP << endl;
 
         int k = 0;
         while (k<orderingArray[vertexInP].laterDegree) {
 ////            cout << __LINE__ << " : vertex " << 75 << " in neighborsOfP[11]?=" << (find(neighborsInP[11].begin(), neighborsInP[11].begin() + numNeighbors[11] + 1, 75) != neighborsInP[11].begin() + numNeighbors[11] + 1) << "InP?=" << InP(75) << endl;
             int const laterNeighbor = orderingArray[vertexInP].later[k];
             int const laterNeighborLocation = vertexLookup[laterNeighbor];
+////            cout << "     evaluating neighbor: " << laterNeighbor << endl;
 ////        if (vertexInP == 11 || laterNeighbor == 11)
 ////            cout << __LINE__ << ": evaluating vertex 11" << endl;
+
+////            cout << "Evaluating later neighbor " << laterNeighbor << endl;
 
             if (laterNeighborLocation >= beginP && laterNeighborLocation < beginR) {
 ////        if (vertexInP == 11 || laterNeighbor == 11)
@@ -295,6 +403,9 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
                 numNeighbors[vertexInP]++;
                 neighborsInP[laterNeighbor][numNeighbors[laterNeighbor]] = vertexInP;
                 numNeighbors[laterNeighbor]++;
+////                if (laterNeighbor == 11 || vertexInP == 11) {
+////                    cout << "(" << vertexInP << "," << laterNeighbor << ") ";
+////                }
             } else {
 ////        if (vertexInP == 11 || laterNeighbor == 11)
 ////                    cout << __LINE__ << ": vertex " << vertexInP << " doesn't have later neighbor " << laterNeighbor << " in P" << endl;
@@ -304,10 +415,15 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
         }
 
         j++;
+////        if (numNeighbors[vertexInP] == 0) {
+////            cout << "Could have removed vertex from consideration" << endl;
+////        }
 
 ////        cout << __LINE__ << " : vertex " << 75 << " in P?=" << InP(75) << endl;
 ////        cout << __LINE__ << " : vertex " << 75 << " in neighborsOfP[11]?=" << (find(neighborsInP[11].begin(), neighborsInP[11].begin() + numNeighbors[11] + 1, 75) != neighborsInP[11].begin() + numNeighbors[11] + 1) << "InP?=" << InP(75) << endl;
     }
+
+////    cout << endl;
 
 ////    cout << __LINE__ << " : vertex " << 75 << " in P?=" << InP(75) << endl;
 
@@ -340,6 +456,18 @@ bool DegeneracyIndependentSets::GetNextTopLevelPartition()
 ////    }
 ////
 ////    std::cout << std::endl;
+
+    vector<int> vDominatedVertices;
+////    RemoveDominatedVertices(vDominatedVertices);
+
+#if 0
+    //sort (vDominatedVertices.begin(),  vDominatedVertices.end());
+    cout << "D : ";
+    for (int const dominatedVertex : vDominatedVertices) {
+        cout << dominatedVertex << " ";
+    }
+    cout << endl;
+#endif
 
     m_bDoneWithTopLevelPartitions = (m_iCurrentTopLevelIndex == m_AdjacencyList.size());
 
@@ -415,4 +543,241 @@ bool DegeneracyIndependentSets::VerifyStartConfiguration() const
     }
 
     return !foundError;
+}
+
+void DegeneracyIndependentSets::RemoveDominatedVertices(vector<int> &removedVertices)
+{
+////        clock_t clockStart = clock();
+        
+////    cout << "X=" << beginD-beginX << ", P=" << beginR-beginP << endl;
+    // for each vertex x in X
+
+////    bool lookForDominatedNodes(true);
+////    while (lookForDominatedNodes) {
+
+    vector<bool> vMarkedNeighbors(m_AdjacencyList.size(), false);
+
+    int const savedBeginR = beginR;
+    for (int i = beginP; i < beginR; i++) {
+////        lookForDominatedNodes = false;
+
+        // mark neighbors in an array
+        int const p(vertexSets[i]);
+        int const potentialNeighborsOfP = numNeighbors[p]; // TODO/DS: optimize. Can we stop at the first one that isn't in P?
+////        bool const debug(p == 68);
+////        vMarkedNeighbors[p] = true;
+////        if (debug) {
+////            cout << "Evaluating " << p << "'s neighbors : ";
+////        }
+        for (int j = 0; j < potentialNeighborsOfP; ++j) {
+            int const neighborOfP(neighborsInP[p][j]);
+            int const neighborLocation(vertexLookup[neighborOfP]);
+            if (InP(neighborOfP)) {
+                vMarkedNeighbors[neighborOfP] = true;
+////                if (debug)
+////                cout << neighborOfP << " ";
+            }
+////            else
+////                break;
+        }
+
+////        if (debug)
+////        cout << endl;
+
+        // for each vertex x in X: check that all of x's neighbors in P are neighbors of p
+        for (int j = beginX; j < beginP; j++) {
+            int const x(vertexSets[j]);
+////            if (debug)
+////                cout << "Does " << x << " dominate?" << endl;
+            bool dominated(true);
+            int const potentialNeighborsOfX = numNeighbors[x]; // TODO/DS: optimize. Can we stop at the first one that isn't in P?
+////            if (debug)
+////                cout << "Neighbors: ";
+            for (int k = 0; k < potentialNeighborsOfX; ++k) { // TODO/DS: optimize this... Can we stop at the first one that isn't in P?
+                int const neighborOfX(neighborsInP[x][k]);
+                if (InP(neighborOfX)) { // in P
+////                    if (debug)
+////                        cout << neighborOfX << " ";
+                    dominated = vMarkedNeighbors[neighborOfX];
+                    if (!dominated) {
+////                        if (debug)
+////                        cout << endl << "    Does not dominate!" << endl;
+                        break;
+                    }
+                }
+////                else {
+////                    break;
+////                }
+            } // for neighbors of p
+
+            if (dominated) {
+////                cout << "Dominated: " << p << " : ";
+////                for (int k = 0; k < potentialNeighborsOfP; ++k) {
+////                    int const neighborOfP(neighborsInP[p][k]);
+////                    if (InP(neighborOfP))
+////                        cout << neighborOfP << " ";
+////                }
+////                cout << endl;
+////
+////                cout << "Dominator: " << x << " : ";
+////                for (int k = 0; k < potentialNeighborsOfX; ++k) {
+////                    int const neighborOfX(neighborsInP[x][k]);
+////                    if (InP(neighborOfX))
+////                        cout << neighborOfX << " ";
+////                }
+////                cout << endl;
+////                lookForDominatedNodes = true;
+                // swap p from P to D
+                beginR--;
+                vertexSets[vertexLookup[p]] = vertexSets[beginR]; vertexLookup[vertexSets[beginR]] = vertexLookup[p]; // move vertex in beginning of P to p's position
+                vertexSets[beginR] = p; vertexLookup[p] = beginR; // move p to beginning of P
+                removedVertices.push_back(p);
+                i--; // evaluate this position again
+////                cout << "Found dominated non-neighbor" << endl;
+                break;
+            }
+
+        } // for vertices x in X
+
+        // unmark neighbors in the array
+        for (int j = 0; j < numNeighbors[p]; ++j) {
+            int const neighborOfP(neighborsInP[p][j]);
+            ////int const neighborLocation(vertexLookup[neighborOfX]);
+            ////if (beginP <= neighborLocation && neighborLocation <= beginR)
+            vMarkedNeighbors[neighborOfP] = false;
+        }
+////        vMarkedNeighbors[p] = false;
+    } // for p in P
+////    } // while looking for dominated nodes
+
+////    clock_t clockEnd = clock();
+////
+////    timeTestingDominancy += (clockEnd-clockStart);
+
+#if 0 // TODO/DS: toggle, eventually to 0
+    beginR = savedBeginR;
+#endif
+}
+
+void DegeneracyIndependentSets::RemoveDominatedVerticesFromVector(vector<int> &vVerticesInP) const
+{
+////        clock_t clockStart = clock();
+        
+////    cout << "X=" << beginD-beginX << ", P=" << beginR-beginP << endl;
+    // for each vertex x in X
+
+////    bool lookForDominatedNodes(true);
+////    while (lookForDominatedNodes) {
+
+    vector<bool> vMarkedNeighbors(m_AdjacencyList.size(), false);
+
+    int numVertices(vVerticesInP.size());
+    for (int i = 0; i < numVertices; i++) {
+////        lookForDominatedNodes = false;
+
+        // mark neighbors in an array
+        int const p(vVerticesInP[i]);
+        int const potentialNeighborsOfP = numNeighbors[p]; // TODO/DS: optimize. Can we stop at the first one that isn't in P?
+        vMarkedNeighbors[p] = true;
+        for (int j = 0; j < potentialNeighborsOfP; ++j) {
+            int const neighborOfP(neighborsInP[p][j]);
+            int const neighborLocation(vertexLookup[neighborOfP]);
+            if (beginP <= neighborLocation && neighborLocation <= beginR)
+                vMarkedNeighbors[neighborOfP] = true;
+            else
+                break;
+        }
+
+        // for each vertex x in X: check that all of x's neighbors in P are neighbors of p
+        for (int j = beginX; j < beginP; j++) {
+            int const x(vertexSets[j]);
+            bool dominated(true);
+            if (dominated) {
+                int const potentialNeighborsOfX = numNeighbors[x]; // TODO/DS: optimize. Can we stop at the first one that isn't in P?
+                for (int k = 0; k < potentialNeighborsOfX; ++k) { // TODO/DS: optimize this... Can we stop at the first one that isn't in P?
+                    int const neighborOfX(neighborsInP[x][k]);
+                    int const neighborLocation(vertexLookup[neighborOfX]);
+                    if (neighborLocation >= beginP && neighborLocation < beginR) { // in P
+                        dominated = !vMarkedNeighbors[neighborOfX];
+                        if (!dominated) break;
+                    } else {
+                        break;
+                    }
+                } // for neighbors of p
+            }
+
+            if (dominated) {
+////                lookForDominatedNodes = true;
+                // swap p from P to D
+                numVertices--;
+                vVerticesInP[i] = vVerticesInP[numVertices];
+                i--; // evaluate this position again
+////                cout << "Found dominated non-neighbor" << endl;
+                break;
+            }
+
+        } // for vertices p in P
+
+        // unmark neighbors in the array
+        for (int j = 0; j < numNeighbors[p]; ++j) {
+            int const neighborOfP(neighborsInP[p][j]);
+            ////int const neighborLocation(vertexLookup[neighborOfX]);
+            ////if (beginP <= neighborLocation && neighborLocation <= beginR)
+            vMarkedNeighbors[neighborOfP] = false;
+        }
+        vMarkedNeighbors[p] = false;
+    } // for x in X
+////    } // while looking for dominated nodes
+
+////    clock_t clockEnd = clock();
+////
+////    timeTestingDominancy += (clockEnd-clockStart);
+
+#if 0 // TODO/DS: toggle, eventually to 0
+    beginR = savedBeginR;
+#endif
+
+    vVerticesInP.resize(numVertices);
+}
+
+// all dominated vertices are moved to space for R
+// this method moves them back to P.
+void DegeneracyIndependentSets::ReturnDominatedVertices(std::vector<int> const &vRemovedVertices)
+{
+    for (int const vertex : vRemovedVertices) {
+        int const vertexLocation = vertexLookup[vertex];
+        vertexSets[vertexLocation] = vertexSets[beginR];
+        vertexSets[beginR] = vertex;
+        vertexLookup[vertex] = beginR;
+        vertexLookup[vertexSets[vertexLocation]] = vertexLocation;
+        beginR++;
+    }
+}
+
+size_t DegeneracyIndependentSets::RemainingSizeEstimate() const
+{
+#if 0
+    vector<bool> vMarkedVertices(m_AdjacencyList.size(), false);
+
+    int estimate(0);
+    for (int i = beginP; i <  beginR; ++i) {
+        int const vertex(vertexSets[i]);
+        if (vMarkedVertices[vertex]) continue;
+        vMarkedVertices[vertex] = true;
+        estimate++;
+        for (int j = 0; j < numNeighbors[vertex]; ++j) {
+            int const neighbor(neighborsInP[vertex][j]);
+            if (InP(neighbor) && !vMarkedVertices[neighbor]) {
+                vMarkedVertices[neighbor] = true;
+                break;
+            }
+        }
+    }
+
+////    cout << "Tighter: " << estimate << ", looser: " << SizeOfP() << endl;
+
+    return estimate;
+#else
+    return SizeOfP();
+#endif
 }

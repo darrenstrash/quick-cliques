@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <ctime>
+#include <algorithm>
 
 #include "Tools.h"
 #include <list>
@@ -90,7 +91,7 @@ using namespace std;
 */
 
 TimeDelayDegeneracyAlgorithm::TimeDelayDegeneracyAlgorithm(vector<list<int>> const &adjacencyList)
- : MaximalCliquesAlgorithm("timedelay-degeneracy")
+ : Algorithm("timedelay-degeneracy")
  , m_AdjacencyList(adjacencyList)
 {
 }
@@ -141,13 +142,15 @@ long TimeDelayDegeneracyAlgorithm::Run(list<list<int>> &cliques)
 
 */
 
-inline int findBestPivotNonNeighborsTimeDelayDegeneracy( int** pivotNonNeighbors, int* numNonNeighbors,
+inline int findBestPivotNonNeighborsTimeDelayDegeneracy( vector<int> &pivotNonNeighbors,
                                                 int* vertexSets, int* vertexLookup,
                                                 int** neighborsInP, int* numNeighbors,
                                                 int beginX, int beginD, int beginP, int beginR)
 {
     int pivot = -1;
     int maxIntersectionSize = -1;
+
+////    vector<int> vNumNeighborsInP(beginR-beginP, 0);
 
     // iterate over each vertex in P union X 
     // to find the vertex with the most neighbors in P.
@@ -160,8 +163,7 @@ inline int findBestPivotNonNeighborsTimeDelayDegeneracy( int** pivotNonNeighbors
         int numNeighborsInP = 0;
 
         int k = 0;
-        while(k<numPotentialNeighbors)
-        {
+        while (k<numPotentialNeighbors) {
             int neighbor = neighborsInP[vertex][k];
             int neighborLocation = vertexLookup[neighbor];
 
@@ -173,6 +175,10 @@ inline int findBestPivotNonNeighborsTimeDelayDegeneracy( int** pivotNonNeighbors
 
             k++;
         }
+
+        // for vertices in P, keep a count of its neighbors in P
+////        if (j >= beginP)
+////            vNumNeighborsInP[j-beginP] = numNeighborsInP;
 
         if (numNeighborsInP > maxIntersectionSize) {
             pivot = vertex;
@@ -191,11 +197,11 @@ inline int findBestPivotNonNeighborsTimeDelayDegeneracy( int** pivotNonNeighbors
     // we initialize enough space for all of P; this is
     // slightly space inefficient, but it results in faster
     // computation of non-neighbors.
-    *pivotNonNeighbors = (int*)Calloc(beginR-beginP, sizeof(int));
-    memcpy(*pivotNonNeighbors, &vertexSets[beginP], (beginR-beginP)*sizeof(int));
+    pivotNonNeighbors.resize(beginR-beginP, 0);
+    memcpy(&pivotNonNeighbors[0], &vertexSets[beginP], (beginR-beginP)*sizeof(int));
 
     // we will decrement numNonNeighbors as we find neighbors
-    *numNonNeighbors = beginR-beginP;
+    int numNonNeighbors = beginR-beginP;
 
     int numPivotNeighbors = min(beginR - beginP, numNeighbors[pivot]);
 
@@ -206,7 +212,7 @@ inline int findBestPivotNonNeighborsTimeDelayDegeneracy( int** pivotNonNeighbors
         int neighborLocation = vertexLookup[neighbor];
 
         if (neighborLocation >= beginP && neighborLocation < beginR) {
-            (*pivotNonNeighbors)[neighborLocation-beginP] = -1;
+            pivotNonNeighbors[neighborLocation-beginP] = -1;
         } else {
             break;
         }
@@ -220,17 +226,25 @@ inline int findBestPivotNonNeighborsTimeDelayDegeneracy( int** pivotNonNeighbors
     // if a vertex is marked as a neighbor, the we move it
     // to the end of pivotNonNeighbors and decrement numNonNeighbors.
     j = 0;
-    while (j<*numNonNeighbors) {
-        int vertex = (*pivotNonNeighbors)[j];
+    while (j<numNonNeighbors) {
+        int vertex = pivotNonNeighbors[j];
 
         if (vertex == -1) {
-            (*numNonNeighbors)--;
-            (*pivotNonNeighbors)[j] = (*pivotNonNeighbors)[*numNonNeighbors];
+            numNonNeighbors--;
+            pivotNonNeighbors[j] = pivotNonNeighbors[numNonNeighbors];
             continue;
         }
 
         j++;
     }
+
+    pivotNonNeighbors.resize(numNonNeighbors);
+
+    // sort non-neighbors in non-increasing order by degree
+
+////    auto compareFunc = [&](int const left, int const right) { return vNumNeighborsInP[vertexLookup[left]-beginP] > vNumNeighborsInP[vertexLookup[right]-beginP]; };
+////
+////    std::sort(pivotNonNeighbors.begin(), pivotNonNeighbors.end(), compareFunc);
 
     return pivot; 
 }
@@ -712,9 +726,11 @@ void moveDominatedVerticesFromNonNeighborstoDMaxDegreeDegeneracy(
         int const potentialNeighborsOfX = min(beginR - beginP, numNeighbors[x]); // TODO/DS: optimize. Can we stop at the first one that isn't in P?
         for (int j = 0; j < potentialNeighborsOfX; ++j) {
             int const neighborOfX(neighborsInP[x][j]);
-            ////int const neighborLocation(vertexLookup[neighborOfX]);
-            ////if (beginP <= neighborLocation && neighborLocation <= beginR)
-            vMarkedNeighbors[neighborOfX] = true;
+            int const neighborLocation(vertexLookup[neighborOfX]);
+            if (beginP <= neighborLocation && neighborLocation <= beginR)
+                vMarkedNeighbors[neighborOfX] = true;
+            else
+                break;
         }
 
         // for each vertex p in P: check that all of p's neighbors in P are neighbors of x
@@ -729,6 +745,8 @@ void moveDominatedVerticesFromNonNeighborstoDMaxDegreeDegeneracy(
                     if (neighborLocation >= beginP && neighborLocation < beginR) { // in P
                         dominated = vMarkedNeighbors[neighborOfP];
                         if (!dominated) break;
+                    } else {
+                        break;
                     }
                 } // for neighbors of p
             }
@@ -761,6 +779,34 @@ void moveDominatedVerticesFromNonNeighborstoDMaxDegreeDegeneracy(
 ////    clock_t clockEnd = clock();
 ////
 ////    timeTestingDominancy += (clockEnd-clockStart);
+}
+
+
+void SwapVertexWithLargestDegreeInP(vector<int> &myCandidatesToIterateThrough, int const iterator, int *vertexSets, int *vertexLookup, int **neighborsInP, int *numNeighbors, int const beginP, int const beginR)
+{
+    int indexWithMaxNeighborsInP(-1);
+    int maxNeighbors(-1);
+    for (int i = iterator; i < myCandidatesToIterateThrough.size(); ++i) {
+        int const vertex(myCandidatesToIterateThrough[i]);
+        int myNeighborsInP(0);
+        int const potentialNeighborsInP(min(beginR-beginP, numNeighbors[vertex]));
+        for (int j = 0; j < potentialNeighborsInP; ++j) {
+            int const neighborLocation(vertexLookup[neighborsInP[vertex][j]]);
+            if (neighborLocation < beginP || neighborLocation >= beginR) {
+                myNeighborsInP = j;
+                break;
+            }
+        }
+
+        if (myNeighborsInP > maxNeighbors) {
+            indexWithMaxNeighborsInP = i;
+            maxNeighbors = myNeighborsInP;
+        }
+    }
+
+    int const vertexWithMaxNeighbors(myCandidatesToIterateThrough[indexWithMaxNeighborsInP]);
+    myCandidatesToIterateThrough[indexWithMaxNeighborsInP] = myCandidatesToIterateThrough[iterator];
+    myCandidatesToIterateThrough[iterator] = vertexWithMaxNeighbors;
 }
 
 
@@ -805,7 +851,6 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
                                                int** neighborsInP, int* numNeighbors,
                                                int beginX, int beginD, int beginP, int beginR)
 {
-
     stepsSinceLastReportedClique++;
 
     // if X is empty and P is empty, process partial clique as maximal
@@ -832,27 +877,26 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
     }
 
     // avoid work if P is empty.
-    if (beginP >= beginR)
+    if (beginP >= beginR) {
         return;
+    }
 
-    int* myCandidatesToIterateThrough;
-    int numCandidatesToIterateThrough;
+    vector<int> myCandidatesToIterateThrough;
 
     // get the candidates to add to R to make a maximal clique
-    findBestPivotNonNeighborsTimeDelayDegeneracy( &myCandidatesToIterateThrough,
-                                         &numCandidatesToIterateThrough,
+    findBestPivotNonNeighborsTimeDelayDegeneracy(myCandidatesToIterateThrough,
                                          vertexSets, vertexLookup,
                                          neighborsInP, numNeighbors,
                                          beginX, beginD, beginP, beginR);
 
     list<int> newlyDominatedVertices;
 
-    moveDominatedVerticesFromNonNeighborstoDMaxDegreeDegeneracy(
-                neighborsInP, numNeighbors, 
-                vertexSets, vertexLookup, 
-                myCandidatesToIterateThrough, numCandidatesToIterateThrough, 0, 
-                beginX, beginD, beginP, beginR, 
-                newlyDominatedVertices);
+////    moveDominatedVerticesFromNonNeighborstoDMaxDegreeDegeneracy(
+////                neighborsInP, numNeighbors, 
+////                vertexSets, vertexLookup, 
+////                myCandidatesToIterateThrough, numCandidatesToIterateThrough, 0, 
+////                beginX, beginD, beginP, beginR, 
+////                newlyDominatedVertices);
 
 ////    cout << "Orig. dominated: ";
 ////    for (int i = beginD; i < beginP; ++i) {
@@ -866,14 +910,18 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
 ////    cout << endl;
 ////    cout << endl;
 
-    if (beginP >= beginR)
+    if (beginP >= beginR) {
         return;
+    }
 
     // add candiate vertices to the partial clique one at a time and 
     // search for maximal cliques
-    if (numCandidatesToIterateThrough != 0) {
+    if (!myCandidatesToIterateThrough.empty()) {
     int iterator = 0;
-    while (iterator < numCandidatesToIterateThrough) {
+    while (iterator < myCandidatesToIterateThrough.size()) {
+
+        SwapVertexWithLargestDegreeInP(myCandidatesToIterateThrough, iterator, vertexSets, vertexLookup, neighborsInP, numNeighbors, beginP, beginR);
+
         // vertex to be added to the partial clique
         int vertex = myCandidatesToIterateThrough[iterator];
 
@@ -959,8 +1007,7 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
     }
 
     // swap vertices that were moved to X back into P, for higher recursive calls.
-    for (int i=0; i < numCandidatesToIterateThrough; ++i) {
-        int const vertexInX = myCandidatesToIterateThrough[i];
+    for (int const vertexInX : myCandidatesToIterateThrough) {
         beginD--;
         beginP--;
 
@@ -980,11 +1027,4 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
         vertexSets[beginP] = vertexInX; vertexLookup[vertexInX] = beginP; // move vertex in X into P.
     }
     }
-
-    // don't need to check for emptiness before freeing, since
-    // something will always be there (we allocated enough memory
-    // for all of P, which is nonempty)
-    Free(myCandidatesToIterateThrough);
-
-    stepsSinceLastReportedClique++;
 }

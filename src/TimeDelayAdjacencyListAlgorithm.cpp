@@ -26,7 +26,7 @@
 #include <vector>
 #include "MemoryManager.h"
 #include "TimeDelayAdjacencyListAlgorithm.h"
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 
 using namespace std;
 
@@ -71,7 +71,7 @@ using namespace std;
 */
 
 TimeDelayAdjacencyListAlgorithm::TimeDelayAdjacencyListAlgorithm(vector<vector<int>> const &adjacencyList)
- : MaximalCliquesAlgorithm("timedelay-adjlist")
+ : Algorithm("timedelay-adjlist")
  , m_AdjacencyList(adjacencyList)
  , m_pDegree(nullptr)
 {

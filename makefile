@@ -1,10 +1,20 @@
 
-OBJECT_DIR = obj
-SRC_DIR    = src
-BIN_DIR    = bin
+BUILD_DIR = build
+SRC_DIR   = src
+BIN_DIR   = bin
 
-CFLAGS = -Winline -O0 -std=c++11 -g
+CFLAGS = -Winline -O2 -std=c++11 -g
 
+SOURCES_TMP += Staging.cpp
+SOURCES_TMP += CliqueTools.cpp
+SOURCES_TMP += GraphTools.cpp
+SOURCES_TMP += DegeneracyIndependentSets2.cpp
+SOURCES_TMP += MaximalCliqueAlgorithm.cpp
+SOURCES_TMP += MinimumCliqueAlgorithm.cpp
+SOURCES_TMP += ReverseDegeneracyVertexSets.cpp
+SOURCES_TMP += CliqueGraphAlgorithm.cpp
+SOURCES_TMP += PartialMatchGraph.cpp
+SOURCES_TMP += PartialMatchDegeneracyVertexSets.cpp
 SOURCES_TMP += DegeneracyIndependentSets.cpp
 SOURCES_TMP += MaximumCliqueAlgorithm.cpp
 SOURCES_TMP += IndependentSets.cpp
@@ -28,7 +38,10 @@ SOURCES_TMP += Tools.cpp
 SOURCES=$(addprefix $(SOURCES_DIR)/, $(SOURCES_TMP))
 
 OBJECTS_TMP=$(SOURCES_TMP:.cpp=.o)
-OBJECTS=$(addprefix $(OBJECT_DIR)/, $(OBJECTS_TMP))
+OBJECTS=$(addprefix $(BUILD_DIR)/, $(OBJECTS_TMP))
+
+DEPFILES_TMP:=$(SOURCES_TMP:.cpp=.d)
+DEPFILES=$(addprefix $(BUILD_DIR)/, $(DEPFILES_TMP))
 
 EXEC_NAMES = printnm compdegen qc
 
@@ -53,7 +66,7 @@ all: $(EXECS)
 .PHONY : clean
 
 clean: 
-	rm -rf $(EXECS) $(OBJECT_DIR) $(BIN_DIR)
+	rm -rf $(EXECS) $(BUILD_DIR) $(BIN_DIR)
 
 $(BIN_DIR)/printnm: printnm.cpp ${OBJECTS} | ${BIN_DIR}
 	g++ ${DEFINE} ${OBJECTS} $(SRC_DIR)/printnm.cpp -o $@
@@ -64,11 +77,14 @@ $(BIN_DIR)/compdegen: compdegen.cpp ${OBJECTS} | ${BIN_DIR}
 $(BIN_DIR)/qc: main.cpp ${OBJECTS} | ${BIN_DIR}
 	g++ $(CFLAGS) ${DEFINE} ${OBJECTS} $(SRC_DIR)/main.cpp -o $@
 
-$(OBJECTS): $(OBJECT_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJECT_DIR)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp $(SRC_DIR)/%.h $(BUILD_DIR)/%.d | $(BUILD_DIR)
 	g++ $(CFLAGS) ${DEFINE} -c $< -o $@
 
-$(OBJECT_DIR):
-	mkdir -p $(OBJECT_DIR)
+$(BUILD_DIR)/%.d: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
+	g++ $(CFLAGS) -MM -MT '$(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$<)' $< -MF $@
+
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)

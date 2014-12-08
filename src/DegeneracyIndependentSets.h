@@ -66,16 +66,45 @@ public:
     virtual size_t SizeOfX() const { return beginP - beginX; }
     virtual size_t SizeOfP() const { return beginR - beginP; }
 
+    virtual size_t GetGraphSize() const { return m_AdjacencyList.size(); }
+
+    virtual size_t RemainingSizeEstimate() const;
+
     void Initialize();
 
     virtual void PrintSummary(int const line) const;
 
     bool GetNextTopLevelPartition();
 
-private:
-    bool VerifyStartConfiguration() const;
+    void GetTopLevelPartialClique(std::list<int> &partialClique) const
+    {
+        if (m_iCurrentTopLevelIndex == 0 || m_iCurrentTopLevelIndex > GetGraphSize()) return;
+        int const orderNumber(m_iCurrentTopLevelIndex-1);
+        int vertex(-1);
+        for (int i = 0; i < orderingArray.size(); ++i) {
+            if (orderingArray[i].orderNumber == orderNumber) {
+                vertex = orderingArray[i].vertex;
+                partialClique.push_back(vertex);
+                return;
+            }
+        }
 
-private: // members
+        if (vertex == -1) {
+            std::cout << __LINE__ << ": ERROR: could not find vertex with order number " << orderNumber << std::endl << std::flush;
+            return;
+        }
+
+////        std::cout << "Putting vertex " << vertex << " in top level partial clique" << std::endl;
+////        std::cout << "Partial clique contains vertex" << partialClique.front() << std::endl;
+    }
+
+protected: // methods
+    bool VerifyStartConfiguration() const;
+    void RemoveDominatedVerticesFromVector(std::vector<int> &vVerticesInP) const;
+    void RemoveDominatedVertices(std::vector<int> &vRemovedVertices);
+    void ReturnDominatedVertices(std::vector<int> const &vRemovedVertices);
+
+protected: // members
     int beginX;
     int beginP;
     int beginR;
@@ -104,6 +133,15 @@ inline void DegeneracyIndependentSets::ReturnVerticesToP(std::vector<int> const 
 // DONE, need to verify
 inline void DegeneracyIndependentSets::MoveFromPToR(int const vertex)
 {
+////    bool const debug(vertex == 105 || vertex == 0);
+////    if (debug) {
+////        std::cout << "Adding " << vertex << " to clique: " << std::endl;
+////        std::cout << "    0 has neighbors : ";
+////        for (int i = 0; i < numNeighbors[0]; ++i) {
+////            std::cout << neighborsInP[0][i] << " ";
+////        }
+////        std::cout << std::endl;
+////    }
 ////    std::cout << "Adding vertex " << vertex << " to R" << std::endl;
     int const vertexLocation = vertexLookup[vertex];
 
@@ -232,6 +270,9 @@ inline void DegeneracyIndependentSets::MoveFromPToR(int const vertex)
         }
 
         j++;
+////        if (numNeighborsInP == 0) {
+////            std::cout << __LINE__ << ": could have pruned whole subtree" << std::endl; 
+////        }
     }
 
     m_lDelineators.emplace_back(VertexSets::SetDelineator(beginX, beginP, beginR));
@@ -286,6 +327,10 @@ inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
     int pivot = -1;
     int maxIntersectionSize = -1;
 
+////    if (PIsEmpty()) return std::vector<int>();
+
+////    std::cout << "beginP=" << beginP << ", beginR=" << beginR << std::endl;
+
 ////    set<tuple<int,int,int>> uniqueEdges;
 ////    int totalEdges(0);
 ////    for (int i = beginX; i < beginP; i++) {
@@ -314,6 +359,12 @@ inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
 ////
 ////    std::cout << "total: " << totalEdges << "(from " << (beginP - beginX) << " vertices), unique: " << uniqueEdges.size() << std::endl;
 
+////    std::cout << "P: ";
+////    for (size_t u = beginP; u < beginR; ++u) {
+////        std::cout << vertexSets[u] << " ";
+////    }
+////    std::cout << std::endl;
+
 #ifdef DJS_PIVOT_DONE
     // iterate over each vertex in P union X 
     // to find the vertex with the most neighbors in P.
@@ -321,7 +372,9 @@ inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
     while(j<beginR)
     {
         int vertex = vertexSets[j];
-        int const numPotentialNeighbors = std::min(beginR - beginP, numNeighbors[vertex]);
+////        int const numPotentialNeighbors = std::min(beginR - beginP, numNeighbors[vertex]);
+        int const numPotentialNeighbors = numNeighbors[vertex];
+////        std::cout << "evaluating neighbors of " << vertex << std::endl;
 
         int numNeighborsInP = 0;
 
@@ -333,15 +386,20 @@ inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
 
             if(neighborLocation >= beginP && neighborLocation < beginR)
             {
+////                std::cout << neighbor << " is in P!" << std::endl;
                 numNeighborsInP++;
-            } else {
-                break;
             }
+////             else {
+////                break;
+////            }
 
             k++;
         }
 
+////        std::cout << "Comparing " << (beginR - beginP - numNeighborsInP) << " and " << maxIntersectionSize << std::endl;
+
         if((beginR - beginP - numNeighborsInP) > maxIntersectionSize) {
+////            std::cout << "Updating pivot to " << pivot << std::endl;
             pivot = vertex;
             maxIntersectionSize = beginR - beginP - numNeighborsInP;
         }
@@ -358,12 +416,16 @@ inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
     // we initialize enough space for all of P; this is
     // slightly space inefficient, but it results in faster
     // computation of non-neighbors.
-    int numPivotNeighbors = std::min(beginR - beginP, numNeighbors[pivot]);
+////    int numPivotNeighbors = std::min(beginR - beginP, numNeighbors[pivot]);
 ////    int numPivotNeighbors = beginR - beginP;
+////    std::cout << "pivot: " << pivot << std::endl;
+    int numPivotNeighbors = numNeighbors[pivot];
     std::vector<int> pivotNonNeighbors(numPivotNeighbors+1,0);
 
     // we will decrement numNonNeighbors as we find neighbors
     int numNonNeighbors = 0;
+
+    if (InP(pivot)) pivotNonNeighbors[numNonNeighbors++] = pivot;
 
     // mark the neighbors of pivot that are in P.
     j = 0;
@@ -373,16 +435,23 @@ inline std::vector<int> DegeneracyIndependentSets::ChoosePivot() const
 
         if(neighborLocation >= beginP && neighborLocation < beginR) {
             pivotNonNeighbors[numNonNeighbors++] = neighbor;
-        } else {
-            break;
         }
+////         else {
+////            break;
+////        }
 
         j++;
     }
 
-    if (InP(pivot)) pivotNonNeighbors[numNonNeighbors++] = pivot;
+////    if (InP(pivot) && numNonNeighbors == 0) {
+////        std::cout << "Could have pruned whole subtree..." << std::endl;
+////    } else if (numNonNeighbors == 0) {
+////        std::cout << "Did prune whole subtree..." << std::endl;
+////    }
 
     pivotNonNeighbors.resize(numNonNeighbors);
+
+    ////RemoveDominatedVerticesFromVector(pivotNonNeighbors);
 
     return pivotNonNeighbors;
 #else

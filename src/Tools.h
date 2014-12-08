@@ -21,7 +21,7 @@
 #include <string>
 #include <stdio.h>
 
-class MaximalCliquesAlgorithm;
+class Algorithm;
 
 /*! \file Tools.h
 
@@ -59,6 +59,7 @@ void destroyCliqueResults(std::list<std::list<int>> &cliques);
 std::vector<std::list<int>> readInGraphAdjList(int* n, int* m);
 
 std::vector<std::list<int>> readInGraphAdjList(int &n, int &m, std::string const &fileName);
+std::vector<std::list<int>> readInGraphAdjListEdgesPerLine(int &n, int &m, std::string const &fileName);
 
 void runAndPrintStatsMatrix(long (*function)(char**,
                                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -72,7 +73,7 @@ void runAndPrintStatsMatrix(long (*function)(char**,
                             #endif
                             int n );
 
-void RunAndPrintStats(MaximalCliquesAlgorithm* pAlgorithm, std::list<std::list<int>> &cliques, bool const outputLatex);
+void RunAndPrintStats(Algorithm* pAlgorithm, std::list<std::list<int>> &cliques, bool const outputLatex);
 
 void runAndPrintStatsListList( long (*function)(std::vector<std::list<int>> const &, 
                                                 int**, 
@@ -134,8 +135,7 @@ void CheckConsistency(int const lineNumber, size_t const recursionNumber, int *v
 
 void CheckReverseConsistency(int const lineNumber, size_t const recursionNumber, int *vertexSets, int *vertexLookup, int const size);
 
-
-
+bool IsMaximalClique(std::list<int> const &clique, std::vector<std::vector<int>> const &adjacencyList);
 
 #endif
 

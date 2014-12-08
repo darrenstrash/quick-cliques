@@ -21,11 +21,13 @@
 
 #include "Tools.h"
 #include <list>
+#include <set>
 #include <vector>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include "MemoryManager.h"
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 
 using namespace std;
 
@@ -246,10 +248,71 @@ vector<list<int>> readInGraphAdjList(int* n, int* m)
     return adjList;
 }
 
+vector<list<int>> readInGraphAdjListEdgesPerLine(int &n, int &m, string const &fileName)
+{
+    ifstream instream(fileName.c_str());
+
+    if (instream.good() && !instream.eof()) {
+        string line;
+        std::getline(instream, line);
+////        cout << "Read Line: " << line << endl << flush;
+        stringstream strm(line);
+        strm >> n >> m;
+    } else {
+        fprintf(stderr, "ERROR: Problem reading number of vertices and edges in file %s\n", fileName.c_str());
+        exit(1);
+    }
+
+#ifdef DEBUG
+    printf("Number of vertices: %d\n", n);
+    printf("Number of edges: %d\n", m);
+#endif
+    
+    vector<list<int>> adjList(n);
+
+    int u, v; // endvertices, to read edges.
+    int i = 0;
+    string line;
+    while (i < n) {
+        if (!instream.good()  || instream.eof()) {
+            fprintf(stderr, "ERROR: Problem reading line %d in file %s\n", i+1, fileName.c_str());
+            exit(1);
+        }
+
+        std::getline(instream, line);
+////        cout << "Read Line: " << line << endl << flush;
+        u = i; // TODO/DS: remove.
+        stringstream strm(line);
+        while (!strm.eof()) {
+            strm >> v;
+            v--;
+////            cout << u << "->" << v << endl;
+
+            assert(u < n && u > -1);
+            assert(v < n && v > -1);
+            if (u==v) {
+                fprintf(stderr, "ERROR: Detected loop %d->%d\n", u, v);
+                exit(1);
+            }
+
+            adjList[u].push_back(v);
+        }
+
+        i++;
+    }
+
+#ifdef DEBUG
+    printArrayOfLinkedLists(adjList, n);
+#endif
+
+    return adjList;
+}
+
+
 vector<list<int>> readInGraphAdjList(int &n, int &m, string const &fileName)
 {
 
-    ifstream instream(fileName.c_str(), std::ifstream::binary);
+    ifstream instream(fileName.c_str());
 
     if (instream.good() && !instream.eof())
         instream >> n;
@@ -288,7 +351,7 @@ vector<list<int>> readInGraphAdjList(int &n, int &m, string const &fileName)
         assert(u < n && u > -1);
         assert(v < n && v > -1);
         if(u==v)
-            fprintf(stderr, "Detexted loop %d->%d\n", u, v);
+            fprintf(stderr, "Detected loop %d->%d\n", u, v);
         assert(u != v);
 
         adjList[u].push_back(v);
@@ -302,6 +365,59 @@ vector<list<int>> readInGraphAdjList(int &n, int &m, string const &fileName)
 
     return adjList;
 }
+
+#if 0
+vector<list<int>> readInGraphAdjListDimacs(int &n, int &m, string const &fileName)
+{
+
+    std::getline(instream, line);
+    ifstream instream(fileName.c_str());
+
+    if (instream.good() && !instream.eof())
+        instream >> m;
+    else {
+
+        fprintf(stderr, "problem with line 2 in input file\n");
+        exit(1);
+    }
+
+#ifdef DEBUG
+    printf("Number of vertices: %d\n", n);
+    printf("Number of edges: %d\n", m);
+#endif
+    
+    vector<list<int>> adjList(n);
+
+    int u, v; // endvertices, to read edges.
+    int i = 0;
+    while(i < m)
+    {
+        char comma;
+        if (instream.good() && !instream.eof()) {
+            instream >> u >> comma >> v;
+        } else {
+            fprintf(stderr, "problem with line %d in input file\n", i+2);
+            exit(1);
+        }
+        assert(u < n && u > -1);
+        assert(v < n && v > -1);
+        if(u==v)
+            fprintf(stderr, "Detected loop %d->%d\n", u, v);
+        assert(u != v);
+
+        adjList[u].push_back(v);
+
+        i++;
+    }
+
+#ifdef DEBUG
+    printArrayOfLinkedLists(adjList, n);
+#endif
+
+    return adjList;
+}
+#endif
+
 
 
 /*! \brief execute an maximal clique listing algorithm
@@ -355,7 +471,7 @@ void runAndPrintStatsMatrix(long (*function)(char**,
     fflush(stderr);
 }
 
-void RunAndPrintStats(MaximalCliquesAlgorithm *pAlgorithm, list<list<int>> &cliques, bool const outputLatex)
+void RunAndPrintStats(Algorithm *pAlgorithm, list<list<int>> &cliques, bool const outputLatex)
 {
     fprintf(stderr, "%s: ", pAlgorithm->GetName().c_str());
     fflush(stderr);
@@ -492,7 +608,7 @@ void printListAbbv(list<int> const &linkedList, void (*printFunc)(int))
 
     if(count != linkedList.size())
     {
-        printf("... plus %d more", linkedList.size()-10);
+        printf("... plus %lu more", linkedList.size()-10);
     }
 
     printf("\n");
@@ -558,5 +674,36 @@ void CheckReverseConsistency(int const lineNumber, size_t const recursionNumber,
     }
 }
 
+////bool IsMaximalClique(std::list<int> const &clique, std::vector<std::vector<int>> const &adjacencyList)
+////{
+////    set<int>
+////    // is clique
+////    int index;
+////    for (int const vertex : partialClique) {
+////    }
+////
+////    // is maximal
+////}
 
 
+void InvertGraph(vector<list<int>> const &adjList)
+{
+    int const n(adjList.size());
+    cout << n << endl;
+    size_t numEdgesInInverse(0);
+    for (list<int> const &neighbors : adjList) {
+        numEdgesInInverse += n - neighbors.size() - 1; // all non-edges except loops
+    }
+
+    cout << numEdgesInInverse << endl;
+
+    for (int i = 0; i < adjList.size(); ++i) {
+        set<int> setNeighbors;
+        setNeighbors.insert(adjList[i].begin(), adjList[i].end());
+        for (int neighbor=0; neighbor < adjList.size(); neighbor++) {
+            if (setNeighbors.find(neighbor) == setNeighbors.end() && neighbor != i) {
+                cout << "(" << i << "," << neighbor << i << ")" << endl;
+            }
+        }
+    }
+}

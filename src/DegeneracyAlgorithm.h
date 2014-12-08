@@ -17,7 +17,7 @@
 */
 
 // local includes
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 #include "Tools.h"
 #include "MemoryManager.h"
 #include "DegeneracyTools.h"
@@ -47,7 +47,7 @@
     \endhtmlonly
 */
 
-class DegeneracyAlgorithm : public MaximalCliquesAlgorithm
+class DegeneracyAlgorithm : public Algorithm
 {
 public:
     DegeneracyAlgorithm(std::vector<std::list<int>> const &adjacencyList);

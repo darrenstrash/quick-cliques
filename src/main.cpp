@@ -25,12 +25,19 @@
 #include "DegeneracyAlgorithm.h"
 #include "FasterDegeneracyAlgorithm.h"
 
+#include "ReverseDegeneracyVertexSets.h"
 #include "AdjacencyListVertexSets.h"
 #include "DegeneracyVertexSets.h"
 #include "CacheEfficientDegeneracyVertexSets.h"
 #include "IndependentSets.h"
 #include "DegeneracyIndependentSets.h"
+#include "DegeneracyIndependentSets2.h"
 #include "MaximumCliqueAlgorithm.h"
+#include "MinimumCliqueAlgorithm.h"
+#include "PartialMatchDegeneracyVertexSets.h"
+#include "CliqueGraphAlgorithm.h"
+
+#include "Staging.h"
 
 // system includes
 #include <map>
@@ -64,29 +71,43 @@ using namespace std;
 bool isValidAlgorithm(string const &name)
 {
     return (name == "tomita" || name == "adjlist" || name == "generic-adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
-            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis");
+            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2");
 }
 
-void ProcessCommandLineArgs(int argc, char** argv, map<string,string> &mapCommandLineArgs)
+void ProcessCommandLineArgs(int const argc, char** argv, map<string,string> &mapCommandLineArgs)
 {
     for (int i = 1; i < argc; ++i) {
+        cout << "Processing argument " << i << endl;
         string const argument(argv[i]);
-        size_t const positionOfEquals(argument.find_first_of('='));
+        cout << "    Argument is " << argument << endl;
+        size_t const positionOfEquals(argument.find_first_of("="));
+        cout << "    Position of = " << positionOfEquals << endl;
         if (positionOfEquals != string::npos) {
             string const key  (argument.substr(0,positionOfEquals));
             string const value(argument.substr(positionOfEquals+1));
-////            cout << "Parsed: " << key << "=" << value << endl;
+            cout << "    Parsed1: " << key << "=" << value << endl;
             mapCommandLineArgs[key] = value;
         } else {
+            cout << "    Parsed2: " << argument << endl;
             mapCommandLineArgs[argument] = "";
         }
     }
 }
 
+void PrintExperimentalWarning()
+{
+    cout << "WARNING: Quick Cliques v2.0beta. (Experimental)" << endl;
+    cout << "WARNING: " << endl;
+    cout << "WARNING: Proceed with caution: this software is currently in an experimental state." << endl;
+    cout << "WARNING: This software may be slow, the algorithm may be unstable and the results may be incorrect." << endl;
+    cout << "WARNING: Please consider using version 1.0 of this software, which has been more thoroughly tested." << endl;
+}
+
 int main(int argc, char** argv)
 {
-    int failureCode(0);
+    PrintExperimentalWarning();
 
+    int failureCode(0);
 
     map<string,string> mapCommandLineArgs;
 
@@ -95,6 +116,8 @@ int main(int argc, char** argv)
     bool   const outputLatex(mapCommandLineArgs.find("--latex") != mapCommandLineArgs.end());
     string const inputFile((mapCommandLineArgs.find("--input-file") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--input-file"] : "");
     string const algorithm((mapCommandLineArgs.find("--algorithm") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--algorithm"] : "");
+    bool   const computeCliqueGraph(mapCommandLineArgs.find("--compute-clique-graph") != mapCommandLineArgs.end());
+    bool   const staging(mapCommandLineArgs.find("--staging") != mapCommandLineArgs.end());
 
     if (inputFile.empty()) {
         cout << "ERROR: Missing input file " << endl;
@@ -102,14 +125,14 @@ int main(int argc, char** argv)
         // return 1; // TODO/DS
     }
 
-    if (algorithm.empty()) {
+    if (!(staging || computeCliqueGraph) && algorithm.empty()) {
         cout << "ERROR: Missing algorithm" << endl;
         // ShowUsageMessage();
         // return 1; // TODO/DS
     }
 
-    if (argc <= 1 || !isValidAlgorithm(algorithm)) {
-        cout << "usage: " << argv[0] << " <tomita|adjlist|hybrid|degeneracy|*> [--latex]" << endl;
+    if (argc <= 1 || (!(computeCliqueGraph || staging) && !isValidAlgorithm(algorithm))) {
+        cout << "usage: " << argv[0] << "--input-file=<filename> --algorithm=<tomita|adjlist|hybrid|degeneracy|*> [--latex]" << endl;
     }
 
     string const name(algorithm);
@@ -140,7 +163,7 @@ int main(int argc, char** argv)
         }
     }
 
-    bool const bComputeAdjacencyArray(name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis");
+    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2");
 
     vector<vector<int>> adjacencyArray;
 
@@ -166,6 +189,8 @@ int main(int argc, char** argv)
     } else if (name == "generic-degeneracy") {
         DegeneracyVertexSets *pSets = new DegeneracyVertexSets(adjacencyArray);
         pAlgorithm = new BronKerboschAlgorithm(pSets);
+    } else if (name == "reverse-degeneracy") {
+        pAlgorithm = new BronKerboschAlgorithm(new ReverseDegeneracyVertexSets(adjacencyArray));
     } else if (name == "timedelay-adjlist") {
         pAlgorithm = new TimeDelayAdjacencyListAlgorithm(adjacencyArray);
     } else if (name == "timedelay-maxdegree") {
@@ -184,12 +209,28 @@ int main(int argc, char** argv)
         pAlgorithm = new BronKerboschAlgorithm(pSets);
     } else if (name == "degeneracy-mis") {
         DegeneracyIndependentSets *pSets = new DegeneracyIndependentSets(adjacencyArray);
-        pAlgorithm = new BronKerboschAlgorithm(pSets);
+        pAlgorithm = new MaximumCliqueAlgorithm(pSets);
+    } else if (name == "degeneracy-mis-2") {
+        DegeneracyIndependentSets2 *pSets = new DegeneracyIndependentSets2(adjacencyArray);
+        pAlgorithm = new MaximumCliqueAlgorithm(pSets);
+    } else if (name == "degeneracy-min") {
+        DegeneracyIndependentSets *pSets = new DegeneracyIndependentSets(adjacencyArray);
+        pAlgorithm = new MinimumCliqueAlgorithm(pSets);
     } else if (name == "timedelay-degeneracy") {
         pAlgorithm = new TimeDelayDegeneracyAlgorithm(adjacencyList);
-    } else {
+    } else if (name == "partial-match-degeneracy") {
+        pAlgorithm = new BronKerboschAlgorithm(new PartialMatchDegeneracyVertexSets(adjacencyArray));
+    } else if (!computeCliqueGraph && !staging){
         cout << "ERROR: unrecognized algorithm name " << name << endl;
         return 1;
+    }
+
+    if (computeCliqueGraph) {
+        pAlgorithm = new CliqueGraphAlgorithm(new DegeneracyVertexSets(adjacencyArray), adjacencyArray);
+    }
+
+    if (staging) {
+        pAlgorithm = new Staging(adjacencyArray);
     }
 
     // Run algorithm

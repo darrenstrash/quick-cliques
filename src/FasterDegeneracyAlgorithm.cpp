@@ -99,7 +99,7 @@ static clock_t timeMovingXToP(0);
 static clock_t timeFillInPX(0);
 
 FasterDegeneracyAlgorithm::FasterDegeneracyAlgorithm(vector<vector<int>> &adjacencyArray)
- : MaximalCliquesAlgorithm("faster-degeneracy")
+ : Algorithm("faster-degeneracy")
  , m_AdjacencyArray(adjacencyArray)
 {
 }

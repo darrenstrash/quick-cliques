@@ -20,7 +20,7 @@
 #include "Tools.h"
 #include "MemoryManager.h"
 
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 
 // system includes
 #include <list>
@@ -46,7 +46,7 @@
     \endhtmlonly
 */
 
-class TomitaAlgorithm : public MaximalCliquesAlgorithm
+class TomitaAlgorithm : public Algorithm
 {
 public:
     TomitaAlgorithm(char **ppAdjacencyMatrix, int const numVertices);

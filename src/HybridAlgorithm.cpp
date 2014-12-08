@@ -86,7 +86,7 @@ using namespace std;
 */
 
 HybridAlgorithm::HybridAlgorithm(vector<list<int>> const &adjacencyList)
- : MaximalCliquesAlgorithm("hybrid")
+ : Algorithm("hybrid")
  , m_AdjacencyList(adjacencyList)
  , m_pDegree(nullptr)
 {
@@ -491,7 +491,7 @@ long listAllMaximalCliquesHybrid( vector<list<int>> const &adjList,
 
     for(i = 0; i<size; i++)
     {
-        Free(orderingArray[i]);
+        delete orderingArray[i];
     }
 
     Free(orderingArray);

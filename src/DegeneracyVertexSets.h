@@ -22,9 +22,13 @@
 
 // system includes
 #include <list>
+#include <set>
 #include <vector>
 #include <cstring> // memcpy
 #include <algorithm>
+#include <iostream>
+
+////#define ORDERED // TODO/DS: take out?
 
 /*! \file FasterDegeneracyAlgorithm.h
 
@@ -46,6 +50,7 @@
 class DegeneracyVertexSets : public VertexSets {
 public:
     DegeneracyVertexSets(std::vector<std::vector<int>> &adjacencyList);
+    DegeneracyVertexSets(std::vector<std::vector<int>> &adjacencyList, std::set<int> const &verticesToExclude);
     ~DegeneracyVertexSets();
 
     DegeneracyVertexSets           (DegeneracyVertexSets const &sets) = delete;
@@ -62,13 +67,34 @@ public:
     bool PIsEmpty() const __attribute__((always_inline));
     bool XAndPAreEmpty() const __attribute__((always_inline));
 
-    void Initialize();
+    virtual size_t SizeOfX() const { return beginP - beginX; }
+    virtual size_t SizeOfP() const { return beginR - beginP; }
 
-    void PrintSummary(int const line) const;
+    virtual void Initialize();
 
-    bool GetNextTopLevelPartition();
+    virtual void PrintSummary(int const line) const;
 
-private: // members
+    virtual bool GetNextTopLevelPartition();
+
+    virtual void GetTopLevelPartialClique(std::list<int> &partialClique)  const {
+        if (m_iCurrentTopLevelIndex == 0 || m_iCurrentTopLevelIndex > m_AdjacencyList.size()) return;
+
+#ifdef ORDERED
+        for (int i = 0; i < orderingArray.size(); ++i) {
+            if (orderingArray[i].orderNumber == m_iCurrentTopLevelIndex-1) {
+                partialClique.push_back(orderingArray[i].vertex);
+                return;
+            }
+        }
+#else
+        partialClique.push_back(orderingArray[m_iCurrentTopLevelIndex-1].vertex);
+        return ;
+#endif
+    }
+
+    virtual size_t GetGraphSize() const { return m_AdjacencyList.size(); }
+
+protected: // members
     int beginX;
     int beginP;
     int beginR;
@@ -80,11 +106,14 @@ private: // members
     std::vector<int> vertexLookup;
     std::vector<SetDelineator> m_lDelineators;
     int m_iCurrentTopLevelIndex;
+    std::set<int> m_EmptySet;
+    std::set<int> const &m_VerticesToExclude;
 };
 
 inline void DegeneracyVertexSets::ReturnVerticesToP(std::vector<int> const &vVertices)
 {
     for (int const vertex : vVertices) {
+////        std::cout << "Returning " << vertex << " to P" << std::endl;
         int const vertexLocation = vertexLookup[vertex];
         beginP--;
         vertexSets[vertexLocation] = vertexSets[beginP];
@@ -96,7 +125,10 @@ inline void DegeneracyVertexSets::ReturnVerticesToP(std::vector<int> const &vVer
 
 inline void DegeneracyVertexSets::MoveFromPToR(int const vertex)
 {
+////    std::cout << "Moving " << vertex << " to R" << std::endl;
     int const vertexLocation = vertexLookup[vertex];
+
+    int sizeOfP = beginR - beginP;
 
     //swap vertex into R and update beginR
     beginR--;
@@ -113,32 +145,31 @@ inline void DegeneracyVertexSets::MoveFromPToR(int const vertex)
 
     // for each neighbor of vertex, ask if it is in X or P,
     // if it is, leave it there. Otherwise, swap it out.
-    int sizeOfP = beginR - beginP;
-
     int j = beginX;
-////    cout << "Iterate through vertices in X: ";
+////    std::cout << "Iterate through vertices in X: ";
     while(j<newBeginX)
     {
         int neighbor = vertexSets[j];
         int neighborLocation = j;
-////        cout << neighbor << " ";
+////        std::cout << neighbor << " ";
 
         int incrementJ = 1;
 
         int numPotentialNeighbors = std::min(sizeOfP, numNeighbors[neighbor]);
-////        cout << "(later neighbors: " << numNeighbors[neighbor] << ") ";
+////        int numPotentialNeighbors = numNeighbors[neighbor];
+////        std::cout << "(later neighbors: " << numNeighbors[neighbor] << ") ";
 
         int k = 0;
         while(k<numPotentialNeighbors)
         {
 ////            if (neighbor == 0 && vertex == 11) {
-////                cout << "Does vertex 0 in X have 11 as a neighbor? : " << endl;
+////                std::cout << "Does vertex 0 in X have 11 as a neighbor? : " << std::endl;
 ////            }
 
             if (neighborsInP[neighbor][k] == vertex)
             {
 ////                if (neighbor == 0 && vertex == 11)
-////                cout << "Yes" << endl;
+////                std::cout << "Yes" << std::endl;
                 (newBeginX)--;
                 vertexSets[neighborLocation] = vertexSets[(newBeginX)];
                 vertexLookup[vertexSets[(newBeginX)]] = neighborLocation;
@@ -146,7 +177,7 @@ inline void DegeneracyVertexSets::MoveFromPToR(int const vertex)
                 vertexLookup[neighbor] = (newBeginX);
                 incrementJ=0;
             } else {
-////                cout << "No" << endl;
+////                std::cout << "No" << std::endl;
             }
 
             k++;
@@ -162,6 +193,7 @@ inline void DegeneracyVertexSets::MoveFromPToR(int const vertex)
         int neighborLocation = j;
 
         int numPotentialNeighbors = std::min(sizeOfP, numNeighbors[neighbor]);
+////       int numPotentialNeighbors = numNeighbors[neighbor];
 
         int k = 0;
         while(k<numPotentialNeighbors)
@@ -187,6 +219,7 @@ inline void DegeneracyVertexSets::MoveFromPToR(int const vertex)
         int thisVertex = vertexSets[j];
 
         int numPotentialNeighbors = std::min(sizeOfP, numNeighbors[thisVertex]);
+////       int numPotentialNeighbors = numNeighbors[thisVertex];
 
         int numNeighborsInP = 0;
 
@@ -283,7 +316,7 @@ inline std::vector<int> DegeneracyVertexSets::ChoosePivot() const
 ////        }
 ////    }
 ////
-////    cout << "total: " << totalEdges << "(from " << (beginP - beginX) << " vertices), unique: " << uniqueEdges.size() << endl;
+////    std::cout << "total: " << totalEdges << "(from " << (beginP - beginX) << " vertices), unique: " << uniqueEdges.size() << std::endl;
 
     // iterate over each vertex in P union X 
     // to find the vertex with the most neighbors in P.

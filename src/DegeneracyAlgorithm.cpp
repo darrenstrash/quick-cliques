@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <ctime>
 
 #include "Tools.h"
 #include <list>
@@ -87,8 +88,14 @@ using namespace std;
 
 */
 
+////static clock_t timeComputingPivot(0);
+////static clock_t timeMovingFromRtoX(0);
+////static clock_t timeMovingToR(0);
+////static clock_t timeMovingXToP(0);
+////static clock_t timeFillInPX(0);
+
 DegeneracyAlgorithm::DegeneracyAlgorithm(vector<list<int>> const &adjacencyList)
- : MaximalCliquesAlgorithm("degeneracy")
+ : Algorithm("degeneracy")
  , m_AdjacencyList(adjacencyList)
 {
 }
@@ -144,6 +151,7 @@ inline int findBestPivotNonNeighborsDegeneracy( int** pivotNonNeighbors, int* nu
                                                 int** neighborsInP, int* numNeighbors,
                                                 int beginX, int beginP, int beginR)
 {
+////    clock_t clockStart = clock();
     int pivot = -1;
     int maxIntersectionSize = -1;
 
@@ -240,6 +248,10 @@ inline int findBestPivotNonNeighborsDegeneracy( int** pivotNonNeighbors, int* nu
         j++;
     }
 
+////    clock_t clockEnd = clock();
+////
+////    timeComputingPivot += (clockEnd - clockStart);
+
     return pivot; 
 }
 
@@ -287,6 +299,7 @@ inline void fillInPandXForRecursiveCallDegeneracy( int vertex, int orderNumber,
                                                    int* pBeginX, int *pBeginP, int *pBeginR, 
                                                    int* pNewBeginX, int* pNewBeginP, int *pNewBeginR)
 {
+////        clock_t startClock = clock();
         int vertexLocation = vertexLookup[vertex];
 
         (*pBeginR)--;
@@ -393,6 +406,8 @@ inline void fillInPandXForRecursiveCallDegeneracy( int vertex, int orderNumber,
 
             j++;
         }
+////    clock_t endClock = clock();
+////    timeFillInPX += (endClock - startClock);
 }
 
 /*! \brief List all maximal cliques in a given graph using the algorithm
@@ -432,7 +447,10 @@ long listAllMaximalCliquesDegeneracy( vector<list<int>> const &adjList,
     int* numNeighbors = (int*)Calloc(size, sizeof(int));
     
     // compute the degeneracy order
+////    clock_t clockStart = clock();
     NeighborListArray** orderingArray = computeDegeneracyOrderArray(adjList, size);
+////    clock_t clockEnd = clock();
+////    clock_t timeDegeneracyOrder = clockEnd - clockStart;
 
     int i = 0;
 
@@ -496,8 +514,15 @@ long listAllMaximalCliquesDegeneracy( vector<list<int>> const &adjList,
         partialClique.pop_back();
     }
 
-    cout << "Largest Difference : " << largestDifference << endl;
-    cout << "Num     Differences: " << numLargeJumps << endl;
+    //cerr << endl;
+    //cerr << "Largest Difference  : " << largestDifference << endl;
+    //cerr << "Num     Differences : " << numLargeJumps << endl;
+    //cerr << "Time Computing Pivot: " << ((double)(timeComputingPivot)/(double)(CLOCKS_PER_SEC)) << endl;
+    //cerr << "Time Moving R to X  : " << ((double)(timeMovingFromRtoX)/(double)(CLOCKS_PER_SEC)) << endl;
+    //cerr << "Time Moving   to R  : " << ((double)(timeMovingToR)/(double)(CLOCKS_PER_SEC)) << endl;
+    //cerr << "Time Moving X to P  : " << ((double)(timeMovingXToP)/(double)(CLOCKS_PER_SEC)) << endl;
+    //cerr << "Time Making X and P : " << ((double)(timeFillInPX)/(double)(CLOCKS_PER_SEC)) << endl;
+    //cerr << "Time Degeneracy Ordr: " << ((double)(timeDegeneracyOrder)/(double)(CLOCKS_PER_SEC)) << endl;
 
     partialClique.clear();
 
@@ -507,7 +532,7 @@ long listAllMaximalCliquesDegeneracy( vector<list<int>> const &adjList,
     for(i = 0; i<size; i++)
     {
         Free(neighborsInP[i]);
-        Free(orderingArray[i]);
+        delete orderingArray[i];
     }
 
     Free(orderingArray);
@@ -557,6 +582,7 @@ inline void moveToRDegeneracy( int vertex,
                                int* pNewBeginX, int* pNewBeginP, int *pNewBeginR)
 {
 
+////    clock_t clockStart = clock();
         int vertexLocation = vertexLookup[vertex];
 
         (*pBeginR)--;
@@ -653,6 +679,10 @@ inline void moveToRDegeneracy( int vertex,
 
             j++;
         }
+
+////    clock_t clockEnd = clock();
+////
+////    timeMovingToR += (clockEnd - clockStart);
 }
 
 /*! \brief Move a vertex from the set R to the set X, and update all necessary pointers
@@ -677,6 +707,7 @@ inline void moveFromRToXDegeneracy( int vertex,
                                     int* vertexSets, int* vertexLookup, 
                                     int* pBeginX, int* pBeginP, int* pBeginR )
 {
+////    clock_t clockStart = clock();
     int vertexLocation = vertexLookup[vertex];
 
     //swap vertex into X and increment beginP and beginR
@@ -687,6 +718,10 @@ inline void moveFromRToXDegeneracy( int vertex,
 
     *pBeginP = *pBeginP + 1;
     *pBeginR = *pBeginR + 1;
+
+////    clock_t clockEnd = clock();
+////
+////    timeMovingFromRtoX += (clockEnd - clockStart);
 }
 
 /*! \brief Recursively list all maximal cliques containing all of
@@ -740,7 +775,7 @@ void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
 
         if (stepsSinceLastReportedClique > partialClique.size()) {
             numLargeJumps++;
-            //cout << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
+            //cerr << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
             if (largestDifference < (stepsSinceLastReportedClique - partialClique.size())) {
                 largestDifference = stepsSinceLastReportedClique - partialClique.size();
             }
@@ -823,6 +858,8 @@ void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
 
     // swap vertices that were moved to X back into P, for higher recursive calls.
     iterator = 0;
+
+////    clock_t clockStart = clock();
     while(iterator < numCandidatesToIterateThrough)
     {
         int vertex = myCandidatesToIterateThrough[iterator];
@@ -836,12 +873,12 @@ void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
 
         iterator++;
     }
+////    clock_t clockEnd = clock();
+////    timeMovingXToP += (clockEnd - clockStart);
     }
 
     // don't need to check for emptiness before freeing, since
     // something will always be there (we allocated enough memory
     // for all of P, which is nonempty)
     Free(myCandidatesToIterateThrough);
-
-    stepsSinceLastReportedClique++;
 }

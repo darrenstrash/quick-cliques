@@ -103,11 +103,16 @@ long MaximumCliqueAlgorithm::Run(list<list<int>> &cliques)
     m_pSets->Initialize();
 
     while (m_pSets->GetNextTopLevelPartition()) {
+        m_pSets->GetTopLevelPartialClique(partialClique);
         RunRecursive(cliqueCount, cliques, partialClique);
+        partialClique.clear();
     }
 
-    cerr << "Largest Difference : " << largestDifference << endl;
-    cerr << "Num     Differences: " << numLargeJumps << endl;
+    if (!GetQuiet()) {
+        cerr << "Largest Difference : " << largestDifference << endl;
+        cerr << "Num     Differences: " << numLargeJumps << endl;
+        cerr << "Largest Clique     : " << m_uMaximumCliqueSize << endl;
+    }
 
     return  cliqueCount;
 }
@@ -136,7 +141,7 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
 ////        cout << "Another vertex down...only " << m_pSets->SizeOfP() << " more to go" << endl;
 ////    }
 
-    if (partialClique.size() + m_pSets->SizeOfP() <= m_uMaximumCliqueSize) {
+    if (partialClique.size() + m_pSets->RemainingSizeEstimate() <= m_uMaximumCliqueSize) {
         return;
     }
 
@@ -147,7 +152,8 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
     // if X is empty and P is empty, return partial clique as maximal
     if (m_pSets->XAndPAreEmpty()) {
         cliqueCount++;
-////        cout << "Found clique with size " << partialClique.size() << endl;
+        if (!GetQuiet())
+            cout << "Found clique with size " << partialClique.size() << endl;
 
         if (stepsSinceLastReportedClique > partialClique.size()) {
             numLargeJumps++;
@@ -160,6 +166,9 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
         m_uMaximumCliqueSize = partialClique.size();
 
         stepsSinceLastReportedClique = 0;
+
+        cliques.clear();
+        cliques.push_back(partialClique);
 
         processClique( 
                        #ifdef RETURN_CLIQUES_ONE_BY_ONE

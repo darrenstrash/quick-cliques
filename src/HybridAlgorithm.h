@@ -23,7 +23,7 @@
 
 #include "Tools.h"
 #include <list>
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 #include "MemoryManager.h"
 #include "DegeneracyTools.h"
 
@@ -44,7 +44,7 @@
     \endhtmlonly
 */
 
-class HybridAlgorithm : public MaximalCliquesAlgorithm
+class HybridAlgorithm : public Algorithm
 {
 public:
     HybridAlgorithm(std::vector<std::list<int>> const &adjacencyList);

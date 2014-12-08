@@ -31,11 +31,15 @@ public:
     virtual size_t SizeOfX() const { return beginP - beginX; }
     virtual size_t SizeOfP() const { return beginR - beginP; }
 
+    virtual size_t GetGraphSize() const { return m_AdjacencyList.size(); }
+
     void Initialize();
 
     void PrintSummary(int const line) const;
 
     bool GetNextTopLevelPartition();
+
+    void GetTopLevelPartialClique(std::list<int> &/*partialClique*/) const { }
 
 private: // members
     int beginX;

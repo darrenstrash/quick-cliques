@@ -23,7 +23,7 @@
 #include "Tools.h"
 #include <list>
 #include <vector>
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 
 /*! \file TimeDelayMaxDegreeAlgorithm.h
 
@@ -42,7 +42,7 @@
     \endhtmlonly
 */
 
-class TimeDelayMaxDegreeAlgorithm : public MaximalCliquesAlgorithm
+class TimeDelayMaxDegreeAlgorithm : public Algorithm
 {
 public:
     TimeDelayMaxDegreeAlgorithm(std::vector<std::vector<int>> const &adjacencyList);

@@ -74,6 +74,7 @@
 // local includes
 #include "PartialMatchDegeneracyVertexSets.h"
 #include "DegeneracyTools.h"
+#include "PartialMatchGraph.h"
 #include "Tools.h"
 
 // system includes
@@ -88,18 +89,16 @@
 #include <tuple>
 #include <algorithm>
 
-////#define OLD_CREATE
-
 using namespace std;
 
 PartialMatchDegeneracyVertexSets::PartialMatchDegeneracyVertexSets(vector<vector<int>> &adjacencyList)
-: VertexSets("degeneracy")
+: VertexSets("partial-match-degeneracy")
 , beginX(0)
 , beginP(0)
 , beginR(adjacencyList.size())
 , orderingArray()
-, newNeighborsInP()
-, neighborsIndex()
+, neighborsInP()
+, numNeighbors()
 , m_AdjacencyList(adjacencyList)
 , vertexSets()
 , vertexLookup()
@@ -118,8 +117,14 @@ void PartialMatchDegeneracyVertexSets::Initialize()
 
     vertexSets  .resize(m_AdjacencyList.size(), 0);
     vertexLookup.resize(m_AdjacencyList.size(), 0);
+    numNeighbors.resize(m_AdjacencyList.size(), 0);
+    neighborsInP.resize(m_AdjacencyList.size());
 
     orderingArray = std::move(computeDegeneracyOrderArray(m_AdjacencyList, m_AdjacencyList.size()));
+
+    for (int i = 0; i < neighborsInP.size(); ++i) {
+        neighborsInP[i].resize(orderingArray[i].laterDegree);
+    }
 
     // indices indicating where each set P, X, R starts in 
     // vertexSets; initially, P contains all the vertices
@@ -134,15 +139,6 @@ void PartialMatchDegeneracyVertexSets::PrintSummary(int const line) const
     cout << line << ": X[size=" << beginP-beginX << "], P[size=" << beginR-beginP << "]" << endl; 
 }
 
-int PartialMatchDegeneracyVertexSets::GetIndexOfVertexInP(int const vertex) const
-{
-    for (int i = 0; i < neighborsIndex.size(); ++i) {
-        if (std::get<0>(neighborsIndex[i]) == vertex)
-            return i;
-    }
-    return -1;
-};
-
 bool PartialMatchDegeneracyVertexSets::GetNextTopLevelPartition()
 {
     if (m_bDoneWithTopLevelPartitions) return false;
@@ -154,20 +150,15 @@ bool PartialMatchDegeneracyVertexSets::GetNextTopLevelPartition()
     beginX = 0;
     beginP = 0;
 
-    int sizeOfNeighborsInP(0);
-
     // fill in X with earlier neighbors
     for (int const neighbor : orderingArray[vertex].earlier) {
         if (vertexLookup[vertexSets[beginP]] == beginP)
             vertexLookup[vertexSets[beginP]] = -1; // make sure no one else claims this position.
         vertexSets[beginP] = neighbor;
         vertexLookup[neighbor] = (beginP)++;
-        sizeOfNeighborsInP += min(orderingArray[neighbor].laterDegree,orderingArray[vertex].laterDegree);
     }
 
     beginR = beginP;
-
-    int index(0);
 
     // fill in P with later neighbors
     for (int const neighbor : orderingArray[vertex].later) {
@@ -175,13 +166,7 @@ bool PartialMatchDegeneracyVertexSets::GetNextTopLevelPartition()
             vertexLookup[vertexSets[beginR]] = -1; // make sure no one else claims this position.
         vertexSets[beginR] = neighbor;
         vertexLookup[neighbor] = (beginR)++;
-        sizeOfNeighborsInP += min(orderingArray[neighbor].laterDegree+index,orderingArray[vertex].laterDegree);
     }
-
-    newNeighborsInP.resize(sizeOfNeighborsInP, -1);
-
-    int lastNeighborOfPIndex(0);
-    int currentNeighborOfPIndex(0);
 
     if (vertexLookup[vertexSets[beginR]] == beginR)
         vertexLookup[vertexSets[beginR]] = -1; // make sure no one else claims this position.
@@ -189,55 +174,59 @@ bool PartialMatchDegeneracyVertexSets::GetNextTopLevelPartition()
     vertexSets[beginR] = vertex;
     vertexLookup[vertex] = beginR;
 
-    neighborsIndex.clear();
-    neighborsIndex.reserve(orderingArray[vertex].laterDegree + orderingArray[vertex].earlierDegree);
-
     for (int const neighbor : orderingArray[orderNumber].earlier) {
-        lastNeighborOfPIndex = currentNeighborOfPIndex;
 
-        // fill in newNeighborsInP
+        int const numNeighborsNeeded(min(beginR-beginP, orderingArray[neighbor].laterDegree));
+
+        if (neighborsInP[neighbor].size() < numNeighborsNeeded) {
+            neighborsInP[neighbor].resize(2*numNeighborsNeeded);
+        }
+
+        numNeighbors[neighbor] = 0;
+
+        // fill in NeighborsInP
         for (int const laterNeighbor : orderingArray[neighbor].later) {
             int laterNeighborLocation = vertexLookup[laterNeighbor];
             if (laterNeighborLocation >= beginP && laterNeighborLocation < beginR) {
-                newNeighborsInP[currentNeighborOfPIndex++] = laterNeighbor;
+                neighborsInP[neighbor][numNeighbors[neighbor]] = laterNeighbor;
+                numNeighbors[neighbor]++;
             }
         }
-
-        neighborsIndex.push_back(make_tuple(neighbor, lastNeighborOfPIndex, currentNeighborOfPIndex));
     }
 
-    //TODO/DS: Sort to make finding elements faster
-    vector<vector<int>> vvTemp(orderingArray[vertex].laterDegree);
-
+    // reset numNeighbors and neighborsInP for this vertex
     int j = beginP;
-    int const startOfPInNeighborsIndex(neighborsIndex.size());
     while (j<beginR) {
-////        cout << "Size of neighborsIndex: " << neighborsIndex.size() << endl;
-        int const vertexInP = vertexSets[j];
-        neighborsIndex.push_back(make_tuple(vertexInP, j - beginP, -1));
-////        cout << "Inserting <" << vertexInP << "," << j - beginP << "," << -1 << ">" << endl; 
-        vvTemp[j-beginP].reserve(beginR-beginP);
+        int vertexInP = vertexSets[j];
+
+        numNeighbors[vertexInP] = 0;
+
+        int const numNeighborsNeeded(min( beginR-beginP, 
+                    orderingArray[vertexInP].laterDegree 
+                    + orderingArray[vertexInP].earlierDegree));
+
+        if (neighborsInP[vertexInP].size() < numNeighborsNeeded) {
+            neighborsInP[vertexInP].resize(2*numNeighborsNeeded);
+        }
+
         j++;
     }
-
 
     // count neighbors in P, and fill in array of neighbors in P
     j = beginP;
     while (j<beginR) {
-        int const vertexInP = vertexSets[j];
-        int const vertexIndex(j-beginP);
+        int vertexInP = vertexSets[j];
 
         int k = 0;
         while (k<orderingArray[vertexInP].laterDegree) {
-            int const laterNeighbor = orderingArray[vertexInP].later[k];
-            int const laterNeighborLocation = vertexLookup[laterNeighbor];
+            int laterNeighbor = orderingArray[vertexInP].later[k];
+            int laterNeighborLocation = vertexLookup[laterNeighbor];
 
             if (laterNeighborLocation >= beginP && laterNeighborLocation < beginR) {
-////                cout << __LINE__ << " : Index of " << vertexInP << "=" << vertexIndex << " in vvTemp" << endl;
-                vvTemp[vertexIndex].push_back(laterNeighbor);
-                vvTemp[GetIndexOfVertexInP(laterNeighbor) - startOfPInNeighborsIndex].push_back(vertexInP);
-////                cout << __LINE__ << " : Index of " << laterNeighbor << "=" << GetIndexOfVertexInP(laterNeighbor) << " in vvTemp"  << endl;
-////                cout << __LINE__ << " : Inserting edges (" << std::get<0>(neighborsIndex[vertexIndex + startOfPInNeighborsIndex]) << "," << std::get<0>(neighborsIndex[GetIndexOfVertexInP(laterNeighbor)]) << ")" << endl;
+                neighborsInP[vertexInP][numNeighbors[vertexInP]] = laterNeighbor;
+                numNeighbors[vertexInP]++;
+                neighborsInP[laterNeighbor][numNeighbors[laterNeighbor]] = vertexInP;
+                numNeighbors[laterNeighbor]++;
             }
 
             k++;
@@ -246,18 +235,207 @@ bool PartialMatchDegeneracyVertexSets::GetNextTopLevelPartition()
         j++;
     }
 
-    for (int i = 0; i < vvTemp.size(); ++i) {
-        lastNeighborOfPIndex = currentNeighborOfPIndex;
-        for (int const neighbor : vvTemp[i]) {
-            newNeighborsInP[currentNeighborOfPIndex++] = neighbor;
-////            cout << __LINE__ << " : Inserting edge " << std::get<0>(neighborsIndex[startOfPInNeighborsIndex + i]) << "->" << neighbor << "" << endl;
-        }
-
-        std::get<1>(neighborsIndex[startOfPInNeighborsIndex + i]) = lastNeighborOfPIndex;
-        std::get<2>(neighborsIndex[startOfPInNeighborsIndex + i]) = currentNeighborOfPIndex;
-    }
-
     m_bDoneWithTopLevelPartitions = (m_iCurrentTopLevelIndex == m_AdjacencyList.size());
 
+    vector<int> vDominatedVertices  = ComputeDominanceStandard();
+    vector<int> vDominatedVertices2 = ComputeDominanceGraph();
+
+#if 1
+    sort (vDominatedVertices.begin(),  vDominatedVertices.end());
+    sort (vDominatedVertices2.begin(), vDominatedVertices2.end());
+    cout << "dominated(standard):";
+    for (int const dominatedVertex : vDominatedVertices) {
+        cout << dominatedVertex << " ";
+    }
+    cout << endl;
+
+    cout << "dominated(graph   ):";
+    for (int const dominatedVertex : vDominatedVertices2) {
+        cout << dominatedVertex << " ";
+    }
+    cout << endl;
+
+    return false;
+#endif
+
     return true;
+
+#ifdef PM_TEST
+
+    std::vector<int> vValues;
+    for (int i = 0; i < 5; ++i) {
+        vValues.push_back(i);
+    }
+
+    std::vector<std::vector<int>> vOrderedValues(1, vValues);
+
+    PartialMatchGraph graph(vValues, vOrderedValues);
+
+    auto Test  = [&graph] (vector<int> const &vTestValues, string const &testName) {
+        if (!graph.Contains(vTestValues)) {
+            cout << testName << ": Failed" << endl;
+        } else {
+            cout << testName << ": Passed" << endl;
+        }
+    };
+
+////    graph.Print();
+
+    std::vector<int> vContiguousTestValues;
+    vContiguousTestValues.push_back(2);
+    vContiguousTestValues.push_back(3);
+    vContiguousTestValues.push_back(4);
+    
+    std::vector<int> vNonContiguous;
+    vNonContiguous.push_back(2);
+    vNonContiguous.push_back(4);
+
+    std::vector<int> vSingleStart;
+    vSingleStart.push_back(1);
+
+    std::vector<int> vSingleRegular;
+    vSingleRegular.push_back(4);
+
+    Test(vContiguousTestValues, "Contiguous     test");
+    Test(vValues              , "All            test");
+    Test(vNonContiguous       , "Non-Contiguous test");
+    Test(vSingleStart         , "Single Start   test");
+    Test(vSingleRegular       , "Single Regular test");
+
+    return false;
+
+#endif // RUN_ALGORITHM
+
+}
+
+vector<int> PartialMatchDegeneracyVertexSets::ComputeDominanceStandard()
+{
+    vector<bool> vMarkedNeighbors(m_AdjacencyList.size(), false);
+    vector<int> dominatedVertices;
+
+    int const savedBeginR = beginR;
+
+////        clock_t clockStart = clock();
+        
+////    cout << "X=" << beginD-beginX << ", P=" << beginR-beginP << endl;
+    // for each vertex x in X
+
+////    bool lookForDominatedNodes(true);
+////    while (lookForDominatedNodes) {
+    for (int i = beginX; i < beginP; i++) {
+////        lookForDominatedNodes = false;
+
+        // mark neighbors in an array
+        int const x(vertexSets[i]);
+        int const potentialNeighborsOfX = min(beginR - beginP, numNeighbors[x]); // TODO/DS: optimize. Can we stop at the first one that isn't in P?
+        for (int j = 0; j < potentialNeighborsOfX; ++j) {
+            int const neighborOfX(neighborsInP[x][j]);
+            int const neighborLocation(vertexLookup[neighborOfX]);
+            if (beginP <= neighborLocation && neighborLocation <= beginR)
+                vMarkedNeighbors[neighborOfX] = true;
+            else
+                break;
+        }
+
+        // for each vertex p in P: check that all of p's neighbors in P are neighbors of x
+        for (int j = beginP; j < beginR; j++) {
+            int const p(vertexSets[j]);
+            bool dominated(vMarkedNeighbors[p]);
+            if (dominated) {
+                int const potentialNeighborsOfP = min(beginR - beginP, numNeighbors[p]); // TODO/DS: optimize. Can we stop at the first one that isn't in P?
+                for (int k = 0; k < potentialNeighborsOfP; ++k) { // TODO/DS: optimize this... Can we stop at the first one that isn't in P?
+                    int const neighborOfP(neighborsInP[p][k]);
+                    int const neighborLocation(vertexLookup[neighborOfP]);
+                    if (neighborLocation >= beginP && neighborLocation < beginR) { // in P
+                        dominated = vMarkedNeighbors[neighborOfP];
+                        if (!dominated) break;
+                    } else {
+                        break;
+                    }
+                } // for neighbors of p
+            }
+
+            // TODO/DS: finish computing dominated vertices for comparison with new partial match graph
+            if (dominated) {
+                dominatedVertices.push_back(p);
+////                lookForDominatedNodes = true;
+                // swap p from P to R
+                beginR--;
+                vertexSets[vertexLookup[p]] = vertexSets[beginR]; vertexLookup[vertexSets[beginR]] = vertexLookup[p]; // move vertex in beginning of P to p's position
+                vertexSets[beginR] = p; vertexLookup[p] = beginR; // move p to beginning of P
+////                beginP++; // move boundary, now D contains p
+                j--; // evaluate this position again
+////////                cout << "Found dominated non-neighbor" << endl;
+            }
+
+        } // for vertices p in P
+
+        // unmark neighbors in the array
+        for (int j = 0; j < numNeighbors[x]; ++j) {
+            int const neighborOfX(neighborsInP[x][j]);
+            ////int const neighborLocation(vertexLookup[neighborOfX]);
+            ////if (beginP <= neighborLocation && neighborLocation <= beginR)
+            vMarkedNeighbors[neighborOfX] = false;
+        }
+    } // for x in X
+////    } // while looking for dominated nodes
+
+////    clock_t clockEnd = clock();
+////
+////    timeTestingDominancy += (clockEnd-clockStart);
+
+    beginR = savedBeginR;
+
+    return dominatedVertices;
+}
+
+vector<int> PartialMatchDegeneracyVertexSets::ComputeDominanceGraph()
+{
+    vector<int> dominatedVertices;
+
+    vector<int> vVertices;
+    for (size_t u = beginP; u < beginR; ++u) {
+        vVertices.push_back(vertexSets[u]);
+    }
+
+    vector<vector<int>> vSortedPaths;
+
+    for (size_t u = beginX; u < beginP; ++u) {
+        vector<int> vPath;
+        int const vertex(vertexSets[u]);
+        for (int const neighbor : orderingArray[vertex].later) {
+            if (InP(neighbor)) vPath.push_back(neighbor);
+        }
+        sort(vPath.begin(), vPath.end());
+        for (int const node : vPath) {
+            cout << node << " ";
+        }
+        cout << endl;
+        vSortedPaths.emplace_back(std::move(vPath));
+    }
+
+    PartialMatchGraph graph(vVertices, vSortedPaths);
+
+    for (size_t u = beginP; u < beginR; ++u) {
+        vector<int> vPath;
+        int const vertex(vertexSets[u]);
+        vPath.push_back(vertex);
+        for (size_t v = 0; v < numNeighbors[vertex]; ++v) {
+            int const neighbor(neighborsInP[vertex][v]);
+            if (InP(neighbor)) vPath.push_back(neighbor);
+        }
+        sort(vPath.begin(), vPath.end());
+        if (graph.Contains(vPath)) {
+            cout << "Vertex and neighbors:" << endl;
+            for (int const node : vPath) {
+                cout << node << " ";
+            }
+            cout << endl;
+            dominatedVertices.push_back(vertex);
+            break;
+        }
+
+    }
+
+    return dominatedVertices;
 }

@@ -103,6 +103,25 @@ DegeneracyVertexSets::DegeneracyVertexSets(vector<vector<int>> &adjacencyList)
 , vertexLookup()
 , m_lDelineators()
 , m_iCurrentTopLevelIndex(0)
+, m_EmptySet()
+, m_VerticesToExclude(m_EmptySet)
+{
+}
+
+DegeneracyVertexSets::DegeneracyVertexSets(vector<vector<int>> &adjacencyList, set<int> const &verticesToExclude)
+: VertexSets("degeneracy")
+, beginX(0)
+, beginP(0)
+, beginR(adjacencyList.size())
+, orderingArray()
+, neighborsInP()
+, numNeighbors()
+, m_AdjacencyList(adjacencyList)
+, vertexSets()
+, vertexLookup()
+, m_lDelineators()
+, m_iCurrentTopLevelIndex(0)
+, m_VerticesToExclude(verticesToExclude)
 {
 }
 
@@ -119,6 +138,7 @@ void DegeneracyVertexSets::Initialize()
     numNeighbors.resize(m_AdjacencyList.size(), 0);
     neighborsInP.resize(m_AdjacencyList.size());
 
+////    orderingArray = std::move(computeDegeneracyOrderArrayForReverse(m_AdjacencyList, m_AdjacencyList.size()));
     orderingArray = std::move(computeDegeneracyOrderArray(m_AdjacencyList, m_AdjacencyList.size()));
 
     for (int i = 0; i < neighborsInP.size(); ++i) {
@@ -142,15 +162,60 @@ bool DegeneracyVertexSets::GetNextTopLevelPartition()
 {
     if (m_bDoneWithTopLevelPartitions) return false;
 
-    //TODO/DS: Compute next top level partition
-    int const orderNumber(m_iCurrentTopLevelIndex++);
-    int const vertex(orderingArray[orderNumber].vertex);
+#ifdef ORDERED
+    int orderNumber(m_iCurrentTopLevelIndex++);
+    int vertex(0);
+
+    m_bDoneWithTopLevelPartitions = (orderNumber >= m_AdjacencyList.size());
+    if (m_bDoneWithTopLevelPartitions) return false;
+
+    for (int i = 0; i < orderingArray.size(); ++i) {
+        if (orderingArray[i].orderNumber == orderNumber) {
+            vertex = orderingArray[i].vertex;
+            break;
+        }
+    }
+
+    while (m_VerticesToExclude.find(vertex) != m_VerticesToExclude.end()) {
+        orderNumber = m_iCurrentTopLevelIndex++;
+
+        m_bDoneWithTopLevelPartitions = (orderNumber >= m_AdjacencyList.size());
+        if (m_bDoneWithTopLevelPartitions) return false;
+
+        for (int i = 0; i < orderingArray.size(); ++i) {
+            if (orderingArray[i].orderNumber == orderNumber) {
+                vertex = orderingArray[i].vertex;
+                break;
+            }
+        }
+    }
+#else
+    int orderNumber(m_iCurrentTopLevelIndex++);
+    int vertex(orderNumber);
+
+    m_bDoneWithTopLevelPartitions = (orderNumber >= m_AdjacencyList.size());
+    if (m_bDoneWithTopLevelPartitions) return false;
+
+    while (m_VerticesToExclude.find(vertex) != m_VerticesToExclude.end()) {
+        orderNumber = m_iCurrentTopLevelIndex++;
+
+        m_bDoneWithTopLevelPartitions = (orderNumber >= m_AdjacencyList.size());
+        if (m_bDoneWithTopLevelPartitions) return false;
+        vertex = orderNumber;
+    }
+#endif
+
+////    bool debug = (vertex == 73);
+
+////    if (debug)
+////        cout << __LINE__ << " : Evaluating vertex " << vertex << endl;
 
     beginX = 0;
     beginP = 0;
 
     // fill in X with earlier neighbors
     for (int const neighbor : orderingArray[vertex].earlier) {
+        if (m_VerticesToExclude.find(neighbor) != m_VerticesToExclude.end()) continue;
         if (vertexLookup[vertexSets[beginP]] == beginP)
             vertexLookup[vertexSets[beginP]] = -1; // make sure no one else claims this position.
         vertexSets[beginP] = neighbor;
@@ -161,6 +226,7 @@ bool DegeneracyVertexSets::GetNextTopLevelPartition()
 
     // fill in P with later neighbors
     for (int const neighbor : orderingArray[vertex].later) {
+        if (m_VerticesToExclude.find(neighbor) != m_VerticesToExclude.end()) continue;
         if (vertexLookup[vertexSets[beginR]] == beginR)
             vertexLookup[vertexSets[beginR]] = -1; // make sure no one else claims this position.
         vertexSets[beginR] = neighbor;
@@ -170,17 +236,38 @@ bool DegeneracyVertexSets::GetNextTopLevelPartition()
     if (vertexLookup[vertexSets[beginR]] == beginR)
         vertexLookup[vertexSets[beginR]] = -1; // make sure no one else claims this position.
 
+////    if (debug) {
+////        cout << __LINE__ << " : X:";
+////        for (int i = beginX; i < beginP; i++) {
+////            cout << vertexSets[i] << " ";
+////        }
+////        cout << endl;
+////
+////        cout << __LINE__ << " : P:";
+////        for (int i = beginP; i < beginR; i++) {
+////            cout << vertexSets[i] << " ";
+////        }
+////        cout << endl;
+////    }
+
     vertexSets[beginR] = vertex;
     vertexLookup[vertex] = beginR;
 
-    for (int const neighbor : orderingArray[orderNumber].earlier) {
+////    if (debug) {
+////        cout << __LINE__ << " : Neighbors of X in P:" << endl;
+////    }
 
+    for (int const neighbor : orderingArray[orderNumber].earlier) {
+////    for (size_t u = beginX; u < beginP; ++u) {
+////        int const neighbor(vertexSets[u]);
         int const numNeighborsNeeded(min(beginR-beginP, orderingArray[neighbor].laterDegree));
 
         if (neighborsInP[neighbor].size() < numNeighborsNeeded) {
             neighborsInP[neighbor].resize(2*numNeighborsNeeded);
         }
 
+////        if (debug)
+////            cout << __LINE__ << " : " << neighbor << ":";
         numNeighbors[neighbor] = 0;
 
         // fill in NeighborsInP
@@ -189,8 +276,15 @@ bool DegeneracyVertexSets::GetNextTopLevelPartition()
             if (laterNeighborLocation >= beginP && laterNeighborLocation < beginR) {
                 neighborsInP[neighbor][numNeighbors[neighbor]] = laterNeighbor;
                 numNeighbors[neighbor]++;
+////                if (debug)
+////                    cout << laterNeighbor << " ";
+            } else {
+////                if (debug)
+////                    cout << "(" << laterNeighbor << ") ";
             }
         }
+////        if (debug)
+////            cout << endl;
     }
 
     // reset numNeighbors and neighborsInP for this vertex

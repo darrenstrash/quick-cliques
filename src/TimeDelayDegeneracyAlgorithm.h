@@ -17,7 +17,7 @@
 */
 
 // local includes
-#include "MaximalCliquesAlgorithm.h"
+#include "Algorithm.h"
 #include "Tools.h"
 #include "MemoryManager.h"
 #include "DegeneracyTools.h"
@@ -47,7 +47,7 @@
     \endhtmlonly
 */
 
-class TimeDelayDegeneracyAlgorithm : public MaximalCliquesAlgorithm
+class TimeDelayDegeneracyAlgorithm : public Algorithm
 {
 public:
     TimeDelayDegeneracyAlgorithm(std::vector<std::list<int>> const &adjacencyList);

@@ -1,5 +1,5 @@
-#ifndef _DJS_PARTIAL_MATCH_DEGENERACY_VERTEX_SETS_H_
-#define _DJS_PARTIAL_MATCH_DEGENERACY_VERTEX_SETS_H_
+#ifndef _DJS_DEGENERACY_INDEPENDENT_SETS2_H_
+#define _DJS_DEGENERACY_INDEPENDENT_SETS2_H_
 
 /* 
     This program is free software: you can redistribute it and/or modify 
@@ -17,7 +17,7 @@
 */
 
 // local includes
-#include "VertexSets.h"
+#include "DegeneracyIndependentSets.h"
 #include "DegeneracyTools.h"
 
 // system includes
@@ -25,6 +25,7 @@
 #include <vector>
 #include <cstring> // memcpy
 #include <algorithm>
+#include <iostream>
 
 /*! \file FasterDegeneracyAlgorithm.h
 
@@ -43,13 +44,13 @@
     \endhtmlonly
 */
 
-class PartialMatchDegeneracyVertexSets : public VertexSets {
+class DegeneracyIndependentSets2 : public DegeneracyIndependentSets {
 public:
-    PartialMatchDegeneracyVertexSets(std::vector<std::vector<int>> &adjacencyList);
-    ~PartialMatchDegeneracyVertexSets();
+    DegeneracyIndependentSets2(std::vector<std::vector<int>> &adjacencyList);
+    ~DegeneracyIndependentSets2();
 
-    PartialMatchDegeneracyVertexSets           (PartialMatchDegeneracyVertexSets const &sets) = delete;
-    PartialMatchDegeneracyVertexSets& operator=(PartialMatchDegeneracyVertexSets const &sets) = delete;
+    DegeneracyIndependentSets2           (DegeneracyIndependentSets2 const &sets) = delete;
+    DegeneracyIndependentSets2& operator=(DegeneracyIndependentSets2 const &sets) = delete;
 
     void MoveFromPToR(int const vertexInP) __attribute__((always_inline));
     void MoveFromRToX(int const vertexInP) __attribute__((always_inline));
@@ -57,47 +58,10 @@ public:
     void ReturnVerticesToP(std::vector<int> const &vVertices) __attribute__((always_inline));
 
     std::vector<int> ChoosePivot() const __attribute__((always_inline));
-    bool InP(int const vertex) const __attribute__((always_inline));
 
-    bool PIsEmpty() const __attribute__((always_inline));
-    bool XAndPAreEmpty() const __attribute__((always_inline));
-
-    virtual size_t SizeOfX() const { return beginP - beginX; }
-    virtual size_t SizeOfP() const { return beginR - beginP; }
-
-    virtual size_t GetGraphSize() const { return m_AdjacencyList.size(); }
-
-    void Initialize();
-
-    void PrintSummary(int const line) const;
-
-    bool GetNextTopLevelPartition();
-
-    void GetTopLevelPartialClique(std::list<int> &partialClique)  const {
-        if (m_iCurrentTopLevelIndex == 0) return;
-        int const vertex(orderingArray[m_iCurrentTopLevelIndex-1].vertex);
-        partialClique.push_back(vertex);
-    }
-
-private: // methods
-    std::vector<int> ComputeDominanceGraph();
-    std::vector<int> ComputeDominanceStandard();
-
-private: // members
-    int beginX;
-    int beginP;
-    int beginR;
-    std::vector<NeighborListArray> orderingArray;
-    std::vector<std::vector<int>> neighborsInP;
-    std::vector<int> numNeighbors;
-    std::vector<std::vector<int>> &m_AdjacencyList;
-    std::vector<int> vertexSets;
-    std::vector<int> vertexLookup;
-    std::vector<SetDelineator> m_lDelineators;
-    int m_iCurrentTopLevelIndex;
 };
 
-inline void PartialMatchDegeneracyVertexSets::ReturnVerticesToP(std::vector<int> const &vVertices)
+inline void DegeneracyIndependentSets2::ReturnVerticesToP(std::vector<int> const &vVertices)
 {
     for (int const vertex : vVertices) {
         int const vertexLocation = vertexLookup[vertex];
@@ -109,11 +73,13 @@ inline void PartialMatchDegeneracyVertexSets::ReturnVerticesToP(std::vector<int>
     }
 }
 
-inline void PartialMatchDegeneracyVertexSets::MoveFromPToR(int const vertex)
+// DONE, need to verify
+inline void DegeneracyIndependentSets2::MoveFromPToR(int const vertex)
 {
+////    std::cout << "Adding vertex " << vertex << " to R" << std::endl;
     int const vertexLocation = vertexLookup[vertex];
 
-    int sizeOfP = beginR - beginP;
+    int const sizeOfP = beginR - beginP;
 
     //swap vertex into R and update beginR
     beginR--;
@@ -130,88 +96,109 @@ inline void PartialMatchDegeneracyVertexSets::MoveFromPToR(int const vertex)
 
     // for each neighbor of vertex, ask if it is in X or P,
     // if it is, leave it there. Otherwise, swap it out.
+    //// Remove for now, see how much faster it is to not maintain X.
+#if 0
     int j = beginX;
-////    cout << "Iterate through vertices in X: ";
+////    std::cout << "Iterate through vertices in X: ";
     while(j<newBeginX)
     {
-        int neighbor = vertexSets[j];
-        int neighborLocation = j;
-////        cout << neighbor << " ";
+        int const neighbor = vertexSets[j];
+        int const neighborLocation = j;
+////        std::cout << neighbor << " ";
 
         int incrementJ = 1;
 
-        int numPotentialNeighbors = std::min(sizeOfP, numNeighbors[neighbor]);
-////        cout << "(later neighbors: " << numNeighbors[neighbor] << ") ";
+////        int const numPotentialNeighbors = std::min(sizeOfP, numNeighbors[neighbor]);
+        int const numPotentialNeighbors = numNeighbors[neighbor];
+////        std::cout << "(later neighbors: " << numNeighbors[neighbor] << ") ";
 
         int k = 0;
+        bool hasVertexAsNeighbor(false);
         while(k<numPotentialNeighbors)
         {
 ////            if (neighbor == 0 && vertex == 11) {
-////                cout << "Does vertex 0 in X have 11 as a neighbor? : " << endl;
+////                std::cout << "Does vertex 0 in X have 11 as a neighbor? : " << std::endl;
 ////            }
 
-            if (neighborsInP[neighbor][k] == vertex)
-            {
+            if (neighborsInP[neighbor][k] == vertex) {
+                hasVertexAsNeighbor = true;
+                break;
 ////                if (neighbor == 0 && vertex == 11)
-////                cout << "Yes" << endl;
-                (newBeginX)--;
-                vertexSets[neighborLocation] = vertexSets[(newBeginX)];
-                vertexLookup[vertexSets[(newBeginX)]] = neighborLocation;
-                vertexSets[(newBeginX)] = neighbor;
-                vertexLookup[neighbor] = (newBeginX);
-                incrementJ=0;
+////                std::cout << "Yes" << std::endl;
             } else {
-////                cout << "No" << endl;
+////                std::cout << "No" << std::endl;
             }
 
             k++;
         }
 
-        if(incrementJ) j++;
+
+        // swap non-neighbors into X for recursion
+        if (!hasVertexAsNeighbor) {
+////            if (find(orderingArray[vertex].later.begin(), orderingArray[vertex].later.end(), neighbor) != orderingArray[vertex].later.end()  && InP(vertex) ||
+////                find(orderingArray[vertex].earlier.begin(), orderingArray[vertex].earlier.end(), neighbor) != orderingArray[vertex].earlier.end() && InP(vertex)) {
+////                std::cout << __LINE__ << ": ERROR - vertex " << vertex << " has neighbor " << neighbor << std::endl;
+////            }
+            newBeginX--;
+            vertexSets[neighborLocation] = vertexSets[newBeginX];
+            vertexLookup[vertexSets[newBeginX]] = neighborLocation;
+            vertexSets[newBeginX] = neighbor;
+            vertexLookup[neighbor] = newBeginX;
+            incrementJ=0;
+        }
+
+        if (incrementJ) j++;
     }
+#endif
 
-    j = beginP;
-    while(j<beginR)
-    {
-        int neighbor = vertexSets[j];
-        int neighborLocation = j;
+    int j = beginP;
+    while(j<beginR) {
+        int const neighbor = vertexSets[j];
+        int const neighborLocation = j;
 
-        int numPotentialNeighbors = std::min(sizeOfP, numNeighbors[neighbor]);
+////        int const numPotentialNeighbors = std::min(sizeOfP, numNeighbors[neighbor]);
+        int const numPotentialNeighbors = numNeighbors[neighbor];
 
         int k = 0;
-        while(k<numPotentialNeighbors)
-        {
-            if(neighborsInP[neighbor][k] == vertex)
-            {
-                vertexSets[neighborLocation] = vertexSets[(newBeginR)];
-                vertexLookup[vertexSets[(newBeginR)]] = neighborLocation;
-                vertexSets[(newBeginR)] = neighbor;
-                vertexLookup[neighbor] = (newBeginR);
-                (newBeginR)++;
+        bool hasVertexAsNeighbor(false);
+        while(k<numPotentialNeighbors) {
+            if(neighborsInP[neighbor][k] == vertex) {
+                hasVertexAsNeighbor = true;
+                break;
             }
 
             k++;
+        }
+
+        // move non-neighbors into P.
+        if (!hasVertexAsNeighbor) {
+////            if (find(orderingArray[vertex].later.begin(), orderingArray[vertex].later.end(), neighbor) != orderingArray[vertex].later.end() ||
+////                find(orderingArray[vertex].earlier.begin(), orderingArray[vertex].earlier.end(), neighbor) != orderingArray[vertex].earlier.end()) {
+////                std::cout << __LINE__ << ": ERROR - vertex " << vertex << " has neighbor " << neighbor << std::endl;
+////            }
+            vertexSets[neighborLocation] = vertexSets[newBeginR];
+            vertexLookup[vertexSets[newBeginR]] = neighborLocation;
+            vertexSets[newBeginR] = neighbor;
+            vertexLookup[neighbor] = newBeginR;
+            newBeginR++;
         }
 
         j++;
     }
 
-    j = (newBeginX);
+    j = newBeginP;
 
     while(j < newBeginR) {
-        int thisVertex = vertexSets[j];
-
-        int numPotentialNeighbors = std::min(sizeOfP, numNeighbors[thisVertex]);
-
-        int numNeighborsInP = 0;
+        int const thisVertex = vertexSets[j];
+////        int const numPotentialNeighbors = std::min(sizeOfP, numNeighbors[thisVertex]);
+        int const numPotentialNeighbors = numNeighbors[thisVertex];
+        int       numNeighborsInP = 0;
 
         int k = 0;
-        while(k < numPotentialNeighbors)
-        {
-            int neighbor = neighborsInP[thisVertex][k];
-            int neighborLocation = vertexLookup[neighbor];
-            if(neighborLocation >= newBeginP && neighborLocation < newBeginR)
-            {
+        while(k < numPotentialNeighbors) {
+            int const neighbor = neighborsInP[thisVertex][k];
+            int const neighborLocation = vertexLookup[neighbor];
+            if(neighborLocation >= newBeginP && neighborLocation < newBeginR) {
                 neighborsInP[thisVertex][k] = neighborsInP[thisVertex][numNeighborsInP];
                 neighborsInP[thisVertex][numNeighborsInP] = neighbor;
                 numNeighborsInP++;
@@ -220,6 +207,9 @@ inline void PartialMatchDegeneracyVertexSets::MoveFromPToR(int const vertex)
         }
 
         j++;
+////        if (numNeighborsInP == 0) {
+////            std::cout << __LINE__ << ": could have pruned whole subtree" << std::endl; 
+////        }
     }
 
     m_lDelineators.emplace_back(VertexSets::SetDelineator(beginX, beginP, beginR));
@@ -235,7 +225,7 @@ inline void PartialMatchDegeneracyVertexSets::MoveFromPToR(int const vertex)
     \param vertex The vertex to move from R to X.
 */
 
-inline void PartialMatchDegeneracyVertexSets::MoveFromRToX(int const vertex)
+inline void DegeneracyIndependentSets2::MoveFromRToX(int const vertex)
 {
     SetDelineator const &delineator = m_lDelineators.back();
 
@@ -266,7 +256,9 @@ inline void PartialMatchDegeneracyVertexSets::MoveFromRToX(int const vertex)
   P \ {neighborhood of v} when this function completes.
  */
 
-inline std::vector<int> PartialMatchDegeneracyVertexSets::ChoosePivot() const
+#define DJS_PIVOT_DONE
+
+inline std::vector<int> DegeneracyIndependentSets2::ChoosePivot() const
 {
     clock_t clockStart = clock();
     int pivot = -1;
@@ -298,15 +290,17 @@ inline std::vector<int> PartialMatchDegeneracyVertexSets::ChoosePivot() const
 ////        }
 ////    }
 ////
-////    cout << "total: " << totalEdges << "(from " << (beginP - beginX) << " vertices), unique: " << uniqueEdges.size() << endl;
+////    std::cout << "total: " << totalEdges << "(from " << (beginP - beginX) << " vertices), unique: " << uniqueEdges.size() << std::endl;
 
+#ifdef DJS_PIVOT_DONE
     // iterate over each vertex in P union X 
     // to find the vertex with the most neighbors in P.
-    int j = beginX;
+    int j = beginP;
     while(j<beginR)
     {
         int vertex = vertexSets[j];
-        int numPotentialNeighbors = std::min(beginR - beginP, numNeighbors[vertex]);
+////        int const numPotentialNeighbors = std::min(beginR - beginP, numNeighbors[vertex]);
+        int const numPotentialNeighbors = numNeighbors[vertex];
 
         int numNeighborsInP = 0;
 
@@ -319,16 +313,17 @@ inline std::vector<int> PartialMatchDegeneracyVertexSets::ChoosePivot() const
             if(neighborLocation >= beginP && neighborLocation < beginR)
             {
                 numNeighborsInP++;
-            } else {
-                break;
             }
+////             else {
+////                break;
+////            }
 
             k++;
         }
 
-        if(numNeighborsInP > maxIntersectionSize) {
+        if((beginR - beginP - numNeighborsInP) > maxIntersectionSize) {
             pivot = vertex;
-            maxIntersectionSize = numNeighborsInP;
+            maxIntersectionSize = beginR - beginP - numNeighborsInP;
         }
 
         j++;
@@ -343,70 +338,50 @@ inline std::vector<int> PartialMatchDegeneracyVertexSets::ChoosePivot() const
     // we initialize enough space for all of P; this is
     // slightly space inefficient, but it results in faster
     // computation of non-neighbors.
-    std::vector<int> pivotNonNeighbors(beginR-beginP,0);
-    memcpy(&pivotNonNeighbors[0], &vertexSets[beginP], (beginR-beginP)*sizeof(int));
+////    int numPivotNeighbors = std::min(beginR - beginP, numNeighbors[pivot]);
+////    int numPivotNeighbors = beginR - beginP;
+    int numPivotNeighbors = numNeighbors[pivot];
+    std::vector<int> pivotNonNeighbors(numPivotNeighbors+1,0);
 
     // we will decrement numNonNeighbors as we find neighbors
-    int numNonNeighbors = beginR-beginP;
+    int numNonNeighbors = 0;
 
-    int numPivotNeighbors = std::min(beginR - beginP, numNeighbors[pivot]);
+    if (InP(pivot)) pivotNonNeighbors[numNonNeighbors++] = pivot;
 
     // mark the neighbors of pivot that are in P.
     j = 0;
-    while(j<numPivotNeighbors)
-    {
-        int neighbor = neighborsInP[pivot][j];
-        int neighborLocation = vertexLookup[neighbor];
+    while(j<numPivotNeighbors) {
+        int const neighbor = neighborsInP[pivot][j];
+        int const neighborLocation = vertexLookup[neighbor];
 
-        if(neighborLocation >= beginP && neighborLocation < beginR)
-        {
-            pivotNonNeighbors[neighborLocation-beginP] = -1;
+        if(neighborLocation >= beginP && neighborLocation < beginR) {
+            pivotNonNeighbors[numNonNeighbors++] = neighbor;
         }
-        else
-        {
-            break;
-        }
+////         else {
+////            break;
+////        }
 
         j++;
     }
 
-    // move non-neighbors of pivot in P to the beginning of
-    // pivotNonNeighbors and set numNonNeighbors appriopriately.
-
-    // if a vertex is marked as a neighbor, the we move it
-    // to the end of pivotNonNeighbors and decrement numNonNeighbors.
-    j = 0;
-    while (j<numNonNeighbors) {
-        int vertex = pivotNonNeighbors[j];
-
-        if (vertex == -1) {
-            numNonNeighbors--;
-            pivotNonNeighbors[j] = pivotNonNeighbors[numNonNeighbors];
-            continue;
-        }
-
-        j++;
-    }
+////    if (InP(pivot) && numNonNeighbors == 0) {
+////        std::cout << "Could have pruned whole subtree..." << std::endl;
+////    } else if (numNonNeighbors == 0) {
+////        std::cout << "Did prune whole subtree..." << std::endl;
+////    }
 
     pivotNonNeighbors.resize(numNonNeighbors);
 
-    return pivotNonNeighbors; 
+    ////RemoveDominatedVerticesFromVector(pivotNonNeighbors);
+
+    return pivotNonNeighbors;
+#else
+    std::vector<int> vVerticesInP;
+    for (int i = beginP; i < beginR; ++i)
+        vVerticesInP.push_back(vertexSets[i]);
+
+    return vVerticesInP;
+#endif
 }
 
-inline bool PartialMatchDegeneracyVertexSets::InP(int const vertex) const
-{
-    int const vertexLocation(vertexLookup[vertex]);
-    return (vertexLocation >= beginP && vertexLocation < beginR);
-}
-
-inline bool PartialMatchDegeneracyVertexSets::PIsEmpty() const
-{
-    return (beginP >= beginR);
-}
-
-inline bool PartialMatchDegeneracyVertexSets::XAndPAreEmpty() const
-{
-    return (beginX >= beginP && beginP >= beginR);
-}
-
-#endif //_DJS_PARTIAL_MATCH_DEGENERACY_ALGORITHM_H_
+#endif // _DJS_DEGENERACY_INDEPENDENT_SETS_H_

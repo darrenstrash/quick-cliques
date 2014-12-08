@@ -94,6 +94,7 @@ public:
 typedef struct NeighborListArray NeighborListArray;
 
 int computeDegeneracy(std::vector<std::list<int>> const &adjList, int size);
+int computeDegeneracy(std::vector<std::vector<int>> const &adjList, int size);
 
 NeighborList** computeDegeneracyOrderList(std::vector<std::list<int>> const &adjList, int size);
 
@@ -102,6 +103,10 @@ NeighborListArray** computeDegeneracyOrderArray(std::vector<std::list<int>> cons
 std::vector<NeighborListArray> computeDegeneracyOrderArray(std::vector<std::vector<int>> &adjArray, int size);
 std::vector<NeighborListArray> computeDegeneracyOrderArrayWithArrays(std::vector<std::vector<int>> &adjArray, int size);
 
+std::vector<NeighborListArray> computeDegeneracyOrderArrayForReverse(std::vector<std::vector<int>> &adjArray, int size);
+
 int neighborListComparator(void* nl1, void* nl2);
+
+std::vector<NeighborListArray> computeMaximumLaterOrderArray(std::vector<std::vector<int>> &adjArray, int size);
 
 #endif

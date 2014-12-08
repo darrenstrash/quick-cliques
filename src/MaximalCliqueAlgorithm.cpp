@@ -24,12 +24,12 @@
 #include <list>
 #include <vector>
 #include "MemoryManager.h"
-#include "BronKerboschAlgorithm.h"
+#include "MaximalCliqueAlgorithm.h"
 #include "Algorithm.h"
 
 using namespace std;
 
-/*! \file BronKerboschAlgorithm.cpp
+/*! \file MaximalCliqueAlgorithm.cpp
 
     \brief This file contains the main algorithm for listing all cliques
            according to the algorithm of Tomita et al. (TCS 2006) with one
@@ -69,17 +69,18 @@ using namespace std;
 
 */
 
-static unsigned long largestDifference(0);
-static unsigned long numLargeJumps;
-static unsigned long stepsSinceLastReportedClique(0);
+////static unsigned long largestDifference(0);
+////static unsigned long numLargeJumps;
+////static unsigned long stepsSinceLastReportedClique(0);
 
-BronKerboschAlgorithm::BronKerboschAlgorithm(VertexSets *pSets)
+MaximalCliqueAlgorithm::MaximalCliqueAlgorithm(VertexSets *pSets)
  : Algorithm(pSets->GetName())
  , m_pSets(pSets)
+ , m_bFoundClique(false)
 {
 }
 
-BronKerboschAlgorithm::~BronKerboschAlgorithm()
+MaximalCliqueAlgorithm::~MaximalCliqueAlgorithm()
 {
     delete m_pSets; m_pSets = nullptr;
 }
@@ -94,7 +95,7 @@ BronKerboschAlgorithm::~BronKerboschAlgorithm()
     \return The number of maximal cliques of the input graph.
 */
 
-long BronKerboschAlgorithm::Run(list<list<int>> &cliques)
+long MaximalCliqueAlgorithm::Run(list<list<int>> &cliques)
 {
     long cliqueCount = 0;
     list<int> partialClique;
@@ -103,12 +104,19 @@ long BronKerboschAlgorithm::Run(list<list<int>> &cliques)
 
     while (m_pSets->GetNextTopLevelPartition()) {
         m_pSets->GetTopLevelPartialClique(partialClique);
+////        cout << "At top level partial clique contains: " << partialClique.front() << endl;
         RunRecursive(cliqueCount, cliques, partialClique);
         partialClique.clear();
+        if (m_bFoundClique) break;
     }
 
-    cerr << "Largest Difference : " << largestDifference << endl;
-    cerr << "Num     Differences: " << numLargeJumps << endl;
+////    cerr << "Largest Difference : " << largestDifference << endl;
+////    cerr << "Num     Differences: " << numLargeJumps << endl;
+////    if (!cliques.empty())
+////        cerr << "Size of Clique     : " << cliques.front().size() << endl;
+////    else
+////        cerr << "(No Clique Found)" << endl;
+
 
     return  cliqueCount;
 }
@@ -128,38 +136,42 @@ long BronKerboschAlgorithm::Run(list<list<int>> &cliques)
 
 static unsigned long recursionNode(0);
 
-void BronKerboschAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cliques, list<int> &partialClique)
+void MaximalCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cliques, list<int> &partialClique)
 {
-    int const currentRecursionNode(recursionNode++);
-
+////    int const currentRecursionNode(recursionNode++);
+////
 ////    cout << currentRecursionNode << endl;
 ////    if (partialClique.empty()) {
 ////        cout << "Another vertex down...only " << m_pSets->SizeOfP() << " more to go" << endl;
 ////    }
 
-////    m_pSets->PrintSummary(__LINE__);
+    if (m_bFoundClique) {
+        return;
+    }
 
-    stepsSinceLastReportedClique++;
+////    m_Sets.PrintSummary(__LINE__);
 
-    vector<int> dominatedVertices;
-    m_pSets->RemoveDominatedVertices(dominatedVertices);
+////    stepsSinceLastReportedClique++;
 
     // if X is empty and P is empty, return partial clique as maximal
     if (m_pSets->XAndPAreEmpty()) {
-////        if (m_pSets->PIsEmpty()){
         cliqueCount++;
-////        if (cliqueCount %50 == 0)
-////            cout << "Found clique #" << cliqueCount << endl;
+////        cout << "Found clique with size " << partialClique.size() << endl;
 
-        if (stepsSinceLastReportedClique > partialClique.size()) {
-            numLargeJumps++;
-            //cout << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
-            if (largestDifference < (stepsSinceLastReportedClique - partialClique.size())) {
-                largestDifference = stepsSinceLastReportedClique - partialClique.size();
-            }
-        }
+////        if (stepsSinceLastReportedClique > partialClique.size()) {
+////            numLargeJumps++;
+////            //cout << "steps: " << stepsSinceLastReportedClique << ">" << partialClique.size() << endl;
+////            if (largestDifference < (stepsSinceLastReportedClique - partialClique.size())) {
+////                largestDifference = stepsSinceLastReportedClique - partialClique.size();
+////            }
+////        }
 
-        stepsSinceLastReportedClique = 0;
+////        stepsSinceLastReportedClique = 0;
+
+        cliques.clear();
+        cliques.push_back(partialClique);
+
+        m_bFoundClique = true;
 
         processClique( 
                        #ifdef RETURN_CLIQUES_ONE_BY_ONE
@@ -167,15 +179,12 @@ void BronKerboschAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cli
                        #endif
                        partialClique );
 
-        m_pSets->ReturnDominatedVertices(dominatedVertices);
         return;
     }
 
     // avoid work if P is empty.
-    if (m_pSets->PIsEmpty()) {
-        m_pSets->ReturnDominatedVertices(dominatedVertices);
+    if (m_pSets->PIsEmpty())
         return;
-    }
 
     vector<int> vNonNeighborsOfPivot = std::move(m_pSets->ChoosePivot());
 
@@ -197,6 +206,8 @@ void BronKerboschAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cli
             // recursively compute maximal cliques with new sets R, P and X
             RunRecursive(cliqueCount, cliques, partialClique);
 
+            if (m_bFoundClique) return;
+
 #ifdef PRINT_CLIQUES_TOMITA_STYLE
             printf("b ");
 #endif
@@ -210,7 +221,5 @@ void BronKerboschAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cli
         m_pSets->ReturnVerticesToP(vNonNeighborsOfPivot);
     }
 
-    m_pSets->ReturnDominatedVertices(dominatedVertices);
-
-    stepsSinceLastReportedClique++;
+////    stepsSinceLastReportedClique++;
 }
