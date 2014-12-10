@@ -141,6 +141,14 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
 ////        cout << "Another vertex down...only " << m_pSets->SizeOfP() << " more to go" << endl;
 ////    }
 
+////    cout << "Partial Clique: ";
+////
+////    for (int const vertex : partialClique) {
+////        cout << vertex << " ";
+////    }
+////
+////    cout << endl << flush;
+
     if (partialClique.size() + m_pSets->RemainingSizeEstimate() <= m_uMaximumCliqueSize) {
         return;
     }
@@ -150,7 +158,7 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
     stepsSinceLastReportedClique++;
 
     // if X is empty and P is empty, return partial clique as maximal
-    if (m_pSets->XAndPAreEmpty()) {
+    if (m_pSets->PIsEmpty()) { //XAndPAreEmpty()) {
         cliqueCount++;
         if (!GetQuiet())
             cout << "Found clique with size " << partialClique.size() << endl;
@@ -189,16 +197,13 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
     // search for maximal cliques
     if (!vNonNeighborsOfPivot.empty()) {
         for (int const vertex : vNonNeighborsOfPivot) {
-            m_pSets->MoveFromPToR(vertex);
-
-            // add vertex into partialClique, representing R.
-            partialClique.push_back(vertex);
-            list<int>::iterator vertexLink(partialClique.end());
-            --vertexLink;
+            m_pSets->MoveFromPToR(partialClique, vertex);
 
 #ifdef PRINT_CLIQUES_TOMITA_STYLE
             printf("%d ", vertex);
 #endif
+
+            m_pSets->ApplyReduction(partialClique);
 
             // recursively compute maximal cliques with new sets R, P and X
             RunRecursive(cliqueCount, cliques, partialClique);
@@ -207,9 +212,9 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
             printf("b ");
 #endif
 
-            // remove vertex from partialCliques
-            partialClique.erase(vertexLink);
-            m_pSets->MoveFromRToX(vertex);
+            m_pSets->UndoReduction(partialClique);
+
+            m_pSets->MoveFromRToX(partialClique, vertex);
         }
 
         // swap vertices that were moved to X back into P, for higher recursive calls.

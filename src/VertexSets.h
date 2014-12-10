@@ -15,7 +15,9 @@ public:
     VertexSets& operator=(VertexSets const &sets) = delete;
 
     virtual void MoveFromPToR(int const vertexInP) __attribute__((always_inline)) = 0;
+    virtual void MoveFromPToR(std::list<int> &partialClique, int const vertexInP) __attribute__((always_inline)) { MoveFromPToR(vertexInP); partialClique.push_back(vertexInP); }
     virtual void MoveFromRToX(int const vertexInP) __attribute__((always_inline)) = 0;
+    virtual void MoveFromRToX(std::list<int> &partialClique, int const vertexInP) __attribute__((always_inline)) { MoveFromRToX(vertexInP); partialClique.pop_back(); }
 
     virtual void ReturnVerticesToP(std::vector<int> const &vVertices) __attribute__((always_inline)) = 0;
 
@@ -39,10 +41,13 @@ public:
     virtual void GetTopLevelPartialClique(std::list<int> &/*partialClique*/) const = 0;
 
     virtual void RemoveDominatedVertices(std::vector<int> &dominatedVertices) {}
+    virtual void ApplyReduction(std::list<int> &partialClique) {}
+    virtual void UndoReduction(std::list<int> &partialClique) {}
 
     virtual void ReturnDominatedVertices(std::vector<int> const &dominatedVertices) {}
 
     std::string GetName() { return m_sName; }
+    void        SetName(std::string const &name) { m_sName = name; }
 
     virtual size_t GetGraphSize() const = 0;
 

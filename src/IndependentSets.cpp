@@ -6,7 +6,7 @@
 
 using namespace std;
 
-IndependentSets::IndependentSets(vector<vector<int>> const &adjacencyList)
+IndependentSets::IndependentSets(vector<vector<int>> &adjacencyList)
 : VertexSets("adjlist")
 , beginX(0)
 , beginP(0)
@@ -45,7 +45,7 @@ void IndependentSets::Initialize()
 
 void IndependentSets::PrintSummary(int const line) const
 {
-    cout << line << ": X[size=" << beginP-beginX << "], P[size=" << beginR-beginP << "]" << endl; 
+    cout << line << ": X[" << beginX << ":" << beginP << "), P[" << beginP << ":" << beginR << ")" << endl; 
 }
 
 bool IndependentSets::GetNextTopLevelPartition()

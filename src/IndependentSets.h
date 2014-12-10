@@ -11,16 +11,16 @@
 
 class IndependentSets : public VertexSets {
 public:
-    IndependentSets(std::vector<std::vector<int>> const &adjacencyList);
-    ~IndependentSets();
+    IndependentSets(std::vector<std::vector<int>> &adjacencyList);
+    virtual ~IndependentSets();
 
     IndependentSets           (IndependentSets const &sets) = delete;
     IndependentSets& operator=(IndependentSets const &sets) = delete;
 
-    void MoveFromPToR(int const vertexInP) __attribute__((always_inline));
-    void MoveFromRToX(int const vertexInP) __attribute__((always_inline));
+    virtual void MoveFromPToR(int const vertexInP) __attribute__((always_inline));
+    virtual void MoveFromRToX(int const vertexInP) __attribute__((always_inline));
 
-    void ReturnVerticesToP(std::vector<int> const &vVertices) __attribute__((always_inline));
+    virtual void ReturnVerticesToP(std::vector<int> const &vVertices) __attribute__((always_inline));
 
     std::vector<int> ChoosePivot() const __attribute__((always_inline));
     bool InP(int const vertex) const __attribute__((always_inline));
@@ -35,17 +35,17 @@ public:
 
     void Initialize();
 
-    void PrintSummary(int const line) const;
+    virtual void PrintSummary(int const line) const;
 
-    bool GetNextTopLevelPartition();
+    virtual bool GetNextTopLevelPartition();
 
-    void GetTopLevelPartialClique(std::list<int> &/*partialClique*/) const { }
+    virtual void GetTopLevelPartialClique(std::list<int> &/*partialClique*/) const { }
 
-private: // members
+protected: // members
     int beginX;
     int beginP;
     int beginR;
-    std::vector<std::vector<int>> const &m_AdjacencyList;
+    std::vector<std::vector<int>> &m_AdjacencyList;
     std::vector<int> vertexSets;
     std::vector<int> vertexLookup;
     std::vector<int> degree;
@@ -68,10 +68,14 @@ inline void IndependentSets::ReturnVerticesToP(std::vector<int> const &vVertices
 // DONE, need to verify
 inline void IndependentSets::MoveFromPToR(int const vertex)
 {
+    PrintSummary(__LINE__);
+    std::cout << "Moving " << vertex << " to R" << std::endl << std::flush;
     int const vertexLocation = vertexLookup[vertex];
+    std::cout << "Location of " << vertex << " is " << vertexLocation << std::endl << std::flush;
 
     //swap vertex into R and update beginR
     beginR--;
+    std::cout << "Moving swapping with location: " << beginR << std::endl << std::flush;
     vertexSets[vertexLocation] = vertexSets[beginR];
     vertexLookup[vertexSets[beginR]] = vertexLocation;
     vertexSets[beginR] = vertex;
@@ -89,9 +93,11 @@ inline void IndependentSets::MoveFromPToR(int const vertex)
     while (j<degree[vertex]) {
         int const neighbor = m_AdjacencyList[vertex][j];
         int const neighborLocation = vertexLookup[neighbor];
+        std::cout << "Evaluating neighbor " << neighbor << std::endl << std::flush;
 
         // if in X
         if (neighborLocation >= beginX && neighborLocation < beginP) {
+            std::cout << "    Moving neighbor " << neighbor << " out of X" << std::endl;
             // swap out of new X territory
             vertexSets[neighborLocation] = vertexSets[newBeginX];
             vertexLookup[vertexSets[newBeginX]] = neighborLocation;
@@ -102,6 +108,7 @@ inline void IndependentSets::MoveFromPToR(int const vertex)
 
         //if in P
         else if (neighborLocation >= beginP && neighborLocation < beginR) {
+            std::cout << "    Moving neighbor " << neighbor << " out of P" << std::endl;
             // swap out of new P territory
             newBeginR--;
             vertexSets[neighborLocation] = vertexSets[newBeginR];
@@ -118,6 +125,8 @@ inline void IndependentSets::MoveFromPToR(int const vertex)
     beginX = newBeginX;
     beginP = newBeginP;
     beginR = newBeginR;
+
+    PrintSummary(__LINE__);
 }
 
 // DONE: need to verify

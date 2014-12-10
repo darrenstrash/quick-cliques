@@ -30,6 +30,7 @@
 #include "DegeneracyVertexSets.h"
 #include "CacheEfficientDegeneracyVertexSets.h"
 #include "IndependentSets.h"
+#include "IndependentSetsReduction.h"
 #include "DegeneracyIndependentSets.h"
 #include "DegeneracyIndependentSets2.h"
 #include "MaximumCliqueAlgorithm.h"
@@ -71,7 +72,7 @@ using namespace std;
 bool isValidAlgorithm(string const &name)
 {
     return (name == "tomita" || name == "adjlist" || name == "generic-adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
-            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2");
+            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis");
 }
 
 void ProcessCommandLineArgs(int const argc, char** argv, map<string,string> &mapCommandLineArgs)
@@ -163,7 +164,7 @@ int main(int argc, char** argv)
         }
     }
 
-    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2");
+    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis");
 
     vector<vector<int>> adjacencyArray;
 
@@ -207,6 +208,9 @@ int main(int argc, char** argv)
     } else if (name == "mis") {
         IndependentSets *pSets = new IndependentSets(adjacencyArray);
         pAlgorithm = new BronKerboschAlgorithm(pSets);
+    } else if (name == "reduction-mis") {
+        IndependentSetsReduction *pSets = new IndependentSetsReduction(adjacencyArray);
+        pAlgorithm = new MaximumCliqueAlgorithm(pSets);
     } else if (name == "degeneracy-mis") {
         DegeneracyIndependentSets *pSets = new DegeneracyIndependentSets(adjacencyArray);
         pAlgorithm = new MaximumCliqueAlgorithm(pSets);
