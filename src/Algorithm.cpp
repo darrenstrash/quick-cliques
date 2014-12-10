@@ -8,11 +8,24 @@ using namespace std;
 Algorithm::Algorithm(std::string const &name)
  : m_sName(name)
  , m_bQuiet(false)
+ , m_vCallBacks()
 {
 }
 
 Algorithm::~Algorithm()
 {
+}
+
+void Algorithm::AddCallBack(std::function<void(std::list<int> const&)> callback)
+{
+    m_vCallBacks.push_back(callback);
+}
+
+void Algorithm::ExecuteCallBacks(std::list<int> const &vertexSet) const
+{
+    for (auto &function : m_vCallBacks) {
+        function(vertexSet);
+    }
 }
 
 string Algorithm::GetName() const

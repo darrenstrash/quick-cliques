@@ -119,3 +119,98 @@ void CliqueTools::DecomposeIntoDisjointCliques(vector<vector<int>> &adjacencyLis
  
 }
 
+bool CliqueTools::IsMaximalClique(vector<vector<int>> &adjacencyArray, list<int> const&clique, bool const verbose)
+{
+    size_t const cliqueSize(clique.size());
+    vector<bool> vMarkedVertices(adjacencyArray.size(), false);
+
+    for (int const vertex : clique) {
+        vMarkedVertices[vertex] = true;
+    }
+
+    // first check that it is a clique
+    #if 0
+    for (int const vertex : clique) {
+        size_t neighborsInClique(0)
+        for (int const neighbor : adjacencyArray[vertex]) {
+            if (vMarkedVertices[neighbor]) neighborsInClique++;
+        }
+        if (neighborsInClique != cliqueSize - 1) {
+            if (verbose) {
+                cout << "Maximal clique test failed: " << vertex << " is not in the clique!" << endl;
+            }
+            return false;
+    }
+    #else
+    for (size_t vertex = 0; vertex < adjacencyArray.size(); ++vertex) {
+        bool const inClique(vMarkedVertices[vertex]);
+        size_t neighborsInClique(0);
+        for (int const neighbor : adjacencyArray[vertex]) {
+            if (vMarkedVertices[neighbor]) neighborsInClique++;
+        }
+
+        if (inClique && neighborsInClique != cliqueSize - 1) {
+            if (verbose) {
+                cout << "Maximal clique test failed: " << vertex << " should not be in clique!" << endl;
+            }
+            return false;
+        }
+
+        if (!inClique && neighborsInClique == cliqueSize) {
+            if (verbose) {
+                cout << "Maximal clique test failed: " << vertex << " can be added to clique!" << endl;
+            }
+            return false;
+        }
+    }
+    #endif
+    return true;
+}
+
+bool CliqueTools::IsMaximalIndependentSet(vector<vector<int>> &adjacencyArray, list<int> const &vertexSet, bool const verbose)
+{
+    size_t const setSize(vertexSet.size());
+    vector<bool> vMarkedVertices(adjacencyArray.size(), false);
+
+    for (size_t const vertex : vertexSet) {
+        vMarkedVertices[vertex] = true;
+    }
+
+    // first check that it is a clique
+    #if 0
+    for (int const vertex : clique) {
+        size_t neighborsInClique(0)
+        for (int const neighbor : adjacencyArray[vertex]) {
+            if (vMarkedVertices[neighbor]) neighborsInClique++;
+        }
+        if (neighborsInClique != cliqueSize - 1) {
+            if (verbose) {
+                cout << "Maximal clique test failed: " << vertex << " is not in the clique!" << endl;
+            }
+            return false;
+    }
+    #else
+    for (size_t vertex = 0; vertex < adjacencyArray.size(); ++vertex) {
+        bool const inSet(vMarkedVertices[vertex]);
+        size_t neighborsInSet(0);
+        for (int const neighbor : adjacencyArray[vertex]) {
+            if (vMarkedVertices[neighbor]) neighborsInSet++;
+        }
+
+        if (inSet && neighborsInSet != 0) {
+            if (verbose) {
+                cout << "Maximal independent set test failed: " << vertex << " should not be in set!" << endl;
+            }
+            return false;
+        }
+
+        if (!inSet && neighborsInSet == 0) {
+            if (verbose) {
+                cout << "Maximal independent set test failed: " << vertex << " can be added to set!" << endl;
+            }
+            return false;
+        }
+    }
+    #endif
+    return true;
+}

@@ -37,6 +37,7 @@
 #include "MinimumCliqueAlgorithm.h"
 #include "PartialMatchDegeneracyVertexSets.h"
 #include "CliqueGraphAlgorithm.h"
+#include "CliqueTools.h"
 
 #include "Staging.h"
 
@@ -180,6 +181,7 @@ int main(int argc, char** argv)
         adjacencyList.clear(); // does this free up memory? probably some...
     }
 
+
     if (name == "tomita") {
         pAlgorithm = new TomitaAlgorithm(adjacencyMatrix, n);
     } else if (name == "adjlist") {
@@ -236,6 +238,21 @@ int main(int argc, char** argv)
     if (staging) {
         pAlgorithm = new Staging(adjacencyArray);
     }
+
+////    auto printClique = [](list<int> const &clique) {
+////        for (int const vertex : clique) {
+////            cout << vertex << " ";
+////        }
+////        cout << endl;
+////    };
+////
+////    auto verifyIndependentSet = [&adjacencyArray](list<int> const &clique) {
+////        bool const isMIS = CliqueTools::IsMaximalIndependentSet(adjacencyArray, clique, true /* verbose */);
+////        cout << "Independent set " << (isMIS ? "is" : "is not" ) << " maximal " << endl;
+////    };
+////
+////    pAlgorithm->AddCallBack(printClique);
+////    pAlgorithm->AddCallBack(verifyIndependentSet);
 
     // Run algorithm
     list<list<int>> cliques;

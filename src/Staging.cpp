@@ -27,6 +27,7 @@ bool RemoveIsolatedClique(int const vertex, vector<set<int>> &neighbors, set<int
 {
     size_t neighborCount(0);
     bool superSet(true);
+    // TODO/DS: Put back!
     for (int const neighbor : neighbors[vertex]) {
         if (neighbors[neighbor].size() < neighbors[vertex].size()) {
             superSet = false; break;
@@ -39,7 +40,21 @@ bool RemoveIsolatedClique(int const vertex, vector<set<int>> &neighbors, set<int
 
     if (!superSet) return false;
 
+////    bool const debug(true);//vertex==194);
+////    if (debug) {
+////        cout << "vertex " << vertex << " has neighbors: ";
+////    }
+////    if (debug) {
+////        for (int const neighbor : neighbors[vertex]) {
+////            cout << neighbor << " " << flush;
+////        }
+////        cout << endl << flush;
+////    }
+
     for (int const neighbor : neighbors[vertex]) {
+////        if (debug) {
+////            cout << "Considering neighbor " <<  neighbor  << flush;
+////        }
         neighborCount++;
 
         for (int const nNeighbor : neighbors[neighbor]) {
@@ -48,6 +63,9 @@ bool RemoveIsolatedClique(int const vertex, vector<set<int>> &neighbors, set<int
         vMarkedVertices[neighbor] = true;
 
         for (int const neighbor2 : neighbors[vertex]) {
+////            if (debug && superSet && !vMarkedVertices[neighbor2]) {
+////                cout << "(missing neighbor " << neighbor2 << ") ";
+////            }
             superSet = superSet && vMarkedVertices[neighbor2];
         }
 
@@ -56,7 +74,15 @@ bool RemoveIsolatedClique(int const vertex, vector<set<int>> &neighbors, set<int
         }
         vMarkedVertices[neighbor] = false;
 
-        if (!superSet) return false;
+        if (!superSet) {
+////            if (debug) {
+////                cout << "[x] " << endl;
+////            }
+            return false;
+        }
+
+////        if (debug)
+////            cout << endl << flush;
 
         ////            cout << "Iteration(" << neighborCount << ": Intersection=";
         ////            for (int const vertex : intersection) {
@@ -72,7 +98,11 @@ bool RemoveIsolatedClique(int const vertex, vector<set<int>> &neighbors, set<int
     ////        cout << endl << flush;
 
     if (superSet) {
-        ////        cout << "Removing " << vertex << " and its " << neighborCount << " remaining neighbors." << endl << flush;
+////        cout << "Removing Clique: [" << vertex;
+////        for (int const neighbor : neighbors[vertex]) {
+////            cout << " " << neighbor;
+////        }
+////        cout << "]" << endl;
         removed.insert(neighbors[vertex].begin(), neighbors[vertex].end());
         removed.insert(vertex);
         isolates.insert(vertex);
@@ -107,7 +137,6 @@ bool RemoveIsolatedPath(int const vertex, vector<set<int>> &neighbors, set<int> 
 
     for (int const neighbor : neighbors[vertex]) {
         if (neighbors[neighbor].size() == 2) {
-            ////            cout << "Removing path vertices!" << endl << flush;
             removed.insert(vertex);
             removed.insert(neighbor);
             isolates.insert(vertex);
@@ -126,7 +155,7 @@ bool RemoveIsolatedPath(int const vertex, vector<set<int>> &neighbors, set<int> 
 
             for (int const otherNeighbor : neighbors[vertex]) {
                 if (otherNeighbor != neighbor) {
-                    neighbors[otherNeighbor].erase(neighbor);
+                    neighbors[otherNeighbor].erase(vertex);
                     remaining.insert(otherNeighbor);
 
                     neighbors[otherNeighbor].insert(endVertex);
@@ -140,6 +169,7 @@ bool RemoveIsolatedPath(int const vertex, vector<set<int>> &neighbors, set<int> 
 
             remaining.erase(vertex);
             remaining.erase(neighbor);
+////            cout << "Removing Path: [" << vertex << " " << neighbor << "]" << endl << flush;
 
             return true;
         }
@@ -221,7 +251,7 @@ bool RemoveMaxDegreeVertex(vector<set<int>> &neighbors, set<int> &remaining, set
 bool RemoveAllIsolates(vector<set<int>> &neighbors, set<int> &remaining, set<int> &isolates, set<int> &removed, vector<bool> &vMarkedVertices)
 {
     //cout << "Removing all isolates." << endl << flush;
-    ////    int isolateSize(isolates.size());
+    int isolateSize(isolates.size());
     while (!remaining.empty()) {
         ////            if (remaining.size() %10000 == 0)
         //cout << "Remaining: " << remaining.size() << ", Removed: " << removed.size() << endl << flush;
@@ -229,7 +259,7 @@ bool RemoveAllIsolates(vector<set<int>> &neighbors, set<int> &remaining, set<int
         int const vertex = *sit;
         remaining.erase(sit);
 
-        cout << "Attempting to remove vertex " << vertex << endl << flush;
+////        cout << "Attempting to remove vertex " << vertex << endl << flush;
 
         bool reduction = RemoveIsolatedClique(vertex, neighbors, remaining, isolates, removed, vMarkedVertices);
         if (!reduction) {
@@ -237,7 +267,7 @@ bool RemoveAllIsolates(vector<set<int>> &neighbors, set<int> &remaining, set<int
         }
     }
 
-    ////    cout << "Removed " << isolates.size() - isolateSize << " isolates." << endl << flush;
+////    cout << "Removed " << isolates.size() - isolateSize << " isolates." << endl << flush;
     return true;
 }
 
@@ -325,6 +355,7 @@ void Staging::Run()
         cout << "Removing vertex " << vertexWithMaxReductions << " maximizes isolate removal (" << maxIsolates << " isolates)." << endl << flush;
         //cout << "Removed " << removed.size() << "/" << m_AdjacencyList.size() << " vertices" << endl << flush;
 
+        cout << "Removing next vertex..." << endl << flush;
         // don't actually remove anything, just run like before. // TODO/DS actually remove vertex!
         set<int> tempRemoved(removed);
         if (vertexWithMaxReductions == -1) {
@@ -334,8 +365,6 @@ void Staging::Run()
             RemoveVertexAndNeighbors(vertexWithMaxReductions, neighbors, remaining, isolates, tempRemoved);
             RemoveAllIsolates(neighbors, remaining, isolates, tempRemoved, vMarkedVertices);
         }
-
-        cout << "# vertices remaining in graph: " << inGraph.size() << "/" << m_AdjacencyList.size() << endl << flush;
 
         vector<int> newlyRemovedVertices(tempRemoved.size() - removed.size(), -1);
         vector<int>::iterator it = set_difference(tempRemoved.begin(), tempRemoved.end(), removed.begin(), removed.end(), newlyRemovedVertices.begin()); // TODO: This is an expensive diff, just grab the added vertices before we get to this point.
@@ -347,6 +376,8 @@ void Staging::Run()
         }
         //        inGraph.erase(tempRemoved.begin(), tempRemoved.end());
         removed.insert(newlyRemovedVertices.begin(), newlyRemovedVertices.end());
+
+        cout << "# vertices remaining in graph: " << inGraph.size() << "/" << m_AdjacencyList.size() << endl << flush;
     }
 
     cout << "Removed " << removed.size() << " vertices." << endl << flush;
@@ -358,9 +389,18 @@ void Staging::Run()
 
     cout << "Removing isolates..." << endl;
     vector<int> vRemoved;
+    vector<int> vIsolates;
     set<int>    setRemoved;
     vector<pair<int,int>> vAddedEdges;
-    isolates.RemoveAllIsolates(vRemoved, vRemoved, vAddedEdges);
+    isolates.RemoveAllIsolates(vIsolates, vRemoved, vAddedEdges);
+
+    list<int> independentSet;
+    for (int const vertex : vIsolates) {
+        independentSet.push_back(vertex);
+    }
+
+
+    vRemoved.insert(vRemoved.end(), vIsolates.begin(), vIsolates.end());
     setRemoved.insert(vRemoved.begin(), vRemoved.end());
 
     cout << "# vertices remaining in graph: " << m_AdjacencyList.size() - vRemoved.size() << "/" << m_AdjacencyList.size() << endl << flush;
@@ -368,22 +408,35 @@ void Staging::Run()
     // as of now, this loop helps find a really small Independent set, this is to help limit the recursion depth.
     // need to expand this into a branch-and-bound, pick the vertices that constrain the search the most, to keep
     // the search at a reasonable depth. And try to "peel off" as many vertices as possible through reductions.
+
+
     while (vRemoved.size() != m_AdjacencyList.size()) {
         // find vertex whose removal maximizes the number of vertices moved to IS by reduction.
         int vertexWithMaxReductions(-1);
 
         int maxIsolates(-1);
         cout << "Testing remaining " << m_AdjacencyList.size() - vRemoved.size() << " vertices, to maximize isolate removal" << endl << flush;
+
         int const vertexToRemove(isolates.NextVertexToRemove());
 
         if (vertexToRemove == -1) {
             cout << "Something is WRONG: NextVertexToRemove returned -1" << endl << flush;
+            exit(1);
         }
 
         cout << "Removing next vertex..." << endl << flush;
         vector<int> vNextRemoved;
+        vector<int> vNextIsolates;
         isolates.RemoveVertexAndNeighbors(vertexToRemove, vNextRemoved);
-        isolates.RemoveAllIsolates(vNextRemoved, vNextRemoved, vAddedEdges);
+        isolates.RemoveAllIsolates(vNextIsolates, vNextRemoved, vAddedEdges);
+
+        independentSet.push_back(vertexToRemove);
+        for (int const vertex : vNextIsolates) {
+            independentSet.push_back(vertex);
+        }
+
+        vNextRemoved.insert(vNextRemoved.end(), vNextIsolates.begin(), vNextIsolates.end());
+
         for (int const vertex : vNextRemoved) {
             if (setRemoved.find(vertex) != setRemoved.end()) {
                 cout << "Vertex " << vertex << " is being removed twice!" << endl << flush;
@@ -395,6 +448,8 @@ void Staging::Run()
 
         cout << "# vertices remaining in graph: " << m_AdjacencyList.size() - vRemoved.size() << "/" << m_AdjacencyList.size() << endl << flush;
     }
+
+    ExecuteCallBacks(independentSet);
 
     cout << "Removed " << vRemoved.size() << " vertices." << endl << flush;
     cout << "Found independent set of size: " << isolates.size() << endl << flush;
