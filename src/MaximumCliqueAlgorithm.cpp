@@ -178,6 +178,8 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
         cliques.clear();
         cliques.push_back(partialClique);
 
+        ExecuteCallBacks(partialClique);
+
         processClique( 
                        #ifdef RETURN_CLIQUES_ONE_BY_ONE
                        cliques,
