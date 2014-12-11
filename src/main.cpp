@@ -239,21 +239,21 @@ int main(int argc, char** argv)
         pAlgorithm = new Staging(adjacencyArray);
     }
 
-    auto printClique = [](list<int> const &clique) {
-        cout << "Clique: ";
-        for (int const vertex : clique) {
-            cout << vertex << " ";
-        }
-        cout << endl;
-    };
-
-    auto verifyIndependentSet = [&adjacencyArray](list<int> const &clique) {
-        bool const isMIS = CliqueTools::IsMaximalIndependentSet(adjacencyArray, clique, true /* verbose */);
-        cout << "Independent set " << (isMIS ? "is" : "is not" ) << " maximal " << endl;
-    };
-
-    pAlgorithm->AddCallBack(printClique);
-    pAlgorithm->AddCallBack(verifyIndependentSet);
+////    auto printClique = [](list<int> const &clique) {
+////        cout << "Clique: ";
+////        for (int const vertex : clique) {
+////            cout << vertex << " ";
+////        }
+////        cout << endl;
+////    };
+////
+////    auto verifyIndependentSet = [&adjacencyArray](list<int> const &clique) {
+////        bool const isMIS = CliqueTools::IsMaximalIndependentSet(adjacencyArray, clique, true /* verbose */);
+////        cout << "Independent set " << (isMIS ? "is" : "is not" ) << " maximal " << endl;
+////    };
+////
+////    pAlgorithm->AddCallBack(printClique);
+////    pAlgorithm->AddCallBack(verifyIndependentSet);
 
     // Run algorithm
     list<list<int>> cliques;
