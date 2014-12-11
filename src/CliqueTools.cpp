@@ -194,13 +194,18 @@ bool CliqueTools::IsMaximalIndependentSet(vector<vector<int>> &adjacencyArray, l
         bool const inSet(vMarkedVertices[vertex]);
         size_t neighborsInSet(0);
         for (int const neighbor : adjacencyArray[vertex]) {
-            if (vMarkedVertices[neighbor]) neighborsInSet++;
+            if (vMarkedVertices[neighbor]) {
+                neighborsInSet++;
+                if (inSet) {
+                    cout << "Maximal independent set test failed: " << vertex << " should not be in set with neighbor " << neighbor << "!" << endl;
+                }
+            }
         }
 
         if (inSet && neighborsInSet != 0) {
-            if (verbose) {
-                cout << "Maximal independent set test failed: " << vertex << " should not be in set!" << endl;
-            }
+////            if (verbose) {
+////                cout << "Maximal independent set test failed: " << vertex << " should not be in set!" << endl;
+////            }
             return false;
         }
 

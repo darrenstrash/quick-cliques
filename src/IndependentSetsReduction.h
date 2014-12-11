@@ -49,6 +49,30 @@ public:
 
     virtual void GetTopLevelPartialClique(std::list<int> &/*partialClique*/) const { }
 
+    std::string CheckP()
+    {
+        std::string errorString;
+        std::set<int> const &inGraph(isolates.GetInGraph());
+        for (int i = beginP; i < beginR; i++) {
+            int const vertex(vertexSets[i]);
+            if (inGraph.find(vertex) == inGraph.end()) {
+                errorString += "Mismatch: " + std::to_string(vertex) + " in P, but not graph. ";
+            }
+        }
+
+        if (SizeOfP() != inGraph.size()) {
+            errorString += "Mismatch: Size of P=" + std::to_string(SizeOfP()) + ", Graph Size=" + std::to_string(inGraph.size());
+            for (int const vertex : inGraph) {
+                if (!InP(vertex)) {
+                    errorString += "Mismatch: " + std::to_string(vertex) + " in graph, but not P. ";
+                }
+            }
+        }
+
+        if (!errorString.empty()) return errorString;
+        return "Ok";
+    }
+
 protected: // methods
 
     void StoreGraphChanges(std::vector<int> &vCliqueVertices, std::vector<int> &vOtherRemoved, std::vector<std::pair<int,int>> &vAddedEdges);
@@ -79,6 +103,8 @@ inline void IndependentSetsReduction::ReturnVerticesToP(std::vector<int> const &
         vertexLookup[vertex] = beginP;
         vertexLookup[vertexSets[vertexLocation]] = vertexLocation;
     }
+
+    isolates.ReplaceAllRemoved(vVertices);
 }
 
 inline void IndependentSetsReduction::MoveFromPToR(int const vertex)
@@ -103,12 +129,25 @@ inline void IndependentSetsReduction::MoveFromPToR(std::list<int> &partialClique
     std::vector<int> vOtherRemoved;
     std::vector<std::pair<int,int>> vAddedEdges;
 
+////    std::cout << __LINE__ << ": " << CheckP() << std::endl;
+
     isolates.RemoveVertexAndNeighbors(vertex, vOtherRemoved);
+////    std::cout << "Removing vertex " << vertex << " and neighbors: ";
+////    for (int const removedVertex : vOtherRemoved) {
+////        std::cout << removedVertex << " ";
+////    }
+////    std::cout << std::endl;
+
 
     vCliqueVertices.push_back(vertex);
     isolates.RemoveAllIsolates(vCliqueVertices, vOtherRemoved, vAddedEdges);
 
     partialClique.insert(partialClique.end(), vCliqueVertices.begin(), vCliqueVertices.end());
+////    std::cout << "Moving vertices ";
+////    for (int const cliqueVertex : vCliqueVertices) {
+////        std::cout << cliqueVertex << " ";
+////    }
+////    std::cout << " to R." << std::endl;
 
     AddToAdjacencyList(vAddedEdges);
 
@@ -125,6 +164,7 @@ inline void IndependentSetsReduction::MoveFromPToR(std::list<int> &partialClique
     // if it is, swap it out. Otherwise, leave it in.
     for (int const cliqueVertex : vCliqueVertices) {
         // first move the vertex to R.
+////        std::cout << "Moving clique vertex " << cliqueVertex << " to R" << std::endl;
         int const vertexLocation = vertexLookup[cliqueVertex];
         newBeginR--;
         vertexSets[vertexLocation] = vertexSets[newBeginR];
@@ -133,11 +173,11 @@ inline void IndependentSetsReduction::MoveFromPToR(std::list<int> &partialClique
         vertexLookup[cliqueVertex] = newBeginR;
         for (int const neighbor : m_AdjacencyList[cliqueVertex]) {
             int const neighborLocation = vertexLookup[neighbor];
-            ////        std::cout << "Evaluating neighbor " << neighbor << std::endl << std::flush;
+////            std::cout << "Evaluating neighbor " << neighbor << std::endl << std::flush;
 
             // if in X
-            if (neighborLocation >= beginX && neighborLocation < beginP) {
-                ////            std::cout << "    Moving neighbor " << neighbor << " out of X" << std::endl;
+            if (neighborLocation >= beginX && neighborLocation < newBeginX) {
+////                std::cout << "    Moving neighbor " << neighbor << " out of X" << std::endl;
                 // swap out of new X territory
                 vertexSets[neighborLocation] = vertexSets[newBeginX];
                 vertexLookup[vertexSets[newBeginX]] = neighborLocation;
@@ -147,8 +187,8 @@ inline void IndependentSetsReduction::MoveFromPToR(std::list<int> &partialClique
             }
 
             //if in P
-            else if (neighborLocation >= beginP && neighborLocation < beginR) {
-                ////            std::cout << "    Moving neighbor " << neighbor << " out of P" << std::endl;
+            else if (neighborLocation >= beginP && neighborLocation < newBeginR) {
+////                std::cout << "    Moving neighbor " << neighbor << " out of P" << std::endl;
                 // swap out of new P territory
                 newBeginR--;
                 vertexSets[neighborLocation] = vertexSets[newBeginR];
@@ -167,6 +207,8 @@ inline void IndependentSetsReduction::MoveFromPToR(std::list<int> &partialClique
     // save state
     StoreGraphChanges(vCliqueVertices, vOtherRemoved, vAddedEdges);
 
+////    std::cout << __LINE__ << ": " << CheckP() << std::endl;
+
 ////    PrintSummary(__LINE__);
 }
 
@@ -181,6 +223,8 @@ inline void IndependentSetsReduction::MoveFromRToX(std::list<int> &partialClique
 {
     SetDelineator const &delineator = m_lDelineators.back();
 
+////    std::cout << __LINE__ << ": " << CheckP() << std::endl;
+
     beginX = delineator.m_BeginX;
     beginP = delineator.m_BeginP;
     beginR = delineator.m_BeginR;
@@ -190,16 +234,26 @@ inline void IndependentSetsReduction::MoveFromRToX(std::list<int> &partialClique
     std::vector<std::pair<int,int>> vEdges;
     RetrieveGraphChanges(vCliqueVertices, vOtherRemoved, vEdges);
 
+////    std::cout << "Moving vertex " << vertex << " to X" << std::endl;
+////
+////    std::cout << "Returning ";
+////    for (int const cliqueVertex : vCliqueVertices) {
+////        std::cout << cliqueVertex << " ";
+////    }
+////    std::cout << " to P." << std::endl;
+
     // restore graph to contain everything in P.
     isolates.ReplaceAllRemoved(vCliqueVertices);
     isolates.ReplaceAllRemoved(vOtherRemoved);
-    RemoveFromAdjacencyList(vEdges);
+    RemoveFromAdjacencyList(vEdges); // TODO/DS: this probably isn't right
 
     for (int const cliqueVertex : vCliqueVertices) {
         partialClique.pop_back();
     }
 
     m_lDelineators.pop_back();
+
+////    std::cout << __LINE__ << ": " << CheckP() << std::endl;
 
     // the location of vertex may have changed
     int const vertexLocation = vertexLookup[vertex];
@@ -214,6 +268,7 @@ inline void IndependentSetsReduction::MoveFromRToX(std::list<int> &partialClique
 
     isolates.RemoveVertex(vertex);
 
+////    std::cout << __LINE__ << ": " << CheckP() << std::endl;
 }
 
 /*! \brief Computes the vertex v in P union X that has the most neighbors in P,
@@ -225,7 +280,7 @@ inline void IndependentSetsReduction::MoveFromRToX(std::list<int> &partialClique
   P \ {neighborhood of v} when this function completes.
  */
 
-#define NOT_DONE
+////#define NOT_DONE
 
 // TODO/DS: Choose pivot to maximize number of non-neighbors.
 inline std::vector<int> IndependentSetsReduction::ChoosePivot() const

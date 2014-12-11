@@ -427,8 +427,13 @@ void Staging::Run()
         cout << "Removing next vertex..." << endl << flush;
         vector<int> vNextRemoved;
         vector<int> vNextIsolates;
+        vector<pair<int,int>> vNextAddedEdges;
         isolates.RemoveVertexAndNeighbors(vertexToRemove, vNextRemoved);
-        isolates.RemoveAllIsolates(vNextIsolates, vNextRemoved, vAddedEdges);
+        isolates.RemoveAllIsolates(vNextIsolates, vNextRemoved, vNextAddedEdges);
+        cout << "Newly added edges:" << endl;
+        for (pair<int,int> const &edge : vNextAddedEdges) {
+            cout << "    " << edge.first << "," << edge.second << endl;
+        }
 
         independentSet.push_back(vertexToRemove);
         for (int const vertex : vNextIsolates) {
@@ -445,11 +450,52 @@ void Staging::Run()
         }
 
         vRemoved.insert(vRemoved.end(), vNextRemoved.begin(), vNextRemoved.end());
+        vAddedEdges.insert(vAddedEdges.end(), vNextAddedEdges.begin(), vNextAddedEdges.end());
 
         cout << "# vertices remaining in graph: " << m_AdjacencyList.size() - vRemoved.size() << "/" << m_AdjacencyList.size() << endl << flush;
     }
 
-    ExecuteCallBacks(independentSet);
+    ////ExecuteCallBacks(independentSet);
+
+    set<int> testIndependentSet;
+    list<int> trueIndependentSet;
+////    testIndependentSet.insert(independentSet.begin(), independentSet.end());
+    // build up the real independent set using alternatives from path isolate removal.
+    for (list<int>::const_reverse_iterator cit = independentSet.rbegin(); cit != independentSet.rend(); ++cit) {
+        int const vertex(*cit);
+        bool useAlternative(false);
+        for (int const neighbor : m_AdjacencyList[vertex]) {
+            if (testIndependentSet.find(neighbor) != testIndependentSet.end()) {
+                cout << "Need to repair independent set: vertex " << vertex << " has neighbor " << neighbor << " in the independent set." << endl;
+                useAlternative = true;
+                break;
+            }
+        }
+
+        if (!useAlternative) {
+            testIndependentSet.insert(vertex);
+            trueIndependentSet.push_front(vertex);
+            continue;
+        }
+
+        int const alternative(isolates.GetAlternativeVertex(vertex));
+        if (alternative == -1) {
+            cout << "Unable to repair independent set: vertex " << vertex << " has no alternative" << endl;
+            continue;
+        }
+
+        for (int const neighbor2 : m_AdjacencyList[alternative]) {
+            if (testIndependentSet.find(neighbor2) != testIndependentSet.end()) {
+                cout << "Unable to repair independent set: " << vertex << "'s alternative " << alternative << " does not fix independent set. " << alternative << " has neighbor " << neighbor2 << " in independent set." << endl;
+                break;
+            }
+        }
+
+        trueIndependentSet.push_front(alternative);
+        testIndependentSet.insert(alternative);
+    }
+
+    ExecuteCallBacks(trueIndependentSet);
 
     cout << "Removed " << vRemoved.size() << " vertices." << endl << flush;
     cout << "Found independent set of size: " << isolates.size() << endl << flush;

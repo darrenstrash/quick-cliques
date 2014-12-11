@@ -6,7 +6,7 @@
 
 using namespace std;
 
-Isolates::Isolates(vector<vector<int>> const &adjacencyArray)
+Isolates::Isolates(vector<vector<int>> &adjacencyArray)
  : m_AdjacencyArray(adjacencyArray)
  , neighbors(adjacencyArray.size())
  , inGraph()
@@ -15,6 +15,7 @@ Isolates::Isolates(vector<vector<int>> const &adjacencyArray)
  , remaining()
  , vMarkedVertices(adjacencyArray.size(), false)
  , vvRemovedVertices()
+ , m_AlternativeVertices()
 {
     for (size_t u=0; u < adjacencyArray.size(); ++u) {
         remaining.insert(u);
@@ -32,6 +33,9 @@ void Isolates::RemoveEdges(vector<pair<int,int>> const &vEdges)
     for (pair<int,int> const &edge : vEdges) {
         neighbors[edge.first].erase(edge.second);
         neighbors[edge.second].erase(edge.first);
+
+        m_AdjacencyArray[edge.first].pop_back();
+        m_AdjacencyArray[edge.second].pop_back();
     }
 }
 
@@ -45,14 +49,16 @@ bool Isolates::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVerti
         }
     }
 
-////    if (vertex == 21952) {
+////    bool debug(vertex == 113);
+////
+////    if (debug) {
 ////        cout << "vertex" << vertex << " has " << neighbors[vertex].size() << " neighbors." << endl << flush;
 ////    }
 
     if (!superSet) return false;
 
 #if 1
-////    bool const debug(true); //vertex==194);
+////    bool const debug(true); //vertex==12);
 ////    if (debug) {
 ////        cout << "vertex " << vertex << " has neighbors: ";
 ////    }
@@ -60,7 +66,13 @@ bool Isolates::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVerti
 ////        for (int const neighbor : neighbors[vertex]) {
 ////            cout << neighbor << " " << flush;
 ////        }
-////        cout << endl << flush;
+////////        cout << endl << flush;
+////        cout << "(";
+////
+////        for (int const neighbor : m_AdjacencyArray[vertex]) {
+////            cout << neighbor << " " << flush;
+////        }
+////        cout << ")" << endl << flush;
 ////    }
 
     for (int const neighbor : neighbors[vertex]) {
@@ -80,6 +92,8 @@ bool Isolates::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVerti
 ////            }
             superSet = superSet && vMarkedVertices[neighbor2];
         }
+
+        //superSet = superSet && (neighborCount == neighbors[vertex].size()); // TODO/DS : put back?
 
         for (int const nNeighbor : neighbors[neighbor]) {
             vMarkedVertices[nNeighbor] = false;
@@ -210,6 +224,7 @@ bool Isolates::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertice
                 if (nNeighbor != vertex) {
                     endVertex1 = nNeighbor;
                     neighbors[nNeighbor].erase(neighbor);
+////                    cout << __LINE__ << ": Removing edge " << nNeighbor << "," << neighbor << endl;
                     remaining.insert(nNeighbor);
                     break;
                 }
@@ -219,9 +234,14 @@ bool Isolates::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertice
                 if (otherNeighbor != neighbor) {
                     endVertex2 = otherNeighbor;
                     neighbors[otherNeighbor].erase(vertex);
+////                    cout << __LINE__ << ": Removing edge " << otherNeighbor << "," << vertex << endl;
                     remaining.insert(otherNeighbor);
 
                     if (neighbors[otherNeighbor].find(endVertex1) == neighbors[otherNeighbor].end()) {
+
+                        m_AdjacencyArray[otherNeighbor].push_back(endVertex1);
+                        m_AdjacencyArray[endVertex1].push_back(otherNeighbor);
+
                         neighbors[otherNeighbor].insert(endVertex1);
                         neighbors[endVertex1].insert(otherNeighbor);
                         vAddedEdges.push_back(make_pair(endVertex1, otherNeighbor));
@@ -244,6 +264,10 @@ bool Isolates::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertice
 
             remaining.erase(vertex);
             remaining.erase(neighbor);
+
+            m_AlternativeVertices[vertex]   = neighbor;
+            m_AlternativeVertices[neighbor] = vertex;
+            ////cout << "Vertex " << vertex << " has alternative " << neighbor << endl;
 
             inGraph.erase(vertex);
             inGraph.erase(neighbor);
@@ -319,7 +343,7 @@ void Isolates::RemoveAllIsolates(vector<int> &vIsolateVertices, vector<int> &vOt
     //cout << "Removing all isolates." << endl << flush;
     int isolateSize(isolates.size());
     while (!remaining.empty()) {
-        ////            if (remaining.size() %10000 == 0)
+////            if (remaining.size() %10000 == 0)
         //cout << "Remaining: " << remaining.size() << ", Removed: " << removed.size() << endl << flush;
         set<int>::iterator sit = remaining.begin();
         int const vertex = *sit;
@@ -328,9 +352,9 @@ void Isolates::RemoveAllIsolates(vector<int> &vIsolateVertices, vector<int> &vOt
 ////        cout << "Attempting to remove vertex " << vertex << endl << flush;
 
         bool reduction = RemoveIsolatedClique(vertex, vIsolateVertices, vOtherRemovedVertices);
-        if (!reduction) {
-            reduction = RemoveIsolatedPath(vertex, vIsolateVertices, vOtherRemovedVertices, vAddedEdges);
-        }
+////        if (!reduction) {
+////            reduction = RemoveIsolatedPath(vertex, vIsolateVertices, vOtherRemovedVertices, vAddedEdges);
+////        }
     }
 
 ////    cout << "Removed " << isolates.size() - isolateSize << " isolates." << endl << flush;
@@ -338,14 +362,16 @@ void Isolates::RemoveAllIsolates(vector<int> &vIsolateVertices, vector<int> &vOt
 
 void Isolates::ReplaceAllRemoved(vector<int> const &vRemoved)
 {
-        inGraph.insert(vRemoved.begin(), vRemoved.end());
-        for (int const removedVertex : vRemoved) {
-            isolates.erase(removedVertex);
-        }
+    inGraph.insert(vRemoved.begin(), vRemoved.end());
+    for (int const removedVertex : vRemoved) {
+        isolates.erase(removedVertex);
+        removed.erase(removedVertex);
+        m_AlternativeVertices.erase(removedVertex);
+    }
 ////    cout << "Replacing all removed vertices." << endl << flush;
     for (int const removedVertex : vRemoved) {
-        ////            if (remaining.size() %10000 == 0)
-////        cout << "Remaining: " << remaining.size() << ", Removed: " << removed.size() << endl << flush;
+////        if (remaining.size() %10000 == 0)
+////            cout << "Remaining: " << remaining.size() << ", Removed: " << removed.size() << endl << flush;
         for (int const neighbor : m_AdjacencyArray[removedVertex]) {
             if (inGraph.find(neighbor) == inGraph.end()) continue;
             neighbors[removedVertex].insert(neighbor);
@@ -357,6 +383,7 @@ void Isolates::ReplaceAllRemoved(vector<int> const &vRemoved)
 
 int Isolates::NextVertexToRemove()
 {
+#if 1
     int vertexWithMaxReductions(-1);
 
     remaining = inGraph;
@@ -399,6 +426,7 @@ int Isolates::NextVertexToRemove()
         cout << "Removing vertex " << vertexWithMaxReductions << " maximizes isolate removal (" << maxIsolates << " isolates)." << endl;
         return vertexWithMaxReductions;
     }
+#endif
 
     int maxDegreeVertex(-1);
     int maxDegree(INT_MIN);
@@ -410,5 +438,14 @@ int Isolates::NextVertexToRemove()
     }
 
     return maxDegreeVertex;
+}
+
+int Isolates::GetAlternativeVertex(int const vertex) const
+{
+    map<int,int>::const_iterator cit(m_AlternativeVertices.find(vertex));
+    if (cit != m_AlternativeVertices.end()) {
+        return cit->second;
+    }
+    return -1;
 }
 

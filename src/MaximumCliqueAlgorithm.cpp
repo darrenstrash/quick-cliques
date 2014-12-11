@@ -157,6 +157,8 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
 
     stepsSinceLastReportedClique++;
 
+////    ExecuteCallBacks(partialClique);
+
     // if X is empty and P is empty, return partial clique as maximal
     if (m_pSets->PIsEmpty()) { //XAndPAreEmpty()) {
         cliqueCount++;
