@@ -280,7 +280,7 @@ inline void IndependentSetsReduction::MoveFromRToX(std::list<int> &partialClique
   P \ {neighborhood of v} when this function completes.
  */
 
-////#define NOT_DONE
+#define NOT_DONE
 
 // TODO/DS: Choose pivot to maximize number of non-neighbors.
 inline std::vector<int> IndependentSetsReduction::ChoosePivot() const
