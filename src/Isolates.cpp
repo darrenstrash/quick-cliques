@@ -210,6 +210,7 @@ bool Isolates::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVerti
 }
 
 // TODO/DS: need to remember added edge, so we can remove it later.
+// TODO/DS: not currently working, proceeding without it.
 bool Isolates::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges)
 {
     if (neighbors[vertex].size() != 2) return false;
@@ -341,7 +342,7 @@ void Isolates::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
 ////    cout << __LINE__ << ": Cleared neighbors: " << vertex << endl << flush;
 }
 
-void Isolates::RemoveAllIsolates(vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges)
+void Isolates::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges)
 {
 ////    remaining = inGraph; // TODO/DS : We can optimize this by knowing which vertex (and neighbors where removed last.
 ////    if (vOtherRemovedVertices.empty()) {
@@ -360,6 +361,12 @@ void Isolates::RemoveAllIsolates(vector<int> &vIsolateVertices, vector<int> &vOt
         set<int>::iterator sit = remaining.begin();
         int const vertex = *sit;
         remaining.erase(sit);
+
+////        if (inGraph.size() - neighbors[vertex].size() - 1) {
+////            remaining.insert(neighbors[vertex].begin(), neighbors[vertex].end());
+////            RemoveVertex(vertex);
+////            vOtherRemovedVertices(vertex);
+////        }
 
 ////        cout << "Attempting to remove vertex " << vertex << endl << flush;
 
@@ -431,7 +438,7 @@ int Isolates::NextVertexToRemove()
 #endif // OPTIMIZE_BRANCHING
 ////        cout << "And the new isolates..." << vertex << endl << flush;
         vector<pair<int,int>> vAddedEdges;
-        RemoveAllIsolates(vRemoved, vRemoved, vAddedEdges);
+        RemoveAllIsolates(0, vRemoved, vRemoved, vAddedEdges);
 #if 0 //def OPTIMIZE_ISOLATES
         if (static_cast<int>(isolates.size() - tempIsolates.size()) > maxIsolates) {
             maxIsolates = static_cast<int>(isolates.size() - tempIsolates.size());
@@ -472,7 +479,7 @@ int Isolates::NextVertexToRemove()
     for (int const vertex : inGraph) {
         if (static_cast<int>(neighbors[vertex].size()) > maxDegree) {
             maxDegree = static_cast<int>(neighbors[vertex].size());
-            maxDegreeVertex = i;
+            maxDegreeVertex = vertex;
         }
     }
 

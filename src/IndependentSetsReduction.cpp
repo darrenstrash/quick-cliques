@@ -62,7 +62,7 @@ bool IndependentSetsReduction::GetNextTopLevelPartition()
     std::vector<int> vCliqueVertices;
     std::vector<int> vOtherRemoved;
     std::vector<std::pair<int,int>> vAddedEdges;
-    isolates.RemoveAllIsolates(vCliqueVertices, vOtherRemoved, vAddedEdges);
+    isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges);
     for (int const cliqueVertex : vCliqueVertices) {
         int const vertexLocation = vertexLookup[cliqueVertex];
         beginR--;

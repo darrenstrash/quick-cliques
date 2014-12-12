@@ -152,7 +152,7 @@ inline void IndependentSetsReduction::MoveFromPToR(std::list<int> &partialClique
 
 
     vCliqueVertices.push_back(vertex);
-    isolates.RemoveAllIsolates(vCliqueVertices, vOtherRemoved, vAddedEdges);
+    isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges);
 
     partialClique.insert(partialClique.end(), vCliqueVertices.begin(), vCliqueVertices.end());
 ////    std::cout << "Moving vertices ";

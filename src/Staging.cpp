@@ -392,7 +392,7 @@ void Staging::Run()
     vector<int> vIsolates;
     set<int>    setRemoved;
     vector<pair<int,int>> vAddedEdges;
-    isolates.RemoveAllIsolates(vIsolates, vRemoved, vAddedEdges);
+    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges);
 
     list<int> independentSet;
     for (int const vertex : vIsolates) {
@@ -429,7 +429,7 @@ void Staging::Run()
         vector<int> vNextIsolates;
         vector<pair<int,int>> vNextAddedEdges;
         isolates.RemoveVertexAndNeighbors(vertexToRemove, vNextRemoved);
-        isolates.RemoveAllIsolates(vNextIsolates, vNextRemoved, vNextAddedEdges);
+        isolates.RemoveAllIsolates(vIsolates.size(), vNextIsolates, vNextRemoved, vNextAddedEdges);
         cout << "Newly added edges:" << endl;
         for (pair<int,int> const &edge : vNextAddedEdges) {
             cout << "    " << edge.first << "," << edge.second << endl;

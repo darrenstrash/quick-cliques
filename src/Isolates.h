@@ -16,7 +16,7 @@ public:
     void RemoveVertexAndNeighbors(int const vertex, std::vector<int> &vRemoved);
     void RemoveVertex(int const vertex);
 
-    void RemoveAllIsolates(std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
+    void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
     void ReplaceAllRemoved(std::vector<int> const &vRemoved);
 
     int NextVertexToRemove();
