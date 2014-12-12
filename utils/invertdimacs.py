@@ -12,7 +12,7 @@ for line in sys.stdin:
         continue
 
     if line.startswith("p"):
-        splitline = line.split(" ")
+        splitline = line.split()
         startIndex = len(splitline) - 2
         vertices  = int(splitline[startIndex])
         edges     = int(splitline[startIndex+1])
@@ -30,7 +30,7 @@ neighbors = defaultdict(list)
 for line in sys.stdin:
     if (line.startswith("c")):
         continue
-    edge = line.split(" ")
+    edge = line.split()
     v1 = int(edge[1])
     v2 = int(edge[2])
     if (v1 < v2):

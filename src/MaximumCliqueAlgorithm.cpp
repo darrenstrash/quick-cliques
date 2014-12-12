@@ -134,7 +134,7 @@ static unsigned long recursionNode(0);
 
 void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cliques, list<int> &partialClique)
 {
-////    int const currentRecursionNode(recursionNode++);
+    int const currentRecursionNode(recursionNode++);
 ////
 ////    cout << currentRecursionNode << endl;
 ////    if (partialClique.empty()) {
@@ -152,6 +152,13 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
     if (partialClique.size() + m_pSets->RemainingSizeEstimate() <= m_uMaximumCliqueSize) {
         return;
     }
+
+////    if (partialClique.size() > m_uMaximumCliqueSize) {
+////        if (!GetQuiet())
+////            cout << "Found clique with size " << partialClique.size() << endl;
+////        m_uMaximumCliqueSize = partialClique.size();
+////        ExecuteCallBacks(partialClique);
+////    }
 
 ////    m_Sets.PrintSummary(__LINE__);
 
@@ -195,13 +202,24 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
     if (m_pSets->PIsEmpty())
         return;
 
-    vector<int> vNonNeighborsOfPivot = std::move(m_pSets->ChoosePivot());
+    vector<int> vNonNeighborsOfPivot = std::move(m_pSets->ChoosePivotNonConst());
 
     // add candiate vertices to the partial clique one at a time and 
     // search for maximal cliques
     if (!vNonNeighborsOfPivot.empty()) {
         for (int const vertex : vNonNeighborsOfPivot) {
-            m_pSets->MoveFromPToR(partialClique, vertex);
+            // choose the order to evaluate the vertices. If no support, always returns -1
+            int realVertex = m_pSets->GetNextVertexToEvaluate();
+
+            if (currentRecursionNode==0) {
+                cout << "Only " << m_pSets->SizeOfP() << " more vertices to go!" << endl << flush;
+            }
+
+            if (realVertex == -1) {
+                realVertex = vertex;
+            }
+
+            m_pSets->MoveFromPToR(partialClique, realVertex);
 
 #ifdef PRINT_CLIQUES_TOMITA_STYLE
             printf("%d ", vertex);
@@ -218,11 +236,11 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
 
             m_pSets->UndoReduction(partialClique);
 
-            m_pSets->MoveFromRToX(partialClique, vertex);
+            m_pSets->MoveFromRToX(partialClique, realVertex);
         }
 
         // swap vertices that were moved to X back into P, for higher recursive calls.
-        m_pSets->ReturnVerticesToP(vNonNeighborsOfPivot);
+        m_pSets->ReturnVerticesToP(partialClique, vNonNeighborsOfPivot);
     }
 
     stepsSinceLastReportedClique++;

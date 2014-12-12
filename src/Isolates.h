@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <ctime>
 
 class Isolates
 {
@@ -44,6 +45,7 @@ protected: // members
     std::vector<bool> vMarkedVertices;
     std::vector<std::vector<int>> vvRemovedVertices;
     std::map<int,int> m_AlternativeVertices;
+    clock_t timer;
 };
 
 #endif //ISOLATES_H

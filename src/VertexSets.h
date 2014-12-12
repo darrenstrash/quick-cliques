@@ -20,7 +20,9 @@ public:
     virtual void MoveFromRToX(std::list<int> &partialClique, int const vertexInP) __attribute__((always_inline)) { MoveFromRToX(vertexInP); partialClique.pop_back(); }
 
     virtual void ReturnVerticesToP(std::vector<int> const &vVertices) __attribute__((always_inline)) = 0;
+    virtual void ReturnVerticesToP(std::list<int> &partialClique, std::vector<int> const &vVertices) __attribute__((always_inline)) { ReturnVerticesToP(vVertices); }
 
+    virtual std::vector<int> ChoosePivotNonConst() __attribute__((always_inline)) { return ChoosePivot(); }
     virtual std::vector<int> ChoosePivot() const __attribute__((always_inline)) = 0;
     virtual bool InP(int const vertex) const __attribute__((always_inline)) = 0;
 
@@ -37,8 +39,9 @@ public:
     virtual void PrintSummary(int const /*lineNumber*/) const {}
 
     virtual bool GetNextTopLevelPartition() = 0;
-
     virtual void GetTopLevelPartialClique(std::list<int> &/*partialClique*/) const = 0;
+
+    virtual int  GetNextVertexToEvaluate() { return -1; }
 
     virtual void RemoveDominatedVertices(std::vector<int> &dominatedVertices) {}
     virtual void ApplyReduction(std::list<int> &partialClique) {}

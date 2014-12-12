@@ -47,7 +47,17 @@ public:
 
     virtual bool GetNextTopLevelPartition();
 
-    virtual void GetTopLevelPartialClique(std::list<int> &/*partialClique*/) const { }
+    virtual void GetTopLevelPartialClique(std::list<int> &partialClique) const
+    {
+        for (int const cliqueVertex : isolates.GetIsolates()) {
+            partialClique.push_back(cliqueVertex);
+        }
+    }
+
+    virtual int GetNextVertexToEvaluate()
+    {
+        return isolates.NextVertexToRemove();
+    }
 
     std::string CheckP()
     {
@@ -95,6 +105,7 @@ protected: // members
 
 inline void IndependentSetsReduction::ReturnVerticesToP(std::vector<int> const &vVertices)
 {
+#if 1 // TODO/DS: PUT BACK!
     for (int const vertex : vVertices) {
         int const vertexLocation = vertexLookup[vertex];
         beginP--;
@@ -105,6 +116,7 @@ inline void IndependentSetsReduction::ReturnVerticesToP(std::vector<int> const &
     }
 
     isolates.ReplaceAllRemoved(vVertices);
+#endif
 }
 
 inline void IndependentSetsReduction::MoveFromPToR(int const vertex)
@@ -255,6 +267,7 @@ inline void IndependentSetsReduction::MoveFromRToX(std::list<int> &partialClique
 
 ////    std::cout << __LINE__ << ": " << CheckP() << std::endl;
 
+#if 1 // TODO/DS: Put back!
     // the location of vertex may have changed
     int const vertexLocation = vertexLookup[vertex];
 
@@ -267,6 +280,7 @@ inline void IndependentSetsReduction::MoveFromRToX(std::list<int> &partialClique
 ////    beginR = beginR + 1; // might need to put this back...
 
     isolates.RemoveVertex(vertex);
+#endif
 
 ////    std::cout << __LINE__ << ": " << CheckP() << std::endl;
 }
@@ -348,31 +362,32 @@ inline std::vector<int> IndependentSetsReduction::ChoosePivot() const
     // we initialize enough space for all of P; this is
     // slightly space inefficient, but it results in faster
     // computation of non-neighbors.
-    std::vector<int> pivotNonNeighbors(beginR-beginP);
+    std::vector<int> pivotNonNeighbors;
 
-    // we will decrement numNonNeighbors as we find neighbors
-    std::size_t numNonNeighbors = 0;
+    std::set<int> verticesToConsider;
 
     // mark neighbors of pivot that are in P.
-    int j = 0;
-    while (j < degree[pivot]) {
-        int const neighbor = m_AdjacencyList[pivot][j];
+    for (int const neighbor : m_AdjacencyList[pivot]) {
         int const neighborLocation = vertexLookup[neighbor];
 
         // if the neighbor is in P, put it in pivot nonNeighbors
         if (neighborLocation >= beginP && neighborLocation < beginR) {
-            pivotNonNeighbors[numNonNeighbors++] = neighbor;
+            verticesToConsider.insert(neighbor);
+////            pivotNonNeighbors.push_back(neighbor);
+////            for (int nNeighbor : m_AdjacencyList[neighbor]) {
+////                int const nNeighborLocation = vertexLookup[nNeighbor];
+////                if (nNeighborLocation >= beginP && nNeighborLocation < beginR) {
+////                    verticesToConsider.insert(nNeighbor);
+////                }
+////            }
         }
- 
-        j++;
     }
 
-    int const pivotLocation(vertexLookup[pivot]);
+    pivotNonNeighbors.insert(pivotNonNeighbors.end(), verticesToConsider.begin(), verticesToConsider.end());
 
-    if (pivotLocation >= beginP && pivotLocation < beginR)
-        pivotNonNeighbors[numNonNeighbors++] = pivot;
-
-    pivotNonNeighbors.resize(numNonNeighbors);
+////    int const pivotLocation(vertexLookup[pivot]);
+////    if (pivotLocation >= beginP && pivotLocation < beginR)
+////        pivotNonNeighbors.push_back(pivot);
 
 #ifdef DEBUG
     std::cout << " - : ";

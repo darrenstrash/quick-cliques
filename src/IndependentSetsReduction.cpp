@@ -54,9 +54,32 @@ void IndependentSetsReduction::PrintSummary(int const line) const
 
 bool IndependentSetsReduction::GetNextTopLevelPartition()
 {
+    if (m_bDoneWithTopLevelPartitions) return false;
     beginX = 0;
     beginP = 0;
     beginR = m_AdjacencyList.size();
+
+    std::vector<int> vCliqueVertices;
+    std::vector<int> vOtherRemoved;
+    std::vector<std::pair<int,int>> vAddedEdges;
+    isolates.RemoveAllIsolates(vCliqueVertices, vOtherRemoved, vAddedEdges);
+    for (int const cliqueVertex : vCliqueVertices) {
+        int const vertexLocation = vertexLookup[cliqueVertex];
+        beginR--;
+        vertexSets[vertexLocation] = vertexSets[beginR];
+        vertexLookup[vertexSets[beginR]] = vertexLocation;
+        vertexSets[beginR] = cliqueVertex;
+        vertexLookup[cliqueVertex] = beginR;
+    }
+
+    for (int const otherVertex : vOtherRemoved) {
+        int const vertexLocation = vertexLookup[otherVertex];
+        beginR--;
+        vertexSets[vertexLocation] = vertexSets[beginR];
+        vertexLookup[vertexSets[beginR]] = vertexLocation;
+        vertexSets[beginR] = otherVertex;
+        vertexLookup[otherVertex] = beginR;
+    }
 
     bool const returnValue(!m_bDoneWithTopLevelPartitions);
     m_bDoneWithTopLevelPartitions = true;
