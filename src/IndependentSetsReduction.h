@@ -11,6 +11,8 @@
 #include <iostream>
 #include <utility>
 
+#define REMOVE_ISOLATES
+
 class IndependentSetsReduction : public VertexSets
 {
 public:
@@ -56,7 +58,11 @@ public:
 
     virtual int GetNextVertexToEvaluate()
     {
+#ifdef REMOVE_ISOLATES
         return isolates.NextVertexToRemove();
+#else
+        return -1;
+#endif
     }
 
     std::string CheckP()
@@ -115,7 +121,9 @@ inline void IndependentSetsReduction::ReturnVerticesToP(std::vector<int> const &
         vertexLookup[vertexSets[vertexLocation]] = vertexLocation;
     }
 
+#ifdef REMOVE_ISOLATES
     isolates.ReplaceAllRemoved(vVertices);
+#endif
 #endif
 }
 
@@ -143,25 +151,29 @@ inline void IndependentSetsReduction::MoveFromPToR(std::list<int> &partialClique
 
 ////    std::cout << __LINE__ << ": " << CheckP() << std::endl;
 
-    isolates.RemoveVertexAndNeighbors(vertex, vOtherRemoved);
 ////    std::cout << "Removing vertex " << vertex << " and neighbors: ";
 ////    for (int const removedVertex : vOtherRemoved) {
 ////        std::cout << removedVertex << " ";
 ////    }
 ////    std::cout << std::endl;
 
-
+    isolates.RemoveVertexAndNeighbors(vertex, vOtherRemoved);
     vCliqueVertices.push_back(vertex);
+
+#ifdef REMOVE_ISOLATES
     isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges);
+    std::cout << "Removed " << vCliqueVertices.size() + vOtherRemoved.size() << " vertices in reduction" << std::endl;
 
     partialClique.insert(partialClique.end(), vCliqueVertices.begin(), vCliqueVertices.end());
+    AddToAdjacencyList(vAddedEdges);
+#else
+    partialClique.push_back(vertex);
+#endif
 ////    std::cout << "Moving vertices ";
 ////    for (int const cliqueVertex : vCliqueVertices) {
 ////        std::cout << cliqueVertex << " ";
 ////    }
 ////    std::cout << " to R." << std::endl;
-
-    AddToAdjacencyList(vAddedEdges);
 
     // save state
     m_lDelineators.emplace_back(VertexSets::SetDelineator(beginX, beginP, beginR));
@@ -254,15 +266,20 @@ inline void IndependentSetsReduction::MoveFromRToX(std::list<int> &partialClique
 ////    }
 ////    std::cout << " to P." << std::endl;
 
-    // restore graph to contain everything in P.
     isolates.ReplaceAllRemoved(vCliqueVertices);
     isolates.ReplaceAllRemoved(vOtherRemoved);
+
+#ifdef REMOVE_ISOLATES
+    // restore graph to contain everything in P.
     RemoveFromAdjacencyList(vEdges); // TODO/DS: this probably isn't right
 
     for (int const cliqueVertex : vCliqueVertices) {
         partialClique.pop_back();
     }
-
+    isolates.RemoveVertex(vertex);
+#else
+    partialClique.pop_back();
+#endif
     m_lDelineators.pop_back();
 
 ////    std::cout << __LINE__ << ": " << CheckP() << std::endl;
@@ -279,7 +296,6 @@ inline void IndependentSetsReduction::MoveFromRToX(std::list<int> &partialClique
     beginP = beginP + 1;
 ////    beginR = beginR + 1; // might need to put this back...
 
-    isolates.RemoveVertex(vertex);
 #endif
 
 ////    std::cout << __LINE__ << ": " << CheckP() << std::endl;
@@ -318,7 +334,7 @@ inline std::vector<int> IndependentSetsReduction::ChoosePivot() const
 #else
     int pivot = -1;
     int maxIntersectionSize = -1;
-    int i = beginX;
+    int i = beginP;
 
     // loop through all vertices in P union X
     while (i < beginR) {
@@ -387,7 +403,7 @@ inline std::vector<int> IndependentSetsReduction::ChoosePivot() const
 
 ////    int const pivotLocation(vertexLookup[pivot]);
 ////    if (pivotLocation >= beginP && pivotLocation < beginR)
-////        pivotNonNeighbors.push_back(pivot);
+        pivotNonNeighbors.push_back(pivot);
 
 #ifdef DEBUG
     std::cout << " - : ";

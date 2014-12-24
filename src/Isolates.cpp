@@ -362,10 +362,13 @@ void Isolates::RemoveAllIsolates(int const independentSetSize, vector<int> &vIso
         int const vertex = *sit;
         remaining.erase(sit);
 
-////        if (inGraph.size() - neighbors[vertex].size() - 1) {
+    // can prune out high-degree vertices too. // but this is slow right now.
+
+////        if (inGraph.size() - neighbors[vertex].size() < independentSetSize) {
 ////            remaining.insert(neighbors[vertex].begin(), neighbors[vertex].end());
 ////            RemoveVertex(vertex);
-////            vOtherRemovedVertices(vertex);
+////            vOtherRemovedVertices.push_back(vertex);
+////            continue;
 ////        }
 
 ////        cout << "Attempting to remove vertex " << vertex << endl << flush;
