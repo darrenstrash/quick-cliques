@@ -202,46 +202,40 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
     if (m_pSets->PIsEmpty())
         return;
 
-    vector<int> vNonNeighborsOfPivot = std::move(m_pSets->ChoosePivotNonConst());
+    vector<int> vVerticesToEvaluate = std::move(m_pSets->ChoosePivotNonConst());
+    vector<int> vEvaluatedVertices;
 
     // add candiate vertices to the partial clique one at a time and 
     // search for maximal cliques
-    if (!vNonNeighborsOfPivot.empty()) {
-        for (int const vertex : vNonNeighborsOfPivot) {
-            // choose the order to evaluate the vertices. If no support, always returns -1
-            int realVertex = m_pSets->GetNextVertexToEvaluate();
-
-            if (currentRecursionNode==0) {
-                cout << "Only " << m_pSets->SizeOfP() << " more vertices to go!" << endl << flush;
-            }
-
-            if (realVertex == -1) {
-                realVertex = vertex;
-            }
-
-            m_pSets->MoveFromPToR(partialClique, realVertex);
-
-#ifdef PRINT_CLIQUES_TOMITA_STYLE
-            printf("%d ", vertex);
-#endif
-
-            m_pSets->ApplyReduction(partialClique);
-
-            // recursively compute maximal cliques with new sets R, P and X
-            RunRecursive(cliqueCount, cliques, partialClique);
-
-#ifdef PRINT_CLIQUES_TOMITA_STYLE
-            printf("b ");
-#endif
-
-            m_pSets->UndoReduction(partialClique);
-
-            m_pSets->MoveFromRToX(partialClique, realVertex);
+    int vertex = m_pSets->GetNextVertexToEvaluate(vVerticesToEvaluate);
+    while (vertex != -1) {
+        vEvaluatedVertices.push_back(vertex);
+        if (currentRecursionNode == 0) {
+            cout << "Only " << vVerticesToEvaluate.size() << " more vertices to go!" << endl << flush;
         }
+        m_pSets->MoveFromPToR(partialClique, vertex);
 
-        // swap vertices that were moved to X back into P, for higher recursive calls.
-        m_pSets->ReturnVerticesToP(partialClique, vNonNeighborsOfPivot);
+#ifdef PRINT_CLIQUES_TOMITA_STYLE
+        printf("%d ", vertex);
+#endif
+
+        m_pSets->ApplyReduction(partialClique);
+
+        // recursively compute maximal cliques with new sets R, P and X
+        RunRecursive(cliqueCount, cliques, partialClique);
+
+#ifdef PRINT_CLIQUES_TOMITA_STYLE
+        printf("b ");
+#endif
+
+        m_pSets->UndoReduction(partialClique);
+
+        m_pSets->MoveFromRToX(partialClique, vertex);
+        vertex = m_pSets->GetNextVertexToEvaluate(vVerticesToEvaluate);
     }
+
+    // swap vertices that were moved to X back into P, for higher recursive calls.
+    m_pSets->ReturnVerticesToP(partialClique, vEvaluatedVertices);
 
     stepsSinceLastReportedClique++;
 }

@@ -41,7 +41,17 @@ public:
     virtual bool GetNextTopLevelPartition() = 0;
     virtual void GetTopLevelPartialClique(std::list<int> &/*partialClique*/) const = 0;
 
-    virtual int  GetNextVertexToEvaluate() { return -1; }
+    virtual int  GetNextVertexToEvaluate(std::vector<int> &vVertices)
+    {
+        if (vVertices.empty()) {
+            return -1;
+        }
+
+        int const frontVertex(vVertices.front());
+        vVertices[0] = vVertices.back();
+        vVertices.pop_back();
+        return frontVertex;
+    }
 
     virtual void RemoveDominatedVertices(std::vector<int> &dominatedVertices) {}
     virtual void ApplyReduction(std::list<int> &partialClique) {}

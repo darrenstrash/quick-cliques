@@ -56,13 +56,19 @@ public:
         }
     }
 
-    virtual int GetNextVertexToEvaluate()
+    virtual int GetNextVertexToEvaluate(std::vector<int> &vVertices)
     {
 #ifdef REMOVE_ISOLATES
-        return isolates.NextVertexToRemove();
-#else
-        return -1;
+        int const vertexToRemove(isolates.NextVertexToRemove());
+        for (int &vertex : vVertices) {
+            if (vertex == vertexToRemove) {
+                vertex = vVertices.back();
+                vVertices.pop_back();
+                return vertexToRemove;
+            }
+        }
 #endif
+        return VertexSets::GetNextVertexToEvaluate(vVertices);
     }
 
     std::string CheckP()

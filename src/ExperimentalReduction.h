@@ -15,6 +15,7 @@
 #include <utility>
 
 #define REMOVE_ISOLATES
+////#define DO_PIVOT
 
 class ExperimentalReduction : public VertexSets
 {
@@ -65,13 +66,19 @@ public:
         }
     }
 
-    virtual int GetNextVertexToEvaluate()
+    virtual int GetNextVertexToEvaluate(std::vector<int> &vVertices)
     {
 #ifdef REMOVE_ISOLATES
-        return isolates.NextVertexToRemove();
-#else
-        return -1;
+        int const vertexToRemove(isolates.NextVertexToRemove());
+        for (int &vertex : vVertices) {
+            if (vertex == vertexToRemove) {
+                vertex = vVertices.back();
+                vVertices.pop_back();
+                return vertexToRemove;
+            }
+        }
 #endif
+        return VertexSets::GetNextVertexToEvaluate(vVertices);
     }
 
     std::string CheckP()
@@ -118,7 +125,7 @@ protected: // members
 
 inline void ExperimentalReduction::ReturnVerticesToP(std::vector<int> const &vVertices)
 {
-#if 1 // TODO/DS: PUT BACK!
+#ifndef DO_PIVOT
     for (int const vertex : vVertices) {
         m_Sets.MoveFromXToP(vertex);
     }
@@ -129,7 +136,7 @@ inline void ExperimentalReduction::ReturnVerticesToP(std::vector<int> const &vVe
 #ifdef REMOVE_ISOLATES
     isolates.ReplaceAllRemoved(vVertices);
 #endif
-#endif
+#endif // DO_PIVOT
 ////    PrintSummary(__LINE__);
 ////    std::cout << __LINE__ << ": CheckP = " << CheckP() << std::endl;
 
@@ -187,8 +194,10 @@ inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, i
     RestoreState(partialClique);
 
     // after Restoring State, the vertex is back in P
+#ifndef DO_PIVOT
     m_Sets.MoveFromPToX(vertex);
     isolates.RemoveVertex(vertex);
+#endif // DO_PIVOT
 
 ////    std::cout << "Moving " << vertex << " from R to X " << std::endl;
 ////    PrintSummary(__LINE__);
@@ -204,7 +213,9 @@ inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, i
   P \ {neighborhood of v} when this function completes.
  */
 
+#ifndef DO_PIVOT
 #define NOT_DONE
+#endif // DO_PIVOT
 
 // TODO/DS: Choose pivot to maximize number of non-neighbors.
 inline std::vector<int> ExperimentalReduction::ChoosePivot() const
