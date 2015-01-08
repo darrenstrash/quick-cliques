@@ -69,7 +69,8 @@ public:
     virtual int GetNextVertexToEvaluate(std::vector<int> &vVertices)
     {
 #ifdef REMOVE_ISOLATES
-        int const vertexToRemove(isolates.NextVertexToRemove());
+        int const vertexToRemove(isolates.NextVertexToRemove(vVertices));
+        // inefficient, should be a better way to elmininate it before getting here.
         for (int &vertex : vVertices) {
             if (vertex == vertexToRemove) {
                 vertex = vVertices.back();

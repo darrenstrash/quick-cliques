@@ -19,6 +19,7 @@ public:
     void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
     void ReplaceAllRemoved(std::vector<int> const &vRemoved);
 
+    int NextVertexToRemove(std::vector<int> &vVertices);
     int NextVertexToRemove();
 
     size_t size() const { return isolates.size(); }
@@ -46,6 +47,8 @@ protected: // members
     std::vector<std::vector<int>> vvRemovedVertices;
     std::map<int,int> m_AlternativeVertices;
     clock_t timer;
+    clock_t removeTimer;
+    clock_t replaceTimer;
 };
 
 #endif //ISOLATES_H

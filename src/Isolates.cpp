@@ -18,8 +18,9 @@ Isolates::Isolates(vector<vector<int>> &adjacencyArray)
  , vvRemovedVertices()
  , m_AlternativeVertices()
  , timer(0)
+ , removeTimer(0)
+ , replaceTimer(0)
 {
-    
     for (size_t u=0; u < adjacencyArray.size(); ++u) {
         remaining.insert(u);
         inGraph.insert(u);
@@ -30,6 +31,8 @@ Isolates::Isolates(vector<vector<int>> &adjacencyArray)
 Isolates::~Isolates()
 {
     cout << "Total time spent computing next vertex: " << (timer/(double)CLOCKS_PER_SEC) << endl;
+    cout << "Total time spent applying reductions  : " << (removeTimer/(double)CLOCKS_PER_SEC) << endl;
+    cout << "Total time spent undoing  reductions  : " << (replaceTimer/(double)CLOCKS_PER_SEC) << endl;
 }
 
 void Isolates::RemoveEdges(vector<pair<int,int>> const &vEdges)
@@ -344,6 +347,7 @@ void Isolates::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
 
 void Isolates::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges)
 {
+    clock_t startClock = clock();
 ////    remaining = inGraph; // TODO/DS : We can optimize this by knowing which vertex (and neighbors where removed last.
 ////    if (vOtherRemovedVertices.empty()) {
         remaining = inGraph;
@@ -380,10 +384,15 @@ void Isolates::RemoveAllIsolates(int const independentSetSize, vector<int> &vIso
     }
 
 ////    cout << "Removed " << isolates.size() - isolateSize << " isolates." << endl << flush;
+
+    clock_t endClock = clock();
+
+    removeTimer += (endClock - startClock);
 }
 
 void Isolates::ReplaceAllRemoved(vector<int> const &vRemoved)
 {
+    clock_t startClock = clock();
     inGraph.insert(vRemoved.begin(), vRemoved.end());
     for (int const removedVertex : vRemoved) {
         isolates.erase(removedVertex);
@@ -401,11 +410,12 @@ void Isolates::ReplaceAllRemoved(vector<int> const &vRemoved)
         }
     }
 ////    cout << "Done replacing vertices..." << endl << flush;
+
+    clock_t endClock = clock();
+    replaceTimer += (endClock - startClock);
 }
 
-bool token(true);
-
-int Isolates::NextVertexToRemove()
+int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
 {
     clock_t startClock = clock();
 #if 1
@@ -420,6 +430,10 @@ int Isolates::NextVertexToRemove()
 
     auto sortByDegree = [this](int const &leftVertex, int const &rightVertex) { return neighbors[leftVertex].size() > neighbors[rightVertex].size(); };
     sort(vVerticesOrderedByDegree.begin(), vVerticesOrderedByDegree.end(), sortByDegree);
+
+    if (vVerticesOrderedByDegree.empty()) return -1;
+    int const maxDegreeVertex(vVerticesOrderedByDegree[0]);
+
     vVerticesOrderedByDegree.resize(vVerticesOrderedByDegree.size()/10); // TODO/DS: Remove when vertex selection becomes faster, this is a compromise between fast vertex selection and good vertex selection.
 
     int maxIsolates(-1);
@@ -441,7 +455,10 @@ int Isolates::NextVertexToRemove()
 #endif // OPTIMIZE_BRANCHING
 ////        cout << "And the new isolates..." << vertex << endl << flush;
         vector<pair<int,int>> vAddedEdges;
+
+        clock_t startremove(clock());
         RemoveAllIsolates(0, vRemoved, vRemoved, vAddedEdges);
+        removeTimer -= (clock() - startremove);
 #if 0 //def OPTIMIZE_ISOLATES
         if (static_cast<int>(isolates.size() - tempIsolates.size()) > maxIsolates) {
             maxIsolates = static_cast<int>(isolates.size() - tempIsolates.size());
@@ -461,7 +478,9 @@ int Isolates::NextVertexToRemove()
 
         // need to do this after restoring variable inGraph
         RemoveEdges(vAddedEdges); // TODO/DS: Put back...
+        clock_t startreplace(clock());
         ReplaceAllRemoved(vRemoved);
+        replaceTimer -= (clock() - startreplace);
 
 ////        cout << "Done with loop" << endl;
     }
@@ -477,16 +496,14 @@ int Isolates::NextVertexToRemove()
     }
 #endif
 
-    int maxDegreeVertex(-1);
-    int maxDegree(INT_MIN);
-    for (int const vertex : inGraph) {
-        if (static_cast<int>(neighbors[vertex].size()) > maxDegree) {
-            maxDegree = static_cast<int>(neighbors[vertex].size());
-            maxDegreeVertex = vertex;
-        }
-    }
-
     return maxDegreeVertex;
+}
+
+int Isolates::NextVertexToRemove()
+{
+    vector<int> vVertices;
+    vVertices.insert(vVertices.end(), inGraph.begin(), inGraph.end());
+    return NextVertexToRemove(vVertices);
 }
 
 int Isolates::GetAlternativeVertex(int const vertex) const
