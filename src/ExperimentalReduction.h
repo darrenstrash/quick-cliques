@@ -3,6 +3,8 @@
 
 // local includes
 #include "Set.h"
+#include "SetsXPR.h"
+#include "ArraySetsXPR.h"
 #include "VertexSets.h"
 #include "Isolates.h"
 
@@ -39,8 +41,8 @@ public:
     bool PIsEmpty() const __attribute__((always_inline));
     bool XAndPAreEmpty() const __attribute__((always_inline));
 
-    virtual size_t SizeOfX() const { return X.Size(); }
-    virtual size_t SizeOfP() const { return P.Size(); }
+    virtual size_t SizeOfX() const { return m_Sets.SizeOfX(); }
+    virtual size_t SizeOfP() const { return m_Sets.SizeOfP(); }
 
     virtual size_t GetGraphSize() const { return m_AdjacencyList.size(); }
 
@@ -110,9 +112,7 @@ protected: // members
     std::vector<std::vector<int>> vvCliqueVertices;
     std::vector<std::vector<int>> vvOtherRemovedVertices;
     std::vector<std::vector<std::pair<int,int>>> vvAddedEdges;
-    Set X;
-    Set P;
-    Set R;
+    ArraySetsXPR m_Sets;
     std::vector<int> m_vCliqueVertices;
 };
 
@@ -120,7 +120,7 @@ inline void ExperimentalReduction::ReturnVerticesToP(std::vector<int> const &vVe
 {
 #if 1 // TODO/DS: PUT BACK!
     for (int const vertex : vVertices) {
-        X.MoveTo(vertex, P);
+        m_Sets.MoveFromXToP(vertex);
     }
 
 ////    std::cout << "Returning vertices to P" << std::endl;
@@ -153,16 +153,16 @@ inline void ExperimentalReduction::MoveFromPToR(std::list<int> &partialClique, i
 
 ////    for (int const cliqueVertex : m_vCliqueVertices) {
         int const cliqueVertex(vertex);
-        P.MoveTo(cliqueVertex, R);
+        m_Sets.MoveFromPToR(cliqueVertex);
 ////        PrintSummary(__LINE__);
         for (int const neighbor : m_AdjacencyList[cliqueVertex]) {
 ////            if (debug) std::cout << "Evaluating neighbor " << neighbor << std::endl;
-            if (X.Contains(neighbor)) {
+            if (m_Sets.InX(neighbor)) {
 ////                if (debug) std::cout << "    Neighbor is in X, Removing..." << std::endl;
-                X.Remove(neighbor);
-            } else if (P.Contains(neighbor)) {
+                m_Sets.RemoveFromX(neighbor);
+            } else if (m_Sets.InP(neighbor)) {
 ////                if (debug) std::cout << "    Neighbor is in P, Removing..." << std::endl;
-                P.Remove(neighbor);
+                m_Sets.RemoveFromP(neighbor);
             }
         }
 ////    }
@@ -184,7 +184,7 @@ inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, i
     RestoreState();
 
     // after Restoring State, the vertex is back in P
-    P.MoveTo(vertex, X);
+    m_Sets.MoveFromPToX(vertex);
 
 ////    std::cout << "Moving " << vertex << " from R to X " << std::endl;
 ////    PrintSummary(__LINE__);
@@ -199,7 +199,7 @@ inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, i
   P \ {neighborhood of v} when this function completes.
  */
 
-#define NOT_DONE
+////#define NOT_DONE
 
 // TODO/DS: Choose pivot to maximize number of non-neighbors.
 inline std::vector<int> ExperimentalReduction::ChoosePivot() const
@@ -207,7 +207,7 @@ inline std::vector<int> ExperimentalReduction::ChoosePivot() const
 
 #ifdef NOT_DONE
     std::vector<int> vVerticesInP;
-    for (int const vertex : P) {
+    for (int const vertex : m_Sets.GetP()) {
         vVerticesInP.push_back(vertex);
     }
 
@@ -224,8 +224,7 @@ inline std::vector<int> ExperimentalReduction::ChoosePivot() const
     int maxIntersectionSize = -1;
 
     // loop through all vertices in P union X
-    for (int const vertex : P) {
-        int vertex = vertexSets[i];
+    for (int const vertex : m_Sets.GetP()) {
         int neighborCount = 0;
         int numNeighbors = 0;
 
@@ -234,18 +233,22 @@ inline std::vector<int> ExperimentalReduction::ChoosePivot() const
         // is greater than the the best count so far.
         // count the number of neighbors vertex has in P.
         for (int const neighbor : m_AdjacencyList[vertex]) {
-            if (P.Contains(neighbor))
+            if (m_Sets.InP(neighbor))
                 neighborCount++;
         }
 
         // if vertex has more neighbors in P, then update the pivot
-        if ((P.Size() - neighborCount) > maxIntersectionSize) {
-            maxIntersectionSize = P.Size() - neighborCount;
-            pivot = vertexSets[i];
+        if (static_cast<int>(m_Sets.SizeOfP() - neighborCount) > maxIntersectionSize) {
+            maxIntersectionSize = m_Sets.SizeOfP() - neighborCount;
+            pivot = vertex;
         }
     }
 
     std::vector<int> pivotNeighbors;
+
+    if (pivot == -1) {
+        return pivotNeighbors;
+    }
 
     std::set<int> verticesToConsider;
 
@@ -274,17 +277,17 @@ inline std::vector<int> ExperimentalReduction::ChoosePivot() const
 
 inline bool ExperimentalReduction::InP(int const vertex) const
 {
-    return P.Contains(vertex);
+    return m_Sets.InP(vertex);
 }
 
 inline bool ExperimentalReduction::PIsEmpty() const
 {
-    return P.Empty();
+    return m_Sets.PIsEmpty();
 }
 
 inline bool ExperimentalReduction::XAndPAreEmpty() const
 {
-    return X.Empty() && P.Empty();
+    return m_Sets.XIsEmpty() && m_Sets.PIsEmpty();
 }
 
 ////inline void ExperimentalReduction::ApplyReductions(int const vertex, std::list<int> &partialClique)
@@ -330,9 +333,7 @@ inline bool ExperimentalReduction::XAndPAreEmpty() const
 
 inline void ExperimentalReduction::SaveState()
 {
-    X.SaveState();
-    P.SaveState();
-    R.SaveState();
+    m_Sets.SaveState();
 
 ////    std::cout << "Saving P : ";
 ////    for (int const vertexInP : P.GetStdSet()) {
@@ -345,9 +346,7 @@ inline void ExperimentalReduction::SaveState()
 
 inline void ExperimentalReduction::RestoreState()
 {
-    X.RestoreState();
-    P.RestoreState();
-    R.RestoreState();
+    m_Sets.RestoreState();
 
 ////    std::cout << "Restoring P to : ";
 ////    for (int const vertexInP : P.GetStdSet()) {

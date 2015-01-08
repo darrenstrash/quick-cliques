@@ -17,9 +17,7 @@ ExperimentalReduction::ExperimentalReduction(vector<vector<int>> &adjacencyList)
 , vvCliqueVertices(1)
 , vvOtherRemovedVertices(1)
 , vvAddedEdges(1)
-, X()
-, P()
-, R()
+, m_Sets(m_AdjacencyList.size())
 , m_vCliqueVertices(vvCliqueVertices.back())
 {
 }
@@ -50,28 +48,7 @@ void ExperimentalReduction::Initialize()
 
 void ExperimentalReduction::PrintSummary(int const line) const
 {
-    cout << line << ": X = [";
-    set<int> setX;
-    setX.insert(X.begin(), X.end());
-    for (int const x : setX) {
-        cout << x << " ";
-    }
-
-    set<int> setP;
-    setP.insert(P.begin(), P.end());
-    cout << "] P = [";
-    for (int const p : setP) {
-        cout << p << " ";
-    }
-
-    set<int> setR;
-    setR.insert(R.begin(), R.end());
-    cout << "] R = [";
-    for (int const r : setR) {
-        cout << r << " ";
-    }
-    cout << "]" << endl;
-    ////P.PrintSummary();
+    m_Sets.PrintSummary();
 }
 
 bool ExperimentalReduction::GetNextTopLevelPartition()
@@ -79,7 +56,7 @@ bool ExperimentalReduction::GetNextTopLevelPartition()
     if (m_bDoneWithTopLevelPartitions) return false;
 
     for (int vertex = 0; vertex < m_AdjacencyList.size(); ++vertex) {
-        P.Insert(vertex);
+        m_Sets.InsertIntoP(vertex);
     }
 
 ////    std::vector<int> vCliqueVertices;
