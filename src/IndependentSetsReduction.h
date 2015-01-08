@@ -162,7 +162,7 @@ inline void IndependentSetsReduction::MoveFromPToR(std::list<int> &partialClique
 
 #ifdef REMOVE_ISOLATES
     isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges);
-    std::cout << "Removed " << vCliqueVertices.size() + vOtherRemoved.size() << " vertices in reduction" << std::endl;
+////    std::cout << "Removed " << vCliqueVertices.size() + vOtherRemoved.size() << " vertices in reduction" << std::endl;
 
     partialClique.insert(partialClique.end(), vCliqueVertices.begin(), vCliqueVertices.end());
     AddToAdjacencyList(vAddedEdges);

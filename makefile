@@ -6,6 +6,7 @@ BIN_DIR   = bin
 CFLAGS = -Winline -O2 -std=c++11 -g
 
 SOURCES_TMP += Isolates.cpp
+SOURCES_TMP += ExperimentalReduction.cpp
 SOURCES_TMP += IndependentSetsReduction.cpp
 SOURCES_TMP += Staging.cpp
 SOURCES_TMP += CliqueTools.cpp

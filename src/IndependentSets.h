@@ -68,14 +68,14 @@ inline void IndependentSets::ReturnVerticesToP(std::vector<int> const &vVertices
 // DONE, need to verify
 inline void IndependentSets::MoveFromPToR(int const vertex)
 {
-    PrintSummary(__LINE__);
-    std::cout << "Moving " << vertex << " to R" << std::endl << std::flush;
+////    PrintSummary(__LINE__);
+////    std::cout << "Moving " << vertex << " to R" << std::endl << std::flush;
     int const vertexLocation = vertexLookup[vertex];
-    std::cout << "Location of " << vertex << " is " << vertexLocation << std::endl << std::flush;
+////    std::cout << "Location of " << vertex << " is " << vertexLocation << std::endl << std::flush;
 
     //swap vertex into R and update beginR
     beginR--;
-    std::cout << "Moving swapping with location: " << beginR << std::endl << std::flush;
+////    std::cout << "Moving swapping with location: " << beginR << std::endl << std::flush;
     vertexSets[vertexLocation] = vertexSets[beginR];
     vertexLookup[vertexSets[beginR]] = vertexLocation;
     vertexSets[beginR] = vertex;
@@ -93,11 +93,11 @@ inline void IndependentSets::MoveFromPToR(int const vertex)
     while (j<degree[vertex]) {
         int const neighbor = m_AdjacencyList[vertex][j];
         int const neighborLocation = vertexLookup[neighbor];
-        std::cout << "Evaluating neighbor " << neighbor << std::endl << std::flush;
+////        std::cout << "Evaluating neighbor " << neighbor << std::endl << std::flush;
 
         // if in X
         if (neighborLocation >= beginX && neighborLocation < beginP) {
-            std::cout << "    Moving neighbor " << neighbor << " out of X" << std::endl;
+////            std::cout << "    Moving neighbor " << neighbor << " out of X" << std::endl;
             // swap out of new X territory
             vertexSets[neighborLocation] = vertexSets[newBeginX];
             vertexLookup[vertexSets[newBeginX]] = neighborLocation;
@@ -108,7 +108,7 @@ inline void IndependentSets::MoveFromPToR(int const vertex)
 
         //if in P
         else if (neighborLocation >= beginP && neighborLocation < beginR) {
-            std::cout << "    Moving neighbor " << neighbor << " out of P" << std::endl;
+////            std::cout << "    Moving neighbor " << neighbor << " out of P" << std::endl;
             // swap out of new P territory
             newBeginR--;
             vertexSets[neighborLocation] = vertexSets[newBeginR];
@@ -126,7 +126,7 @@ inline void IndependentSets::MoveFromPToR(int const vertex)
     beginP = newBeginP;
     beginR = newBeginR;
 
-    PrintSummary(__LINE__);
+////    PrintSummary(__LINE__);
 }
 
 // DONE: need to verify

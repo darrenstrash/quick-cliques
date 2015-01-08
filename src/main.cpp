@@ -31,6 +31,7 @@
 #include "CacheEfficientDegeneracyVertexSets.h"
 #include "IndependentSets.h"
 #include "IndependentSetsReduction.h"
+#include "ExperimentalReduction.h"
 #include "DegeneracyIndependentSets.h"
 #include "DegeneracyIndependentSets2.h"
 #include "MaximumCliqueAlgorithm.h"
@@ -73,7 +74,7 @@ using namespace std;
 bool isValidAlgorithm(string const &name)
 {
     return (name == "tomita" || name == "adjlist" || name == "generic-adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
-            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis");
+            name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis");
 }
 
 void ProcessCommandLineArgs(int const argc, char** argv, map<string,string> &mapCommandLineArgs)
@@ -165,7 +166,7 @@ int main(int argc, char** argv)
         }
     }
 
-    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis");
+    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis");
 
     vector<vector<int>> adjacencyArray;
 
@@ -213,6 +214,9 @@ int main(int argc, char** argv)
     } else if (name == "reduction-mis") {
         IndependentSetsReduction *pSets = new IndependentSetsReduction(adjacencyArray);
         pAlgorithm = new MaximumCliqueAlgorithm(pSets);
+    } else if (name == "experimental-mis") {
+        ExperimentalReduction *pSets = new ExperimentalReduction(adjacencyArray);
+        pAlgorithm = new MaximumCliqueAlgorithm(pSets);
     } else if (name == "degeneracy-mis") {
         DegeneracyIndependentSets *pSets = new DegeneracyIndependentSets(adjacencyArray);
         pAlgorithm = new MaximumCliqueAlgorithm(pSets);
@@ -239,21 +243,21 @@ int main(int argc, char** argv)
         pAlgorithm = new Staging(adjacencyArray);
     }
 
-////    auto printClique = [](list<int> const &clique) {
-////        cout << "Clique: ";
-////        for (int const vertex : clique) {
-////            cout << vertex << " ";
-////        }
-////        cout << endl;
-////    };
-////
-////    auto verifyIndependentSet = [&adjacencyArray](list<int> const &clique) {
-////        bool const isMIS = CliqueTools::IsMaximalIndependentSet(adjacencyArray, clique, true /* verbose */);
-////        cout << "Independent set " << (isMIS ? "is" : "is not" ) << " maximal " << endl;
-////    };
-////
-////    pAlgorithm->AddCallBack(printClique);
-////    pAlgorithm->AddCallBack(verifyIndependentSet);
+    auto printClique = [](list<int> const &clique) {
+        cout << "Clique: ";
+        for (int const vertex : clique) {
+            cout << vertex << " ";
+        }
+        cout << endl;
+    };
+
+    auto verifyIndependentSet = [&adjacencyArray](list<int> const &clique) {
+        bool const isMIS = CliqueTools::IsMaximalIndependentSet(adjacencyArray, clique, true /* verbose */);
+        cout << "Independent set " << (isMIS ? "is" : "is not" ) << " maximal " << endl;
+    };
+
+    pAlgorithm->AddCallBack(printClique);
+    pAlgorithm->AddCallBack(verifyIndependentSet);
 
     // Run algorithm
     list<list<int>> cliques;
