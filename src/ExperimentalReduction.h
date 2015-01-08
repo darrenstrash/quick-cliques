@@ -51,7 +51,7 @@ public:
     virtual void PrintSummary(int const line) const;
 
     void SaveState() __attribute__((always_inline));
-    void RestoreState() __attribute__((always_inline));
+    void RestoreState(std::list<int> &partialClique) __attribute__((always_inline));
 
     void UndoReductions(std::list<int> &partialClique) __attribute__((always_inline));
     void ApplyReductions(int const vertex, std::list<int> &partialClique) __attribute__((always_inline));
@@ -60,42 +60,42 @@ public:
 
     virtual void GetTopLevelPartialClique(std::list<int> &partialClique) const
     {
-////        for (int const cliqueVertex : isolates.GetIsolates()) {
-////            partialClique.push_back(cliqueVertex);
-////        }
+        for (int const cliqueVertex : isolates.GetIsolates()) {
+            partialClique.push_back(cliqueVertex);
+        }
     }
 
     virtual int GetNextVertexToEvaluate()
     {
-////#ifdef REMOVE_ISOLATES
-////        return isolates.NextVertexToRemove();
-////#else
+#ifdef REMOVE_ISOLATES
+        return isolates.NextVertexToRemove();
+#else
         return -1;
-////#endif
+#endif
     }
 
-////    std::string CheckP()
-////    {
-////        std::string errorString;
-////        std::set<int> const &inGraph(isolates.GetInGraph());
-////        for (int const vertex : P) {
-////            if (inGraph.find(vertex) == inGraph.end()) {
-////                errorString += "Mismatch: " + std::to_string(vertex) + " in P, but not graph. ";
-////            }
-////        }
-////
-////        if (P.Size() != inGraph.size()) {
-////            errorString += "Mismatch: Size of P=" + std::to_string(SizeOfP()) + ", Graph Size=" + std::to_string(inGraph.size());
-////            for (int const vertex : inGraph) {
-////                if (!InP(vertex)) {
-////                    errorString += "Mismatch: " + std::to_string(vertex) + " in graph, but not P. ";
-////                }
-////            }
-////        }
-////
-////        if (!errorString.empty()) return errorString;
-////        return "Ok";
-////    }
+    std::string CheckP()
+    {
+        std::string errorString;
+        std::set<int> const &inGraph(isolates.GetInGraph());
+        for (int const vertex : m_Sets.GetP()) {
+            if (inGraph.find(vertex) == inGraph.end()) {
+                errorString += "Mismatch: " + std::to_string(vertex) + " in P, but not graph. ";
+            }
+        }
+
+        if (m_Sets.SizeOfP() != inGraph.size()) {
+            errorString += "Mismatch: Size of P=" + std::to_string(m_Sets.SizeOfP()) + ", Graph Size=" + std::to_string(inGraph.size());
+            for (int const vertex : inGraph) {
+                if (!InP(vertex)) {
+                    errorString += "Mismatch: " + std::to_string(vertex) + " in graph, but not P. ";
+                }
+            }
+        }
+
+        if (!errorString.empty()) return errorString;
+        return "Ok";
+    }
 
 protected: // methods
 
@@ -108,7 +108,7 @@ protected: // members
     std::vector<int> vertexLookup;
     std::vector<int> degree;
     std::vector<SetDelineator> m_lDelineators;
-////    Isolates isolates;
+    Isolates isolates;
     std::vector<std::vector<int>> vvCliqueVertices;
     std::vector<std::vector<int>> vvOtherRemovedVertices;
     std::vector<std::vector<std::pair<int,int>>> vvAddedEdges;
@@ -127,9 +127,14 @@ inline void ExperimentalReduction::ReturnVerticesToP(std::vector<int> const &vVe
 ////    PrintSummary(__LINE__);
 
 #ifdef REMOVE_ISOLATES
-////    isolates.ReplaceAllRemoved(vVertices);
+    isolates.ReplaceAllRemoved(vVertices);
 #endif
 #endif
+////    PrintSummary(__LINE__);
+////    std::cout << __LINE__ << ": CheckP = " << CheckP() << std::endl;
+
+////    std::cout << "EndCheckPoint: ";
+////    PrintSummary(__LINE__);
 }
 
 inline void ExperimentalReduction::MoveFromPToR(int const vertex)
@@ -144,30 +149,30 @@ inline void ExperimentalReduction::MoveFromPToR(std::list<int> &partialClique, i
 ////    std::cout << "Moving " << vertex << " from P to R " << std::endl;
 ////    PrintSummary(__LINE__);
 
-    partialClique.push_back(vertex);
-////    ApplyReductions(vertex, partialClique);
+    ApplyReductions(vertex, partialClique);
 
 ////    bool const debug(vertex == 37 || vertex == 36);
 
     SaveState();
 
-////    for (int const cliqueVertex : m_vCliqueVertices) {
-        int const cliqueVertex(vertex);
+    for (int const cliqueVertex : m_vCliqueVertices) {
         m_Sets.MoveFromPToR(cliqueVertex);
+////        partialClique.push_back(cliqueVertex);
 ////        PrintSummary(__LINE__);
         for (int const neighbor : m_AdjacencyList[cliqueVertex]) {
-////            if (debug) std::cout << "Evaluating neighbor " << neighbor << std::endl;
+////            std::cout << "Evaluating neighbor " << neighbor << std::endl;
             if (m_Sets.InX(neighbor)) {
-////                if (debug) std::cout << "    Neighbor is in X, Removing..." << std::endl;
+////                std::cout << "    Neighbor is in X, Removing..." << std::endl;
                 m_Sets.RemoveFromX(neighbor);
             } else if (m_Sets.InP(neighbor)) {
-////                if (debug) std::cout << "    Neighbor is in P, Removing..." << std::endl;
+////                std::cout << "    Neighbor is in P, Removing..." << std::endl;
                 m_Sets.RemoveFromP(neighbor);
             }
         }
-////    }
+    }
 
 ////    PrintSummary(__LINE__);
+////    std::cout << __LINE__ << ": CheckP = " << CheckP() << std::endl;
 }
 
 inline void ExperimentalReduction::MoveFromRToX(int const vertex)
@@ -179,15 +184,15 @@ inline void ExperimentalReduction::MoveFromRToX(int const vertex)
 // DONE: need to verify
 inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, int const vertex)
 {
-    partialClique.pop_back();
-
-    RestoreState();
+    RestoreState(partialClique);
 
     // after Restoring State, the vertex is back in P
     m_Sets.MoveFromPToX(vertex);
+    isolates.RemoveVertex(vertex);
 
 ////    std::cout << "Moving " << vertex << " from R to X " << std::endl;
 ////    PrintSummary(__LINE__);
+////    std::cout << __LINE__ << ": CheckP = " << CheckP() << std::endl;
 }
 
 /*! \brief Computes the vertex v in P union X that has the most neighbors in P,
@@ -199,24 +204,20 @@ inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, i
   P \ {neighborhood of v} when this function completes.
  */
 
-////#define NOT_DONE
+#define NOT_DONE
 
 // TODO/DS: Choose pivot to maximize number of non-neighbors.
 inline std::vector<int> ExperimentalReduction::ChoosePivot() const
 {
+
+////    std::cout << "Checkpoint: ";
+////    PrintSummary(__LINE__);
 
 #ifdef NOT_DONE
     std::vector<int> vVerticesInP;
     for (int const vertex : m_Sets.GetP()) {
         vVerticesInP.push_back(vertex);
     }
-
-#ifdef DEBUG
-    std::cout << " P : ";
-    for (int const neighbor: vVerticesInP)
-        std::cout << neighbor << " ";
-    std::cout << std::endl;
-#endif //DEBUG
 
     return vVerticesInP;
 #else
@@ -290,46 +291,64 @@ inline bool ExperimentalReduction::XAndPAreEmpty() const
     return m_Sets.XIsEmpty() && m_Sets.PIsEmpty();
 }
 
-////inline void ExperimentalReduction::ApplyReductions(int const vertex, std::list<int> &partialClique)
-////{
-////    std::vector<int> vCliqueVertices;
-////    std::vector<int> vOtherRemoved;
-////    std::vector<std::pair<int,int>> vAddedEdges;
-////
-////    isolates.RemoveVertexAndNeighbors(vertex, vOtherRemoved);
-////    vCliqueVertices.push_back(vertex);
-////
-////#ifdef REMOVE_ISOLATES
-////    isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges);
-////////    std::cout << "Removed " << vCliqueVertices.size() + vOtherRemoved.size() << " vertices in reduction" << std::endl;
-////
-////    partialClique.insert(partialClique.end(), vCliqueVertices.begin(), vCliqueVertices.end());
-////    AddToAdjacencyList(vAddedEdges);
-////#else
-////    partialClique.push_back(vertex);
-////#endif
-////}
+inline void ExperimentalReduction::ApplyReductions(int const vertex, std::list<int> &partialClique)
+{
+    std::vector<int> &vCliqueVertices(vvCliqueVertices.back());
+    std::vector<int> &vOtherRemoved(vvOtherRemovedVertices.back());
+    std::vector<std::pair<int,int>> &vAddedEdges(vvAddedEdges.back());
 
-////inline void ExperimentalReduction::UndoReductions(std::list<int> &partialClique)
-////{
-////    // restore graph to contain everything in P.
-////    std::vector<int>           vCliqueVertices;
-////    std::vector<int>           vOtherRemoved;
-////    std::vector<std::pair<int,int>> vEdges;
-////    RetrieveGraphChanges(vCliqueVertices, vOtherRemoved, vEdges);
-////
-////    RemoveFromAdjacencyList(vEdges); // TODO/DS: this probably isn't right
-////
-////    isolates.ReplaceAllRemoved(vCliqueVertices);
-////    for (int const vertex : vCliqueVertices) {
-////        R.MoveTo(vertex, P);
+    isolates.RemoveVertexAndNeighbors(vertex, vOtherRemoved);
+    vCliqueVertices.push_back(vertex);
+
+#ifdef REMOVE_ISOLATES
+    isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges);
+////    std::cout << "Removed " << vCliqueVertices.size() + vOtherRemoved.size() << " vertices in reduction" << std::endl;
+////    std::cout << "    Vertices: ";
+
+////    for (int const cliqueVertex : vCliqueVertices) {
+////        std::cout << cliqueVertex << " ";
 ////    }
 ////
-////    isolates.ReplaceAllRemoved(vOtherRemoved);
+////    for (int const otherVertex : vOtherRemoved) {
+////        std::cout << otherVertex << " ";
+////    }
+////    std::cout << std::endl;
+
+    partialClique.insert(partialClique.end(), vCliqueVertices.begin(), vCliqueVertices.end());
+    AddToAdjacencyList(vAddedEdges);
+#else
+    partialClique.push_back(vertex);
+#endif
+
+}
+
+inline void ExperimentalReduction::UndoReductions(std::list<int> &partialClique)
+{
+    RetrieveGraphChanges();
+
+    // restore graph to contain everything in P.
+    std::vector<int>                &vCliqueVertices(vvCliqueVertices.back());
+    std::vector<int>                &vOtherRemoved  (vvOtherRemovedVertices.back());
+    std::vector<std::pair<int,int>> &vEdges         (vvAddedEdges.back());
+
+    RemoveFromAdjacencyList(vEdges); // TODO/DS: this probably isn't right
+
+////    std::cout << "Returning " << vCliqueVertices.size() + vOtherRemoved.size() << " vertices to isolate graph" << std::endl;
+    isolates.ReplaceAllRemoved(vCliqueVertices);
+    for (int const vertex : vCliqueVertices) {
+////        m_Sets.MoveFromRToP(vertex);
+        partialClique.pop_back();
+    }
+
+    isolates.ReplaceAllRemoved(vOtherRemoved);
 ////    for (int const vertex : vOtherRemoved) {
-////        P.Insert(vertex);
+////        m_Sets.MoveFromRToP(vertex);
 ////    }
-////}
+
+    vCliqueVertices.clear();
+    vOtherRemoved.clear();
+    vEdges.clear();
+}
 
 inline void ExperimentalReduction::SaveState()
 {
@@ -341,10 +360,10 @@ inline void ExperimentalReduction::SaveState()
 ////    }
 ////    std::cout << std::endl;
 
-////    StoreGraphChanges();
+    StoreGraphChanges();
 }
 
-inline void ExperimentalReduction::RestoreState()
+inline void ExperimentalReduction::RestoreState(std::list<int> &partialClique)
 {
     m_Sets.RestoreState();
 
@@ -354,7 +373,7 @@ inline void ExperimentalReduction::RestoreState()
 ////    }
 ////    std::cout << std::endl;
 
-////    UndoReductions();
+    UndoReductions(partialClique);
 }
 
 #endif //EXPERIMENTAL_REDUCTION_H

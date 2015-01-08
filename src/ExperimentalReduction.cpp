@@ -13,7 +13,7 @@ ExperimentalReduction::ExperimentalReduction(vector<vector<int>> &adjacencyList)
 , vertexLookup()
 , degree()
 , m_lDelineators()
-////, isolates(adjacencyList)
+, isolates(adjacencyList)
 , vvCliqueVertices(1)
 , vvOtherRemovedVertices(1)
 , vvAddedEdges(1)
@@ -59,28 +59,18 @@ bool ExperimentalReduction::GetNextTopLevelPartition()
         m_Sets.InsertIntoP(vertex);
     }
 
-////    std::vector<int> vCliqueVertices;
-////    std::vector<int> vOtherRemoved;
-////    std::vector<std::pair<int,int>> vAddedEdges;
-////    isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges);
-////    for (int const cliqueVertex : vCliqueVertices) {
-////        int const vertexLocation = vertexLookup[cliqueVertex];
-////        beginR--;
-////        vertexSets[vertexLocation] = vertexSets[beginR];
-////        vertexLookup[vertexSets[beginR]] = vertexLocation;
-////        vertexSets[beginR] = cliqueVertex;
-////        vertexLookup[cliqueVertex] = beginR;
-////    }
-////
-////    for (int const otherVertex : vOtherRemoved) {
-////        int const vertexLocation = vertexLookup[otherVertex];
-////        beginR--;
-////        vertexSets[vertexLocation] = vertexSets[beginR];
-////        vertexLookup[vertexSets[beginR]] = vertexLocation;
-////        vertexSets[beginR] = otherVertex;
-////        vertexLookup[otherVertex] = beginR;
-////    }
-////
+    std::vector<int> vCliqueVertices;
+    std::vector<int> vOtherRemoved;
+    std::vector<std::pair<int,int>> vAddedEdges;
+    isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges);
+    for (int const cliqueVertex : vCliqueVertices) {
+        m_Sets.RemoveFromP(cliqueVertex);
+    }
+
+    for (int const otherVertex : vOtherRemoved) {
+        m_Sets.RemoveFromP(otherVertex);
+    }
+
     bool const returnValue(!m_bDoneWithTopLevelPartitions);
     m_bDoneWithTopLevelPartitions = true;
 
