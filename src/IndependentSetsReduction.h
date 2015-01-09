@@ -74,16 +74,16 @@ public:
     std::string CheckP()
     {
         std::string errorString;
-        std::set<int> const &inGraph(isolates.GetInGraph());
+        ArraySet const &inGraph(isolates.GetInGraph());
         for (int i = beginP; i < beginR; i++) {
             int const vertex(vertexSets[i]);
-            if (inGraph.find(vertex) == inGraph.end()) {
+            if (!inGraph.Contains(vertex)) {
                 errorString += "Mismatch: " + std::to_string(vertex) + " in P, but not graph. ";
             }
         }
 
-        if (SizeOfP() != inGraph.size()) {
-            errorString += "Mismatch: Size of P=" + std::to_string(SizeOfP()) + ", Graph Size=" + std::to_string(inGraph.size());
+        if (SizeOfP() != inGraph.Size()) {
+            errorString += "Mismatch: Size of P=" + std::to_string(SizeOfP()) + ", Graph Size=" + std::to_string(inGraph.Size());
             for (int const vertex : inGraph) {
                 if (!InP(vertex)) {
                     errorString += "Mismatch: " + std::to_string(vertex) + " in graph, but not P. ";

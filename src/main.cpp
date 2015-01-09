@@ -14,6 +14,7 @@
 */
 
 // local includes
+#include "ArraySet.h"
 #include "Tools.h"
 #include "TomitaAlgorithm.h"
 #include "AdjacencyListAlgorithm.h"
@@ -106,9 +107,16 @@ void PrintExperimentalWarning()
     cout << "WARNING: If you care about this sort of thing, please consider using version 1.0 of this software, which has been more thoroughly tested." << endl;
 }
 
+void RunUnitTests()
+{
+    std::cout << "Running unit tests..." << std::endl;
+    ArraySet::Test();
+}
+
 int main(int argc, char** argv)
 {
     PrintExperimentalWarning();
+    RunUnitTests();
 
     int failureCode(0);
 

@@ -1,6 +1,9 @@
 #ifndef ISOLATES_H
 #define ISOLATES_H
 
+#include "Set.h"
+#include "ArraySet.h"
+
 #include <vector>
 #include <map>
 #include <set>
@@ -25,7 +28,7 @@ public:
     size_t size() const { return isolates.size(); }
 
     std::set<int> const& GetIsolates() const { return isolates; }
-    std::set<int> const& GetInGraph()  const { return inGraph;  }
+    ArraySet const& GetInGraph()       const { return inGraph;  }
     std::vector<std::set<int>> const& Neighbors()  const { return neighbors;  }
 
     void RemoveEdges(std::vector<std::pair<int,int>> const &vEdges);
@@ -39,7 +42,7 @@ protected: // methods
 protected: // members
     std::vector<std::vector<int>> &m_AdjacencyArray;
     std::vector<std::set<int>>     neighbors;
-    std::set<int> inGraph;
+    ArraySet inGraph;
     std::set<int> isolates;
     std::set<int> removed;
     std::set<int> remaining;
