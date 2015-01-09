@@ -10,7 +10,7 @@
 class ArraySet
 {
 public:
-    ArraySet(size_t const size) : m_Lookup(size, -1), m_Elements(size, -1), m_iBegin(0), m_iEnd(-1), m_States(0)
+    ArraySet(size_t const size) : m_Lookup(size, -1), m_Elements(size, -1), m_iBegin(0), m_iEnd(-1), m_States(0), m_bInserted(false), m_bRemoved(false)
     {
     }
 
@@ -26,16 +26,17 @@ public:
     }
 
     bool Contains(int const x) const {
+        if (x < 0 || x >= m_Lookup.size()) return false;
         int const locationX(m_Lookup[x]);
         return locationX >= m_iBegin && locationX <= m_iEnd;
     }
 
     // Inserts are not allowed after saving state, as it is currently not supported.
     void Insert(int const x) {
-////        std::cout << "#States = " << m_States.size() << std::endl << std::flush;
-        assert(m_States.empty());
         if (Contains(x)) return;
-        if (!Contains(m_Elements[m_iEnd+1])) // if not a reinserted element, overwrite its lookup.
+        assert(!m_bRemoved); // not allowed to insert and remove when saving states
+        if (!m_States.empty()) m_bInserted = true;
+        if (m_Elements[m_iEnd+1] != -1 && !Contains(m_Elements[m_iEnd+1])) // if not a reinserted element, overwrite its lookup.
             m_Lookup[m_Elements[m_iEnd+1]] = -1; 
         m_iEnd++;
         m_Lookup[x] = m_iEnd;
@@ -44,6 +45,8 @@ public:
 
     void Remove(int const x) {
         if (!Contains(x)) return;
+        assert(!m_bInserted); // not allowed to insert and remove when saving states
+        if (!m_States.empty()) m_bRemoved = true;
         int const locationX(m_Lookup[x]);
         m_Elements[locationX] = m_Elements[m_iEnd];
         m_Lookup[m_Elements[locationX]] = locationX;
@@ -80,6 +83,10 @@ public:
         m_iEnd   = range.second;
         m_States.pop_back();
 ////        std::cout << "#States = " << m_States.size() << std::endl << std::flush;
+        if (m_States.empty()) {
+            m_bRemoved  = false;
+            m_bInserted = false;
+        }
     }
 
     void Clear()
@@ -170,6 +177,8 @@ private:
     int m_iBegin;
     int m_iEnd;
     std::vector<std::pair<int,int>> m_States;
+    bool m_bInserted;
+    bool m_bRemoved;
 };
 
 #endif // ARRAY_SET_H
