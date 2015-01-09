@@ -45,7 +45,7 @@ protected: // members
     ArraySet inGraph;
     std::set<int> isolates;
     std::set<int> removed;
-    std::set<int> remaining;
+    ArraySet remaining;
     std::vector<bool> vMarkedVertices;
     std::vector<std::vector<int>> vvRemovedVertices;
     std::map<int,int> m_AlternativeVertices;

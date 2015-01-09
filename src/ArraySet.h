@@ -82,6 +82,12 @@ public:
 ////        std::cout << "#States = " << m_States.size() << std::endl << std::flush;
     }
 
+    void Clear()
+    {
+        m_iBegin = 0;
+        m_iEnd = -1;
+    }
+
     static bool Test() {
         std::cout << "ArraySet: ";
         ArraySet testSet(3);

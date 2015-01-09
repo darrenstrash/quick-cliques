@@ -14,7 +14,7 @@ Isolates::Isolates(vector<vector<int>> &adjacencyArray)
  , inGraph(adjacencyArray.size())
  , isolates()
  , removed()
- , remaining()
+ , remaining(adjacencyArray.size())
  , vMarkedVertices(adjacencyArray.size(), false)
  , vvRemovedVertices()
  , m_AlternativeVertices()
@@ -23,7 +23,7 @@ Isolates::Isolates(vector<vector<int>> &adjacencyArray)
  , replaceTimer(0)
 {
     for (size_t u=0; u < adjacencyArray.size(); ++u) {
-        remaining.insert(u);
+        remaining.Insert(u);
         inGraph.Insert(u);
         neighbors[u].insert(m_AdjacencyArray[u].begin(), m_AdjacencyArray[u].end());
     }
@@ -188,12 +188,12 @@ bool Isolates::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVerti
         vOtherRemovedVertices.insert(vOtherRemovedVertices.end(), neighbors[vertex].begin(), neighbors[vertex].end());
 
         for (int const neighbor : neighbors[vertex]) {
-            remaining.erase(neighbor);
+            remaining.Remove(neighbor);
             inGraph.Remove(neighbor);
             ////                cout << "   Expunging neighbor " << neighbor << " with " << neighbors[neighbor].size() << " neighbors" << endl << flush;
             for (int const nNeighbor : neighbors[neighbor]) {
                 if (removed.find(nNeighbor) == removed.end()) {
-                    remaining.insert(nNeighbor);
+                    remaining.Insert(nNeighbor);
                 }
 
                 if (nNeighbor != vertex) {
@@ -234,7 +234,7 @@ bool Isolates::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertice
                     endVertex1 = nNeighbor;
                     neighbors[nNeighbor].erase(neighbor);
 ////                    cout << __LINE__ << ": Removing edge " << nNeighbor << "," << neighbor << endl;
-                    remaining.insert(nNeighbor);
+                    remaining.Insert(nNeighbor);
                     break;
                 }
             }
@@ -244,7 +244,7 @@ bool Isolates::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertice
                     endVertex2 = otherNeighbor;
                     neighbors[otherNeighbor].erase(vertex);
 ////                    cout << __LINE__ << ": Removing edge " << otherNeighbor << "," << vertex << endl;
-                    remaining.insert(otherNeighbor);
+                    remaining.Insert(otherNeighbor);
 
                     if (neighbors[otherNeighbor].find(endVertex1) == neighbors[otherNeighbor].end()) {
 
@@ -271,8 +271,8 @@ bool Isolates::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertice
 ////            cout << __LINE__ << ": Removing " << neighbor << " from graph." << endl << flush;
 ////        }
 
-            remaining.erase(vertex);
-            remaining.erase(neighbor);
+            remaining.Remove(vertex);
+            remaining.Remove(neighbor);
 
             m_AlternativeVertices[vertex]   = neighbor;
             m_AlternativeVertices[neighbor] = vertex;
@@ -292,7 +292,7 @@ void Isolates::RemoveVertex(int const vertex)
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
     removed.insert(vertex);
-    remaining.erase(vertex);
+    remaining.Remove(vertex);
     inGraph.Remove(vertex);
     isolates.erase(vertex);
 
@@ -308,7 +308,7 @@ void Isolates::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
     removed.insert(vertex);
-    remaining.erase(vertex);
+    remaining.Remove(vertex);
     isolates.insert(vertex);
     vRemoved.push_back(vertex);
     inGraph.Remove(vertex);
@@ -320,7 +320,7 @@ void Isolates::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
     for (int const neighbor : neighbors[vertex]) {
 ////        cout << __LINE__ << ":     Removing neighbor " << neighbor << endl << flush;
         removed.insert(neighbor);
-        remaining.erase(neighbor);
+        remaining.Remove(neighbor);
         vRemoved.push_back(neighbor);
         inGraph.Remove(neighbor);
 ////        if (neighbor == 0) {
@@ -334,7 +334,7 @@ void Isolates::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
             neighbors[nNeighbor].erase(neighbor);
 ////            cout << __LINE__ << ":         Done removing" << endl << flush;
             if (removed.find(nNeighbor) == removed.end())
-                remaining.insert(nNeighbor);
+                remaining.Insert(nNeighbor);
         }
 ////        cout << __LINE__ << ":     Done Removing neighbor" << neighbor << endl << flush;
         neighbors[neighbor].clear();
@@ -351,8 +351,10 @@ void Isolates::RemoveAllIsolates(int const independentSetSize, vector<int> &vIso
     clock_t startClock = clock();
 ////    remaining = inGraph; // TODO/DS : We can optimize this by knowing which vertex (and neighbors where removed last.
 ////    if (vOtherRemovedVertices.empty()) {
-        remaining.clear();
-        remaining.insert(inGraph.begin(), inGraph.end());
+        remaining.Clear();
+        for (int const vertex : inGraph) {
+            remaining.Insert(vertex);
+        }
 ////    } else {
 ////        remaining.clear();
 ////        for (int const removedVertex : vOtherRemovedVertices) {
@@ -361,12 +363,11 @@ void Isolates::RemoveAllIsolates(int const independentSetSize, vector<int> &vIso
 ////    }
     //cout << "Removing all isolates." << endl << flush;
     int isolateSize(isolates.size());
-    while (!remaining.empty()) {
+    while (!remaining.Empty()) {
 ////            if (remaining.size() %10000 == 0)
         //cout << "Remaining: " << remaining.size() << ", Removed: " << removed.size() << endl << flush;
-        set<int>::iterator sit = remaining.begin();
-        int const vertex = *sit;
-        remaining.erase(sit);
+        int const vertex = *(remaining.begin());
+        remaining.Remove(vertex);
 
     // can prune out high-degree vertices too. // but this is slow right now.
 
@@ -421,8 +422,10 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
 {
     clock_t startClock = clock();
 
-    remaining.clear();
-    remaining.insert(inGraph.begin(), inGraph.end()); // only consider neighbors of removed vertices... makes it faster.
+    remaining.Clear();
+    for (int const vertex : inGraph) {
+        remaining.Insert(vertex); // only consider neighbors of removed vertices... makes it faster.
+    }
 
     inGraph.SaveState();
 
@@ -447,7 +450,7 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
         // TODO/DS: Remove when vertex selection becomes faster, this is a compromise between fast vertex selection and good vertex selection.
         if (index >= vVerticesOrderedByDegree.size()/10) break;
 
-        remaining.clear();
+        remaining.Clear();
         set<int> tempRemoved(removed);
         set<int> tempIsolates(isolates);
 
