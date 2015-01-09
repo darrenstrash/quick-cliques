@@ -13,7 +13,6 @@ Isolates::Isolates(vector<vector<int>> &adjacencyArray)
  , neighbors(adjacencyArray.size())
  , inGraph(adjacencyArray.size())
  , isolates()
- , removed(adjacencyArray.size())
  , remaining(adjacencyArray.size())
  , vMarkedVertices(adjacencyArray.size(), false)
  , vvRemovedVertices()
@@ -178,23 +177,21 @@ bool Isolates::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVerti
 ////        cout << endl;
 
         for (int const neighbor : neighbors[vertex]) {
-            removed.Insert(neighbor);
+            inGraph.Remove(neighbor);
+            remaining.Remove(neighbor);
         }
-        removed.Insert(vertex);
+        inGraph.Remove(vertex);
         isolates.insert(vertex);
         vIsolateVertices.push_back(vertex);
-        inGraph.Remove(vertex);
 ////        if (vertex == 0) {
 ////            cout << __LINE__ << ": Removing " << vertex << " from graph." << endl << flush;
 ////        }
         vOtherRemovedVertices.insert(vOtherRemovedVertices.end(), neighbors[vertex].begin(), neighbors[vertex].end());
 
         for (int const neighbor : neighbors[vertex]) {
-            remaining.Remove(neighbor);
-            inGraph.Remove(neighbor);
             ////                cout << "   Expunging neighbor " << neighbor << " with " << neighbors[neighbor].size() << " neighbors" << endl << flush;
             for (int const nNeighbor : neighbors[neighbor]) {
-                if (!removed.Contains(nNeighbor)) {
+                if (inGraph.Contains(nNeighbor)) {
                     remaining.Insert(nNeighbor);
                 }
 
@@ -223,8 +220,6 @@ bool Isolates::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertice
 
     for (int const neighbor : neighbors[vertex]) {
         if (neighbors[neighbor].size() == 2) {
-            removed.Insert(vertex);
-            removed.Insert(neighbor);
             isolates.insert(vertex);
 
             int endVertex1(-1);
@@ -293,9 +288,8 @@ bool Isolates::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertice
 void Isolates::RemoveVertex(int const vertex)
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
-    removed.Insert(vertex);
-    remaining.Remove(vertex);
     inGraph.Remove(vertex);
+    remaining.Remove(vertex);
     isolates.erase(vertex);
 
     for (int const neighbor : neighbors[vertex]) {
@@ -309,11 +303,10 @@ void Isolates::RemoveVertex(int const vertex)
 void Isolates::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
-    removed.Insert(vertex);
+    inGraph.Remove(vertex);
     remaining.Remove(vertex);
     isolates.insert(vertex);
     vRemoved.push_back(vertex);
-    inGraph.Remove(vertex);
 ////    if (vertex == 0) {
 ////        cout << __LINE__ << ": Removing " << vertex << " from graph." << endl << flush;
 ////    }
@@ -321,21 +314,19 @@ void Isolates::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
 
     for (int const neighbor : neighbors[vertex]) {
 ////        cout << __LINE__ << ":     Removing neighbor " << neighbor << endl << flush;
-        removed.Insert(neighbor);
+        inGraph.Remove(neighbor);
         remaining.Remove(neighbor);
         vRemoved.push_back(neighbor);
-        inGraph.Remove(neighbor);
 ////        if (neighbor == 0) {
 ////            cout << __LINE__ << ": Removing " << neighbor << " from graph." << endl << flush;
 ////        }
-        inGraph.Remove(neighbor);
 
         for (int const nNeighbor : neighbors[neighbor]) {
 ////            cout << __LINE__ << ":         Removing from neighbor's neighbor "<< nNeighbor << endl << flush;
             if (nNeighbor == vertex) continue;
             neighbors[nNeighbor].erase(neighbor);
 ////            cout << __LINE__ << ":         Done removing" << endl << flush;
-            if (!removed.Contains(nNeighbor))
+            if (inGraph.Contains(nNeighbor))
                 remaining.Insert(nNeighbor);
         }
 ////        cout << __LINE__ << ":     Done Removing neighbor" << neighbor << endl << flush;
@@ -401,7 +392,6 @@ void Isolates::ReplaceAllRemoved(vector<int> const &vRemoved)
     for (int const removedVertex : vRemoved) {
         inGraph.Insert(removedVertex);
         isolates.erase(removedVertex);
-        removed.Remove(removedVertex);
         m_AlternativeVertices.erase(removedVertex);
     }
 ////    cout << "Replacing all removed vertices." << endl << flush;
@@ -429,8 +419,6 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
         remaining.Insert(vertex); // only consider neighbors of removed vertices... makes it faster.
     }
 
-    inGraph.SaveState();
-
     vector<int> &vVerticesOrderedByDegree(vVertices);
 
     auto sortByDegree = [this](int const &leftVertex, int const &rightVertex) { return neighbors[leftVertex].size() > neighbors[rightVertex].size(); };
@@ -453,10 +441,8 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
         if (index >= vVerticesOrderedByDegree.size()/10) break;
 
         remaining.Clear();
-        ArraySet tempRemoved(m_AdjacencyArray.size());
-        for (int const removedVertex : removed) {
-            tempRemoved.Insert(removedVertex);
-        }
+
+        inGraph.SaveState();
 
         set<int> tempIsolates(isolates);
 
@@ -473,27 +459,28 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
         clock_t startremove(clock());
         RemoveAllIsolates(0, vRemoved, vRemoved, vAddedEdges);
         removeTimer -= (clock() - startremove);
+
+        int const newNumRemoved(m_AdjacencyArray.size() - inGraph.Size());
+
+        inGraph.RestoreState();
+        int const oldNumRemoved(m_AdjacencyArray.size() - inGraph.Size());
+        int const deltaRemoved(newNumRemoved - oldNumRemoved);
 #if 0 //def OPTIMIZE_ISOLATES
         if (static_cast<int>(isolates.size() - tempIsolates.size()) > maxIsolates) {
             maxIsolates = static_cast<int>(isolates.size() - tempIsolates.size());
             vertexWithMaxReductions = vertex;
         }
 #else // optimize removed vertices
-        if (static_cast<int>(removed.Size() - tempRemoved.Size()) > maxRemoved) {
-            maxRemoved = static_cast<int>(removed.Size() - tempRemoved.Size());
+        if (deltaRemoved > maxRemoved) {
+            maxRemoved = deltaRemoved;
             vertexWithMaxReductions = vertex;
             maxIndex = index;
         }
 #endif
 
 ////        remaining = std::move(tempRemaining); // TODO/DS: put back?
-        removed.Clear();
-        for (int const removedVertex : tempRemoved) {
-            removed.Insert(removedVertex);
-        }
 
         isolates  = std::move(tempIsolates);
-        inGraph.RestoreState();
 
         // need to do this after restoring variable inGraph
         RemoveEdges(vAddedEdges); // TODO/DS: Put back...
@@ -503,11 +490,9 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
 
         index++;
 
-        inGraph.SaveState();
 ////        cout << "Done with loop" << endl;
     }
 
-    inGraph.RestoreState();
 
     clock_t endClock = clock();
 
