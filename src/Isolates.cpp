@@ -12,7 +12,7 @@ Isolates::Isolates(vector<vector<int>> &adjacencyArray)
  : m_AdjacencyArray(adjacencyArray)
  , neighbors(adjacencyArray.size())
  , inGraph(adjacencyArray.size())
- , isolates()
+ , isolates(adjacencyArray.size())
  , remaining(adjacencyArray.size())
  , vMarkedVertices(adjacencyArray.size(), false)
  , vvRemovedVertices()
@@ -181,7 +181,7 @@ bool Isolates::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVerti
             remaining.Remove(neighbor);
         }
         inGraph.Remove(vertex);
-        isolates.insert(vertex);
+        isolates.Insert(vertex);
         vIsolateVertices.push_back(vertex);
 ////        if (vertex == 0) {
 ////            cout << __LINE__ << ": Removing " << vertex << " from graph." << endl << flush;
@@ -220,7 +220,7 @@ bool Isolates::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertice
 
     for (int const neighbor : neighbors[vertex]) {
         if (neighbors[neighbor].size() == 2) {
-            isolates.insert(vertex);
+            isolates.Insert(vertex);
 
             int endVertex1(-1);
             int endVertex2(-1);
@@ -290,7 +290,7 @@ void Isolates::RemoveVertex(int const vertex)
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
     inGraph.Remove(vertex);
     remaining.Remove(vertex);
-    isolates.erase(vertex);
+    isolates.Remove(vertex);
 
     for (int const neighbor : neighbors[vertex]) {
         neighbors[neighbor].erase(vertex);
@@ -305,7 +305,7 @@ void Isolates::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
     inGraph.Remove(vertex);
     remaining.Remove(vertex);
-    isolates.insert(vertex);
+    isolates.Insert(vertex);
     vRemoved.push_back(vertex);
 ////    if (vertex == 0) {
 ////        cout << __LINE__ << ": Removing " << vertex << " from graph." << endl << flush;
@@ -355,7 +355,7 @@ void Isolates::RemoveAllIsolates(int const independentSetSize, vector<int> &vIso
 ////        }
 ////    }
     //cout << "Removing all isolates." << endl << flush;
-    int isolateSize(isolates.size());
+    int isolateSize(isolates.Size());
     while (!remaining.Empty()) {
 ////            if (remaining.size() %10000 == 0)
         //cout << "Remaining: " << remaining.size() << ", Removed: " << removed.size() << endl << flush;
@@ -391,7 +391,7 @@ void Isolates::ReplaceAllRemoved(vector<int> const &vRemoved)
     clock_t startClock = clock();
     for (int const removedVertex : vRemoved) {
         inGraph.Insert(removedVertex);
-        isolates.erase(removedVertex);
+        isolates.Remove(removedVertex);
         m_AlternativeVertices.erase(removedVertex);
     }
 ////    cout << "Replacing all removed vertices." << endl << flush;
@@ -444,7 +444,10 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
 
         inGraph.SaveState();
 
-        set<int> tempIsolates(isolates);
+        ArraySet tempIsolates(m_AdjacencyArray.size());
+        for (int const isolateVertex : isolates) {
+            tempIsolates.Insert(isolateVertex);
+        }
 
         vector<int> vRemoved;
 ////        cout << "Try removing vertex " << vertex << endl << flush;
@@ -480,7 +483,10 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
 
 ////        remaining = std::move(tempRemaining); // TODO/DS: put back?
 
-        isolates  = std::move(tempIsolates);
+        isolates.Clear();
+        for (int const isolatedVertex : tempIsolates) {
+            isolates.Insert(isolatedVertex);
+        }
 
         // need to do this after restoring variable inGraph
         RemoveEdges(vAddedEdges); // TODO/DS: Put back...

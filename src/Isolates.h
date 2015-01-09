@@ -25,10 +25,10 @@ public:
     int NextVertexToRemove(std::vector<int> &vVertices);
     int NextVertexToRemove();
 
-    size_t size() const { return isolates.size(); }
+    size_t size() const { return isolates.Size(); }
 
-    std::set<int> const& GetIsolates() const { return isolates; }
-    ArraySet const& GetInGraph()       const { return inGraph;  }
+    ArraySet const& GetIsolates() const { return isolates; }
+    ArraySet const& GetInGraph()  const { return inGraph;  }
     std::vector<std::set<int>> const& Neighbors()  const { return neighbors;  }
 
     void RemoveEdges(std::vector<std::pair<int,int>> const &vEdges);
@@ -43,7 +43,7 @@ protected: // members
     std::vector<std::vector<int>> &m_AdjacencyArray;
     std::vector<std::set<int>>     neighbors;
     ArraySet inGraph;
-    std::set<int> isolates;
+    ArraySet isolates;
     ArraySet remaining;
     std::vector<bool> vMarkedVertices;
     std::vector<std::vector<int>> vvRemovedVertices;
