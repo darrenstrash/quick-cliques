@@ -36,7 +36,7 @@ public:
 
     virtual void ReturnVerticesToP(std::vector<int> const &vVertices) __attribute__((always_inline));
 
-    std::vector<int> ChoosePivot() const __attribute__((always_inline));
+    std::vector<int> ChoosePivotNonConst() __attribute__((always_inline));
     bool InP(int const vertex) const __attribute__((always_inline));
 
     bool PIsEmpty() const __attribute__((always_inline));
@@ -69,17 +69,10 @@ public:
     virtual int GetNextVertexToEvaluate(std::vector<int> &vVertices)
     {
 #ifdef REMOVE_ISOLATES
-        int const vertexToRemove(isolates.NextVertexToRemove(vVertices));
-        // inefficient, should be a better way to elmininate it before getting here.
-        for (int &vertex : vVertices) {
-            if (vertex == vertexToRemove) {
-                vertex = vVertices.back();
-                vVertices.pop_back();
-                return vertexToRemove;
-            }
-        }
-#endif
+        return isolates.NextVertexToRemove(vVertices);
+#else
         return VertexSets::GetNextVertexToEvaluate(vVertices);
+#endif
     }
 
     std::string CheckP()
@@ -219,7 +212,7 @@ inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, i
 #endif // DO_PIVOT
 
 // TODO/DS: Choose pivot to maximize number of non-neighbors.
-inline std::vector<int> ExperimentalReduction::ChoosePivot() const
+inline std::vector<int> ExperimentalReduction::ChoosePivotNonConst()
 {
 
 ////    std::cout << "Checkpoint: ";
@@ -233,6 +226,7 @@ inline std::vector<int> ExperimentalReduction::ChoosePivot() const
 
     return vVerticesInP;
 #else
+#ifdef MIN_DEGREE_PIVOT
     int pivot = -1;
     int maxIntersectionSize = -1;
 
@@ -256,6 +250,9 @@ inline std::vector<int> ExperimentalReduction::ChoosePivot() const
             pivot = vertex;
         }
     }
+#else
+    int const pivot = isolates.NextVertexToRemove();
+#endif // MIN_DEGREE_PIVOT
 
     std::vector<int> pivotNeighbors;
 
@@ -263,20 +260,15 @@ inline std::vector<int> ExperimentalReduction::ChoosePivot() const
         return pivotNeighbors;
     }
 
-    std::set<int> verticesToConsider;
-
+    pivotNeighbors.push_back(pivot); // pivot is in P
     // mark neighbors of pivot that are in P.
     for (int const neighbor : m_AdjacencyList[pivot]) {
         // if the neighbor is in P, put it in pivot nonNeighbors
         if (InP(neighbor)) {
-            verticesToConsider.insert(neighbor);
+            pivotNeighbors.push_back(neighbor);
         }
     }
-
-    pivotNeighbors.insert(pivotNeighbors.end(), verticesToConsider.begin(), verticesToConsider.end());
-
-    pivotNeighbors.push_back(pivot); // pivot is in P
-
+    
 #ifdef DEBUG
     std::cout << " - : ";
     for (int const neighbor: pivotNeighbors)

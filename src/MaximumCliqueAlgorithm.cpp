@@ -219,7 +219,7 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
         printf("%d ", vertex);
 #endif
 
-        m_pSets->ApplyReduction(partialClique);
+////        m_pSets->ApplyReduction(partialClique);
 
         // recursively compute maximal cliques with new sets R, P and X
         RunRecursive(cliqueCount, cliques, partialClique);
@@ -228,9 +228,13 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
         printf("b ");
 #endif
 
-        m_pSets->UndoReduction(partialClique);
+////        m_pSets->UndoReduction(partialClique);
 
         m_pSets->MoveFromRToX(partialClique, vertex);
+
+        if (partialClique.size() + m_pSets->RemainingSizeEstimate() <= m_uMaximumCliqueSize) {
+            break;
+        }
         vertex = m_pSets->GetNextVertexToEvaluate(vVerticesToEvaluate);
     }
 

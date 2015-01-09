@@ -23,7 +23,7 @@ public:
     virtual void ReturnVerticesToP(std::list<int> &partialClique, std::vector<int> const &vVertices) __attribute__((always_inline)) { ReturnVerticesToP(vVertices); }
 
     virtual std::vector<int> ChoosePivotNonConst() __attribute__((always_inline)) { return ChoosePivot(); }
-    virtual std::vector<int> ChoosePivot() const __attribute__((always_inline)) = 0;
+    virtual std::vector<int> ChoosePivot() const __attribute__((always_inline)) { return std::vector<int>(); }
     virtual bool InP(int const vertex) const __attribute__((always_inline)) = 0;
 
     virtual bool PIsEmpty() const __attribute__((always_inline)) = 0;

@@ -4,6 +4,7 @@
 #include <set>
 #include <iostream>
 #include <ctime>
+#include <cassert>
 
 using namespace std;
 
@@ -418,30 +419,32 @@ void Isolates::ReplaceAllRemoved(vector<int> const &vRemoved)
 int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
 {
     clock_t startClock = clock();
-#if 1
-    int vertexWithMaxReductions(-1);
 
     remaining = inGraph; // only consider neighbors of removed vertices... makes it faster.
 
     set<int> tempInGraph(inGraph);
 
-    vector<int> vVerticesOrderedByDegree;
-    vVerticesOrderedByDegree.insert(vVerticesOrderedByDegree.end(), tempInGraph.begin(), tempInGraph.end());
+    vector<int> &vVerticesOrderedByDegree(vVertices);
 
     auto sortByDegree = [this](int const &leftVertex, int const &rightVertex) { return neighbors[leftVertex].size() > neighbors[rightVertex].size(); };
     sort(vVerticesOrderedByDegree.begin(), vVerticesOrderedByDegree.end(), sortByDegree);
 
     if (vVerticesOrderedByDegree.empty()) return -1;
-    int const maxDegreeVertex(vVerticesOrderedByDegree[0]);
 
-    vVerticesOrderedByDegree.resize(vVerticesOrderedByDegree.size()/10); // TODO/DS: Remove when vertex selection becomes faster, this is a compromise between fast vertex selection and good vertex selection.
-
+    int vertexWithMaxReductions(vVerticesOrderedByDegree[0]); // default to max degree vertex
     int maxIsolates(-1);
     int maxRemoved(-1);
+    int maxIndex(-1);
+    size_t index(0); // default to index of maximum degree vertex
+
 ////    cout << "Testing remaining " << inGraph.size() << " vertices, to maximize isolate removal" << endl << flush;
     for (int const vertex : vVerticesOrderedByDegree) {
 ////        cout << "Starting loop..." << endl << flush;
 ////        set<int> tempRemaining(remaining); // TODO/DS: put back?
+
+        // TODO/DS: Remove when vertex selection becomes faster, this is a compromise between fast vertex selection and good vertex selection.
+        if (index >= vVerticesOrderedByDegree.size()/10) break;
+
         remaining.clear();
         set<int> tempRemoved(removed);
         set<int> tempIsolates(isolates);
@@ -468,6 +471,7 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
         if (static_cast<int>(removed.size() - tempRemoved.size()) > maxRemoved) {
             maxRemoved = static_cast<int>(removed.size() - tempRemoved.size());
             vertexWithMaxReductions = vertex;
+            maxIndex = index;
         }
 #endif
 
@@ -482,6 +486,7 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
         ReplaceAllRemoved(vRemoved);
         replaceTimer -= (clock() - startreplace);
 
+        index++;
 ////        cout << "Done with loop" << endl;
     }
 
@@ -489,14 +494,17 @@ int Isolates::NextVertexToRemove(std::vector<int> &vVertices)
 
     timer += (endClock - startClock);
 
-    // if no vertex was found, then return max degree vertex
-    if (vertexWithMaxReductions != -1) {
-////        cout << "Removing vertex " << vertexWithMaxReductions << " maximizes isolate removal (" << maxIsolates << " isolates)." << endl;
-        return vertexWithMaxReductions;
+    // inefficient, should be a better way to elmininate it before getting here.
+    for (int &vertex : vVertices) {
+        if (vertex == vertexWithMaxReductions) {
+            vertex = vVertices.back();
+            vVertices.pop_back();
+            return vertexWithMaxReductions;
+        }
     }
-#endif
 
-    return maxDegreeVertex;
+    assert(0);
+    return vertexWithMaxReductions;
 }
 
 int Isolates::NextVertexToRemove()
