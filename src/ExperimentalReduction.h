@@ -6,7 +6,7 @@
 #include "SetsXPR.h"
 #include "ArraySetsXPR.h"
 #include "VertexSets.h"
-#include "Isolates.h"
+#include "Isolates2.h"
 
 // system includes
 #include <vector>

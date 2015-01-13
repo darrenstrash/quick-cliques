@@ -6,6 +6,7 @@ BIN_DIR   = bin
 CFLAGS = -Winline -O2 -std=c++11 -g
 
 SOURCES_TMP += Isolates.cpp
+SOURCES_TMP += Isolates2.cpp
 SOURCES_TMP += ExperimentalReduction.cpp
 SOURCES_TMP += IndependentSetsReduction.cpp
 SOURCES_TMP += Staging.cpp
@@ -91,3 +92,4 @@ $(BUILD_DIR):
 
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
+
