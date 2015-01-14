@@ -416,6 +416,25 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
 {
     clock_t startClock = clock();
 
+#if 0
+    if (vVertices.empty()) return -1;
+
+    int index(0);
+    for (int i = 0; i < vVertices.size(); ++i) {
+        if (neighbors[vVertices[index]].Size() < neighbors[vVertices[i]].Size()) index = i;
+    }
+
+    int const vertexWithMaxReductions = vVertices[index];
+
+    vVertices[index]= vVertices.back();
+    vVertices.pop_back();
+
+    clock_t endClock = clock();
+    timer += (endClock - startClock);
+
+    return vertexWithMaxReductions;
+#else
+
     remaining.Clear();
     for (int const vertex : inGraph) {
         remaining.Insert(vertex); // only consider neighbors of removed vertices... makes it faster.
@@ -433,6 +452,11 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
     int maxRemoved(-1);
     int maxIndex(-1);
     size_t index(0); // default to index of maximum degree vertex
+
+    for (int const vertex : inGraph) {
+        ArraySet &neighborSet(neighbors[vertex]);
+        neighborSet.SaveState(); // checkpoint the neighbors so we can easily restore them after test-removing vertices.
+    }
 
 ////    cout << "Testing remaining " << inGraph.size() << " vertices, to maximize isolate removal" << endl << flush;
     for (int const vertex : vVerticesOrderedByDegree) {
@@ -492,19 +516,36 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
 
         // need to do this after restoring variable inGraph
         RemoveEdges(vAddedEdges); // TODO/DS: Put back...
-        clock_t startreplace(clock());
-        ReplaceAllRemoved(vRemoved);
-        replaceTimer -= (clock() - startreplace);
+
+
+////        for (int const removedVertex : vRemoved) {
+////            inGraph.Insert(removedVertex);
+////            isolates.Remove(removedVertex);
+////            m_AlternativeVertices.erase(removedVertex);
+////        }
+
+        for (int const vertex : inGraph) {
+            ArraySet &neighborSet(neighbors[vertex]);
+            neighborSet.RestoreState(); // checkpoint the neighbors so we can easily restore them after test-removing vertices.
+            neighborSet.SaveState();
+        }
+
+////        clock_t startreplace(clock());
+////        ReplaceAllRemoved(vRemoved);
+////        replaceTimer -= (clock() - startreplace);
 
         index++;
 
 ////        cout << "Done with loop" << endl;
     }
 
-
     clock_t endClock = clock();
-
     timer += (endClock - startClock);
+
+    for (int const vertex : inGraph) {
+        ArraySet &neighborSet(neighbors[vertex]);
+        neighborSet.RestoreState();
+    }
 
     // inefficient, should be a better way to elmininate it before getting here.
     for (int &vertex : vVertices) {
@@ -517,6 +558,9 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
 
     assert(0);
     return vertexWithMaxReductions;
+#endif // 0
+
+    return -1;
 }
 
 int Isolates2::NextVertexToRemove()
