@@ -60,6 +60,8 @@ public:
 
     bool Empty() const { return m_State.back().empty(); }
 
+    void Clear() {m_State.back().clear(); }
+
     // make copy of current set, and make it the working copy
     void SaveState() {
         std::set<int> temp(m_State.back());

@@ -1,5 +1,5 @@
-#ifndef ISOLATES_H
-#define ISOLATES_H
+#ifndef ISOLATES2_H
+#define ISOLATES2_H
 
 #include "Set.h"
 #include "ArraySet.h"
@@ -52,4 +52,4 @@ protected: // members
     clock_t replaceTimer;
 };
 
-#endif //ISOLATES_H
+#endif //ISOLATES2_H

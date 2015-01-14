@@ -14,7 +14,17 @@ public:
     {
     }
 
+    ArraySet() : m_Lookup(), m_Elements(), m_iBegin(0), m_iEnd(-1), m_States(0), m_bInserted(false), m_bRemoved(false)
+    {
+    }
+
     ~ArraySet() {}
+
+    void Resize(size_t const size)
+    {
+        m_Lookup.resize(size, -1);
+        m_Elements.resize(size, -1);
+    }
 
     void PrintSummary() const
     {
