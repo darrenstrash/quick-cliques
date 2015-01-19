@@ -3,12 +3,16 @@
 
 #include "Set.h"
 #include "ArraySet.h"
+#include "SparseArraySet.h"
 
 #include <vector>
 #include <map>
 #include <set>
 #include <utility>
 #include <ctime>
+
+////#define TIMERS
+#define SPARSE
 
 class Isolates2
 {
@@ -41,15 +45,25 @@ protected: // methods
 
 protected: // members
     std::vector<std::vector<int>> &m_AdjacencyArray;
+#ifdef SPARSE
+    std::vector<SparseArraySet>     neighbors;
+#else
     std::vector<ArraySet>     neighbors;
+#endif // SPARSE
     ArraySet inGraph;
     ArraySet isolates;
     ArraySet remaining;
     std::vector<bool> vMarkedVertices;
     std::map<int,int> m_AlternativeVertices;
+#ifdef TIMERS
     clock_t timer;
     clock_t removeTimer;
     clock_t replaceTimer;
+    clock_t sortDuringNextTimer;
+    clock_t removeOneDuringNextTimer;
+    clock_t removeDuringNextTimer;
+    clock_t replaceDuringNextTimer;
+    #endif // TIMERS
 };
 
 #endif //ISOLATES_H

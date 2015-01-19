@@ -409,7 +409,7 @@ void Staging::Run()
     // need to expand this into a branch-and-bound, pick the vertices that constrain the search the most, to keep
     // the search at a reasonable depth. And try to "peel off" as many vertices as possible through reductions.
 
-
+#if 0
     while (vRemoved.size() != m_AdjacencyList.size()) {
         // find vertex whose removal maximizes the number of vertices moved to IS by reduction.
         int vertexWithMaxReductions(-1);
@@ -499,6 +499,7 @@ void Staging::Run()
 
     cout << "Removed " << vRemoved.size() << " vertices." << endl << flush;
     cout << "Found independent set of size: " << isolates.size() << endl << flush;
+#endif // 0
 
 #endif // 1
 }

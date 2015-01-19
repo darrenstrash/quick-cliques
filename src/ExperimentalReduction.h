@@ -6,6 +6,7 @@
 #include "SetsXPR.h"
 #include "ArraySetsXPR.h"
 #include "VertexSets.h"
+#include "Isolates.h"
 #include "Isolates2.h"
 
 // system includes
@@ -150,17 +151,35 @@ inline void ExperimentalReduction::MoveFromPToR(std::list<int> &partialClique, i
 ////    std::cout << "Moving " << vertex << " from P to R " << std::endl;
 ////    PrintSummary(__LINE__);
 
+////    std::cout << __LINE__ << ": Checking P..." << std::endl;
+////    CheckP();
+
     ApplyReductions(vertex, partialClique);
+
+////    std::cout << __LINE__ << ": Checking P..." << std::endl;
+////    CheckP();
+////    if (!InP(31)) std::cout << "vertex 31 is not in P..." << std::endl << std::flush;
+////    ArraySet const &inGraph(isolates.GetInGraph());
+////    if (!inGraph.Contains(31)) std::cout << "vertex 31 is not in Graph..." << std::endl << std::flush;
 
 ////    bool const debug(vertex == 37 || vertex == 36);
 
     SaveState();
 
+
+////    std::cout << "Clique Vertices : ";
     for (int const cliqueVertex : m_vCliqueVertices) {
+////        std::cout << cliqueVertex << " " << std::flush;
+////        if (!InP(cliqueVertex)) {
+////            std::cout << "Moving clique vertex " << cliqueVertex << ", when it is not in P!" << std::endl << std::flush; 
+////            CheckP();
+////        }
+
         m_Sets.MoveFromPToR(cliqueVertex);
 ////        partialClique.push_back(cliqueVertex);
 ////        PrintSummary(__LINE__);
-        for (int const neighbor : m_AdjacencyList[cliqueVertex]) {
+        for (int const neighbor : m_AdjacencyList[cliqueVertex]) { // TODO/DS: validate this change
+//        for (int const neighbor : m_vOtherVertices) { // TODO/DS: validate this change
 ////            std::cout << "Evaluating neighbor " << neighbor << std::endl;
             if (m_Sets.InX(neighbor)) {
 ////                std::cout << "    Neighbor is in X, Removing..." << std::endl;
@@ -171,6 +190,7 @@ inline void ExperimentalReduction::MoveFromPToR(std::list<int> &partialClique, i
             }
         }
     }
+////    std::cout << std::endl << std::flush;
 
 ////    PrintSummary(__LINE__);
 ////    std::cout << __LINE__ << ": CheckP = " << CheckP() << std::endl;
@@ -306,7 +326,7 @@ inline void ExperimentalReduction::ApplyReductions(int const vertex, std::list<i
 
 #ifdef REMOVE_ISOLATES
     isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges);
-////    std::cout << "Removed " << vCliqueVertices.size() + vOtherRemoved.size() << " vertices in reduction" << std::endl;
+    std::cout << "Removed " << vCliqueVertices.size() + vOtherRemoved.size() << "/" << m_Sets.SizeOfP() << " vertices in reduction" << std::endl;
 ////    std::cout << "    Vertices: ";
 
 ////    for (int const cliqueVertex : vCliqueVertices) {

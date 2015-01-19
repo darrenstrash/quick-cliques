@@ -1,5 +1,5 @@
-#ifndef ARRAY_SET_H
-#define ARRAY_SET_H
+#ifndef SPARSE_ARRAY_SET_H
+#define SPARSE_ARRAY_SET_H
 
 #include <set>
 #include <vector>
@@ -7,22 +7,21 @@
 #include <cassert>
 #include <utility>
 
-class ArraySet
+class SparseArraySet
 {
 public:
-    ArraySet(size_t const size) : m_Lookup(size, -1), m_Elements(size, -1), m_iBegin(0), m_iEnd(-1), m_States(0), m_bInserted(false), m_bRemoved(false)
+    SparseArraySet(size_t const size) : m_Elements(size, -1), m_iBegin(0), m_iEnd(-1), m_States(0), m_bInserted(false), m_bRemoved(false)
     {
     }
 
-    ArraySet() : m_Lookup(), m_Elements(), m_iBegin(0), m_iEnd(-1), m_States(0), m_bInserted(false), m_bRemoved(false)
+    SparseArraySet() : m_Elements(), m_iBegin(0), m_iEnd(-1), m_States(0), m_bInserted(false), m_bRemoved(false)
     {
     }
 
-    ~ArraySet() {}
+    ~SparseArraySet() {}
 
     void Resize(size_t const size)
     {
-        m_Lookup.resize(size, -1);
         m_Elements.resize(size, -1);
     }
 
@@ -36,38 +35,36 @@ public:
     }
 
     bool Contains(int const x) const {
-        if (x < 0 || x >= m_Lookup.size()) return false;
-        int const locationX(m_Lookup[x]);
-        return locationX >= m_iBegin && locationX <= m_iEnd;
+        for (int const value : *this) {
+            if (value == x) return true;
+        }
+        return false;
     }
 
     // Inserts are not allowed after saving state, as it is currently not supported.
     void Insert(int const x) {
-////        if (x==107) std::cout << "Inserting vertex " << x << " into graph." << std::endl << std::flush;
         if (Contains(x)) return;
         assert(!m_bRemoved); // not allowed to insert and remove when saving states
         if (!m_States.empty()) m_bInserted = true;
-        if (m_Elements[m_iEnd+1] != -1 && !Contains(m_Elements[m_iEnd+1])) // if not a reinserted element, overwrite its lookup.
-            m_Lookup[m_Elements[m_iEnd+1]] = -1; 
         m_iEnd++;
-        m_Lookup[x] = m_iEnd;
         m_Elements[m_iEnd] = x;
     }
 
     void Remove(int const x) {
-////        if (x==107) std::cout << "Removing vertex " << x << " from graph." << std::endl << std::flush;
-        if (!Contains(x)) return;
-        assert(!m_bInserted); // not allowed to insert and remove when saving states
-        if (!m_States.empty()) m_bRemoved = true;
-        int const locationX(m_Lookup[x]);
-        m_Elements[locationX] = m_Elements[m_iEnd];
-        m_Lookup[m_Elements[locationX]] = locationX;
-        m_Lookup[x] = m_iEnd;
-        m_Elements[m_iEnd] = x;
-        m_iEnd--;
+        for (int index = m_iBegin; index <= m_iEnd; index++) {
+            if (m_Elements[index] == x) {
+                if (!m_States.empty()) m_bRemoved = true;
+                assert(!m_bInserted); // not allowed to insert and remove when saving states
+                m_Elements[index] = m_Elements[m_iEnd];
+                m_Elements[m_iEnd] = x;
+                m_iEnd--;
+                return;
+            }
+        }
+        return;
     }
 
-    void MoveTo(int const x, ArraySet &other) {
+    void MoveTo(int const x, SparseArraySet &other) {
         Remove(x);
         other.Insert(x);
     }
@@ -107,54 +104,40 @@ public:
         m_iEnd = -1;
     }
 
-    bool operator==(ArraySet const &that) const
-    {
-        if (Size() != that.Size()) return false;
-        for (int const value : *this) {
-            if (!that.Contains(value)) return false;
-        }
-        return true;
-    }
-
-    bool operator!=(ArraySet const &that) const
-    {
-        return !(*this == that);
-    }
-
     static bool Test() {
-        std::cout << "ArraySet: ";
-        ArraySet testSet(3);
+        std::cout << "SparseArraySet: ";
+        SparseArraySet testSet(3);
         testSet.Insert(0);
         testSet.Insert(1);
         testSet.Insert(2);
 
         if (!testSet.Contains(0) || !testSet.Contains(1) || !testSet.Contains(2) || testSet.Size() != 3) {
-            std::cout << "FAILED: ArraySet failed ContainsTest" << std::endl;
+            std::cout << "FAILED: SparseArraySet failed ContainsTest" << std::endl;
             return false;
         }
 
         testSet.Remove(0);
         if (testSet.Contains(0) || testSet.Size() != 2) {
-            std::cout << "FAILED: ArraySet failed RemoveFirst Test" << std::endl;
+            std::cout << "FAILED: SparseArraySet failed RemoveFirst Test" << std::endl;
             return false;
         }
 
         testSet.Insert(0);
         if (!testSet.Contains(0) || !testSet.Contains(1) || !testSet.Contains(2) || testSet.Size() != 3) {
-            std::cout << "FAILED: ArraySet failed RemoveAdd Test" << std::endl;
+            std::cout << "FAILED: SparseArraySet failed RemoveAdd Test" << std::endl;
             return false;
         }
 
         testSet.Remove(0);
         if (testSet.Contains(0) || testSet.Size() != 2) {
-            std::cout << "FAILED: ArraySet failed RemoveLast Test" << std::endl;
+            std::cout << "FAILED: SparseArraySet failed RemoveLast Test" << std::endl;
             return false;
         }
 
         testSet.Insert(0);
         testSet.Remove(1);
         if (testSet.Contains(1) || testSet.Size() != 2) {
-            std::cout << "FAILED: ArraySet failed RemoveMiddle Test" << std::endl;
+            std::cout << "FAILED: SparseArraySet failed RemoveMiddle Test" << std::endl;
             return false;
         }
 
@@ -163,7 +146,7 @@ public:
         testSet.Remove(2);
         testSet.Remove(0);
         if (testSet.Contains(0) || testSet.Contains(1) || testSet.Contains(2) || testSet.Size() != 0 || !testSet.Empty()) {
-            std::cout << "FAILED: ArraySet failed RemoveAll Test" << std::endl;
+            std::cout << "FAILED: SparseArraySet failed RemoveAll Test" << std::endl;
             return false;
         }
 
@@ -171,25 +154,25 @@ public:
         testSet.Insert(1);
         testSet.Insert(2);
         if (!testSet.Contains(0) || !testSet.Contains(1) || !testSet.Contains(2) || testSet.Size() != 3) {
-            std::cout << "FAILED: ArraySet failed InsertAll Test" << std::endl;
+            std::cout << "FAILED: SparseArraySet failed InsertAll Test" << std::endl;
             return false;
         }
 
         testSet.SaveState();
         if (!testSet.Contains(0) || !testSet.Contains(1) || !testSet.Contains(2) || testSet.Size() != 3) {
-            std::cout << "FAILED: ArraySet failed SaveState Test" << std::endl;
+            std::cout << "FAILED: SparseArraySet failed SaveState Test" << std::endl;
             return false;
         }
 
         testSet.Remove(0);
         if (testSet.Contains(0) || !testSet.Contains(1) || !testSet.Contains(2) || testSet.Size() != 2) {
-            std::cout << "FAILED: ArraySet failed RemoveAfterSave Test" << std::endl;
+            std::cout << "FAILED: SparseArraySet failed RemoveAfterSave Test" << std::endl;
             return false;
         }
 
         testSet.RestoreState();
         if (!testSet.Contains(0) || !testSet.Contains(1) || !testSet.Contains(2) || testSet.Size() != 3) {
-            std::cout << "FAILED: ArraySet failed RestoreState Test" << std::endl;
+            std::cout << "FAILED: SparseArraySet failed RestoreState Test" << std::endl;
             return false;
         }
 
@@ -198,7 +181,6 @@ public:
     }
 
 private:
-    std::vector<int> m_Lookup;
     std::vector<int> m_Elements;
     int m_iBegin;
     int m_iEnd;
@@ -207,4 +189,4 @@ private:
     bool m_bRemoved;
 };
 
-#endif // ARRAY_SET_H
+#endif // SPARSE_ARRAY_SET_H

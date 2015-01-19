@@ -107,9 +107,13 @@ public:
 
     void MoveFromPToR(int const vertex)
     {
-        if (vertex < 0 || vertex >= vertexLookup.size() || !InP(vertex)) {
-            std::cout << "Attempting to move invalid vertex : " << vertex << std::endl << std::flush;
-        }
+////        if (vertex == 31) {
+////            std::cout << "Moving " << vertex << " from P to R" << std::endl << std::flush;
+////        }
+////
+////        if (vertex < 0 || vertex >= vertexLookup.size() || !InP(vertex)) {
+////            std::cout << "Attempting to move invalid vertex : " << vertex << std::endl << std::flush;
+////        }
         int const vertexLocation = vertexLookup[vertex];
         beginR--;
         vertexSets[vertexLocation] = vertexSets[beginR];
@@ -130,6 +134,10 @@ public:
 
     void MoveFromPToX(int const vertex)
     {
+////        if (vertex == 31) {
+////            std::cout << "Moving " << vertex << " from P to X" << std::endl << std::flush;
+////        }
+
         int const vertexLocation = vertexLookup[vertex];
 
         //swap vertex into X and increment beginP and beginR
@@ -162,6 +170,7 @@ public:
 
     void RemoveFromP(int const vertex)
     {
+////        if (vertex == 31) std::cout << " Removing vertex " << vertex << " from consideration for clique" << std::endl << std::flush;
         int const vertexLocation = vertexLookup[vertex];
         beginR--;
         vertexSets[vertexLocation] = vertexSets[beginR];

@@ -154,8 +154,10 @@ int main(int argc, char** argv)
 
     vector<list<int>> adjacencyList;
     if (inputFile.find(".graph") != string::npos) {
+        cout << "Reading .graph file format. " << endl << flush;
         adjacencyList = readInGraphAdjListEdgesPerLine(n, m, inputFile);
     } else {
+        cout << "Reading .edges file format. " << endl << flush;
         adjacencyList = readInGraphAdjList(n, m, inputFile);
     }
 
@@ -260,8 +262,8 @@ int main(int argc, char** argv)
     };
 
     auto verifyIndependentSet = [&adjacencyArray](list<int> const &clique) {
-        bool const isMIS = CliqueTools::IsMaximalIndependentSet(adjacencyArray, clique, true /* verbose */);
-        cout << "Independent set " << (isMIS ? "is" : "is not" ) << " maximal " << endl;
+        bool const isMIS = CliqueTools::IsIndependentSet(adjacencyArray, clique, true /* verbose */);
+////        cout << "Independent set " << (isMIS ? "is" : "is not" ) << " maximal " << endl;
     };
 
     pAlgorithm->AddCallBack(printClique);

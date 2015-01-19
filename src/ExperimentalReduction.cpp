@@ -74,6 +74,8 @@ bool ExperimentalReduction::GetNextTopLevelPartition()
     bool const returnValue(!m_bDoneWithTopLevelPartitions);
     m_bDoneWithTopLevelPartitions = true;
 
+    cout << "After preprocessing, graph has " << SizeOfP() << " vertices remaining." << endl << flush;
+
     return returnValue;
 }
 

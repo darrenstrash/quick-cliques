@@ -256,6 +256,9 @@ vector<list<int>> readInGraphAdjListEdgesPerLine(int &n, int &m, string const &f
         string line;
         std::getline(instream, line);
 ////        cout << "Read Line: " << line << endl << flush;
+        while((line.empty() || line[0] == '%') && instream.good() && !instream.eof()) {
+            std::getline(instream, line);
+        }
         stringstream strm(line);
         strm >> n >> m;
     } else {
@@ -272,31 +275,34 @@ vector<list<int>> readInGraphAdjListEdgesPerLine(int &n, int &m, string const &f
 
     int u, v; // endvertices, to read edges.
     int i = 0;
-    string line;
     while (i < n) {
         if (!instream.good()  || instream.eof()) {
             fprintf(stderr, "ERROR: Problem reading line %d in file %s\n", i+1, fileName.c_str());
             exit(1);
         }
 
+        string line;
         std::getline(instream, line);
-////        cout << "Read Line: " << line << endl << flush;
         u = i; // TODO/DS: remove.
         stringstream strm(line);
-        while (!strm.eof()) {
+////        cout << (u+1) << " : ";
+////        cout << "Read Line: " << line << endl << flush;
+        while (strm.good() && !strm.eof()) {
             strm >> v;
+            if (!strm.good()) break;
+////            cout << v << " ";
             v--;
-////            cout << u << "->" << v << endl;
 
             assert(u < n && u > -1);
             assert(v < n && v > -1);
             if (u==v) {
-                fprintf(stderr, "ERROR: Detected loop %d->%d\n", u, v);
+                fprintf(stderr, "ERROR: Detected loop %d->%d\n", u + 1, v + 1);
                 exit(1);
             }
 
             adjList[u].push_back(v);
         }
+////        cout << endl << flush;
 
         i++;
     }

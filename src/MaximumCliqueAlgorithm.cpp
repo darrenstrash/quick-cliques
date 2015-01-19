@@ -149,7 +149,11 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
 ////
 ////    cout << endl << flush;
 
+////    vector<int> dominatedVertices;
+////    m_pSets->RemoveDominatedVertices(dominatedVertices);
+
     if (partialClique.size() + m_pSets->RemainingSizeEstimate() <= m_uMaximumCliqueSize) {
+////        m_pSets->ReturnDominatedVertices(dominatedVertices);
         return;
     }
 
@@ -195,12 +199,15 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
                        #endif
                        partialClique );
 
+////        m_pSets->ReturnDominatedVertices(dominatedVertices);
         return;
     }
 
     // avoid work if P is empty.
-    if (m_pSets->PIsEmpty())
+    if (m_pSets->PIsEmpty()) {
+////        m_pSets->ReturnDominatedVertices(dominatedVertices);
         return;
+    }
 
     vector<int> vVerticesToEvaluate = std::move(m_pSets->ChoosePivotNonConst());
     vector<int> vEvaluatedVertices;
@@ -213,6 +220,12 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
         if (currentRecursionNode == 0) {
             cout << "Only " << vVerticesToEvaluate.size() << " more vertices to go!" << endl << flush;
         }
+////        if (currentRecursionNode == 15) {
+////            cout << currentRecursionNode << ":" << endl << flush;
+////            cout << "vertex " << vertex << " is " << (m_pSets->InP(vertex) ? " " : "not ") << " in P" << endl << flush;
+////            cout << "Adding vertex " << vertex << " to clique " << endl << flush;
+////        }
+
         m_pSets->MoveFromPToR(partialClique, vertex);
 
 #ifdef PRINT_CLIQUES_TOMITA_STYLE
@@ -242,4 +255,7 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
     m_pSets->ReturnVerticesToP(partialClique, vEvaluatedVertices);
 
     stepsSinceLastReportedClique++;
+
+////    m_pSets->ReturnDominatedVertices(dominatedVertices);
+    return;
 }
