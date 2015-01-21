@@ -285,12 +285,14 @@ vector<list<int>> readInGraphAdjListEdgesPerLine(int &n, int &m, string const &f
         std::getline(instream, line);
         u = i; // TODO/DS: remove.
         stringstream strm(line);
-////        cout << (u+1) << " : ";
-////        cout << "Read Line: " << line << endl << flush;
+////        bool debug(true); ////u == 40656 || u == 40653);
+////if (debug)        cout << (u+1) << " : " << endl << flush;
+////if (debug)        cout << "Read     Line: " << line << endl << flush;
+////if (debug)        cout << "Actually Read: ";
         while (strm.good() && !strm.eof()) {
             strm >> v;
-            if (!strm.good()) break;
-////            cout << v << " ";
+            ////if (!strm.good()) break;
+////if (debug)            cout << v << " ";
             v--;
 
             assert(u < n && u > -1);
@@ -302,7 +304,7 @@ vector<list<int>> readInGraphAdjListEdgesPerLine(int &n, int &m, string const &f
 
             adjList[u].push_back(v);
         }
-////        cout << endl << flush;
+////if (debug)        cout << endl << flush;
 
         i++;
     }

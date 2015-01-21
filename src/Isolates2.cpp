@@ -68,6 +68,7 @@ void Isolates2::RemoveEdges(vector<pair<int,int>> const &vEdges)
 
 bool Isolates2::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
 {
+////    bool const debug(vertex==40653);
 ////    if (vertex == 31) {
 ////        cout << "Removing isolated clique with vertex " << vertex << endl << flush;
 ////        if (!inGraph.Contains(31)) cout << "Vertex 31 is not in the graph!" << endl << flush;
@@ -97,7 +98,7 @@ bool Isolates2::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVert
 ////        for (int const neighbor : neighbors[vertex]) {
 ////            cout << neighbor << " " << flush;
 ////        }
-////////        cout << endl << flush;
+////        cout << endl << flush;
 ////        cout << "(";
 ////
 ////        for (int const neighbor : m_AdjacencyArray[vertex]) {
@@ -105,7 +106,7 @@ bool Isolates2::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVert
 ////        }
 ////        cout << ")" << endl << flush;
 ////    }
-
+////
     for (int const neighbor : neighbors[vertex]) {
 ////        if (debug) {
 ////            cout << "Considering neighbor " <<  neighbor  << flush;
@@ -190,11 +191,13 @@ bool Isolates2::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVert
     ////        cout << endl << flush;
 
     if (superSet) {
-////        cout << "Removing Clique: [" << vertex;
-////        for (int const neighbor : neighbors[vertex]) {
-////            cout << " " << neighbor;
+////        if (debug) {
+////            cout << "Removing Clique: [" << vertex;
+////            for (int const neighbor : neighbors[vertex]) {
+////                cout << " " << neighbor;
+////            }
+////            cout << "]" << endl;
 ////        }
-////        cout << "]" << endl;
 ////        for (int const neighbor : neighbors[vertex]) {
 ////            cout << neighbor << " ";
 ////        }
@@ -331,6 +334,7 @@ void Isolates2::RemoveVertex(int const vertex)
 
     for (int const neighbor : neighbors[vertex]) {
         neighbors[neighbor].Remove(vertex);
+        remaining.Insert(neighbor);
     }
 
     neighbors[vertex].Clear();
@@ -377,7 +381,7 @@ void Isolates2::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved
 ////    cout << __LINE__ << ": Cleared neighbors: " << vertex << endl << flush;
 }
 
-void Isolates2::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges)
+void Isolates2::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges, bool bConsiderAllVertices)
 {
 ////    if (find (vIsolateVertices.begin(), vIsolateVertices.end(), 31) != vIsolateVertices.end())
 ////        cout << "Calling RemoveAllIsolates with 31 in the isolate set!" << endl;
@@ -386,9 +390,15 @@ void Isolates2::RemoveAllIsolates(int const independentSetSize, vector<int> &vIs
 #endif // TIMERS
 ////    remaining = inGraph; // TODO/DS : We can optimize this by knowing which vertex (and neighbors where removed last.
 ////    if (vOtherRemovedVertices.empty()) {
-        remaining.Clear();
-        for (int const vertex : inGraph) {
-            remaining.Insert(vertex);
+
+        // TODO/DS: Put this in; it saves us from having to consider obvious non-candidates. Only works if we establish
+        // the invariant that the graph contains no vertices that can be reduced.
+////        if (bConsiderAllVertices) { ////true) { //bConsiderAllVertices) {
+        if (true) { //bConsiderAllVertices) {
+            remaining.Clear();
+            for (int const vertex : inGraph) {
+                remaining.Insert(vertex);
+            }
         }
 ////    } else {
 ////        remaining.clear();
@@ -481,12 +491,29 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
 #if 1
     if (vVertices.empty()) return -1;
 
+////    set<int> setVertices; setVertices.insert(vVertices.begin(), vVertices.end());
+////    cout << "Choices: ";
+////    for (int const vertex : setVertices) {
+////        cout << vertex << "(degree=" << neighbors[vertex].Size() << ") ";
+////    }
+////    cout << endl << flush;
     int index(0);
-    for (int i = 0; i < vVertices.size(); ++i) {
-        if (neighbors[vVertices[index]].Size() < neighbors[vVertices[i]].Size()) index = i;
+    size_t currentMaxSize(neighbors[vVertices[index]].Size());
+    for (int i = 1; i < vVertices.size(); ++i) {
+        size_t const newCandidateSize(neighbors[vVertices[i]].Size());
+////        cout << vVertices[i] << "(" << newCandidateSize << " neighbors) ";
+
+        // break ties in favor of vertex with smaller id
+        if ((currentMaxSize < newCandidateSize) || ((currentMaxSize == newCandidateSize) && (vVertices[i] < vVertices[index])))
+        {
+            currentMaxSize = newCandidateSize;
+            index = i;
+        }
     }
+////    cout << endl << flush;
 
     int const vertexWithMaxReductions = vVertices[index];
+////    cout << "Choosing to remove " << vertexWithMaxReductions << " next, with " << neighbors[vVertices[index]].Size() << " neighbors " << endl; 
 
     vVertices[index]= vVertices.back();
     vVertices.pop_back();
@@ -539,7 +566,7 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
 
         // TODO/DS: Remove when vertex selection becomes faster, this is a compromise between fast vertex selection and good vertex selection.
         if (index >= vVerticesOrderedByDegree.size()/10) break;
-////        if (index >= 10) break;
+////        if (index >= 2) break;
 
 #ifdef DEBUG
 #ifdef SPARSE

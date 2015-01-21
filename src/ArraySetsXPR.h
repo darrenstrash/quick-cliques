@@ -180,6 +180,7 @@ public:
     }
 
     IteratorShim GetP() const { return IteratorShim(vertexSets.begin() + beginP, vertexSets.begin() + beginR); }
+    IteratorShim GetX() const { return IteratorShim(vertexSets.begin() + beginX, vertexSets.begin() + beginP); }
 
 protected:
     std::vector<int> vertexSets;

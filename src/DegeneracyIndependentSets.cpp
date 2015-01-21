@@ -659,7 +659,7 @@ void DegeneracyIndependentSets::RemoveDominatedVertices(vector<int> &removedVert
 #endif
 }
 
-void DegeneracyIndependentSets::RemoveDominatedVerticesFromVector(vector<int> &vVerticesInP) const
+void DegeneracyIndependentSets::RemoveDominatedVerticesFromVector(vector<int> &vVerticesInP)
 {
 ////        clock_t clockStart = clock();
         

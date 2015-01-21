@@ -171,7 +171,7 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
 ////    ExecuteCallBacks(partialClique);
 
     // if X is empty and P is empty, return partial clique as maximal
-    if (m_pSets->PIsEmpty()) { //XAndPAreEmpty()) {
+    if (partialClique.size() > m_uMaximumCliqueSize ) { ////m_pSets->PIsEmpty()) { //XAndPAreEmpty()) {
         cliqueCount++;
         if (!GetQuiet())
             cout << "Found clique with size " << partialClique.size() << endl;
@@ -198,9 +198,6 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
                        cliques,
                        #endif
                        partialClique );
-
-////        m_pSets->ReturnDominatedVertices(dominatedVertices);
-        return;
     }
 
     // avoid work if P is empty.
@@ -227,6 +224,7 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
 ////        }
 
         m_pSets->MoveFromPToR(partialClique, vertex);
+        m_pSets->RemoveDominatedVerticesFromVector(vVerticesToEvaluate);
 
 #ifdef PRINT_CLIQUES_TOMITA_STYLE
         printf("%d ", vertex);

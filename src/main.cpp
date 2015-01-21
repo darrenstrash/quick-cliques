@@ -262,11 +262,13 @@ int main(int argc, char** argv)
     };
 
     auto verifyIndependentSet = [&adjacencyArray](list<int> const &clique) {
-        bool const isMIS = CliqueTools::IsIndependentSet(adjacencyArray, clique, true /* verbose */);
-////        cout << "Independent set " << (isMIS ? "is" : "is not" ) << " maximal " << endl;
+        bool const isIS = CliqueTools::IsIndependentSet(adjacencyArray, clique, true /* verbose */);
+        if (!isIS) {
+            cout << "ERROR: Set " << (isIS ? "is" : "is not" ) << " and independent set!" << endl;
+        }
     };
 
-    pAlgorithm->AddCallBack(printClique);
+////    pAlgorithm->AddCallBack(printClique);
     pAlgorithm->AddCallBack(verifyIndependentSet);
 
     // Run algorithm

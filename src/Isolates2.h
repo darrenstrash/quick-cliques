@@ -23,7 +23,7 @@ public:
     void RemoveVertexAndNeighbors(int const vertex, std::vector<int> &vRemoved);
     void RemoveVertex(int const vertex);
 
-    void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
+    void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges, bool const bConsiderAllVertices);
     void ReplaceAllRemoved(std::vector<int> const &vRemoved);
 
     int NextVertexToRemove(std::vector<int> &vVertices);
@@ -33,7 +33,7 @@ public:
 
     ArraySet const& GetIsolates() const { return isolates; }
     ArraySet const& GetInGraph()  const { return inGraph;  }
-////    std::vector<std::set<int>> const& Neighbors()  const { return neighbors;  }
+    std::vector<SparseArraySet> const& Neighbors()  const { return neighbors;  }
 
     void RemoveEdges(std::vector<std::pair<int,int>> const &vEdges);
 

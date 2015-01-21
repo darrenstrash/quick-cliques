@@ -53,6 +53,7 @@ public:
         return frontVertex;
     }
 
+    virtual void RemoveDominatedVerticesFromVector(std::vector<int> &vVerticesInP) {}
     virtual void RemoveDominatedVertices(std::vector<int> &dominatedVertices) {}
     virtual void ApplyReduction(std::list<int> &partialClique) {}
     virtual void UndoReduction(std::list<int> &partialClique) {}

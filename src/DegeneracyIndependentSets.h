@@ -100,7 +100,7 @@ public:
 
 protected: // methods
     bool VerifyStartConfiguration() const;
-    void RemoveDominatedVerticesFromVector(std::vector<int> &vVerticesInP) const;
+    void RemoveDominatedVerticesFromVector(std::vector<int> &vVerticesInP);
     void RemoveDominatedVertices(std::vector<int> &vRemovedVertices);
     void ReturnDominatedVertices(std::vector<int> const &vRemovedVertices);
 

@@ -11,6 +11,7 @@
 
 // system includes
 #include <vector>
+#include <set>
 #include <cstring> // memcopy
 #include <iostream>
 #include <utility>
@@ -63,6 +64,7 @@ public:
     virtual void GetTopLevelPartialClique(std::list<int> &partialClique) const
     {
         for (int const cliqueVertex : isolates.GetIsolates()) {
+////            if (cliqueVertex == 40653) { std::cout << "vertex 40653 is in top-level clique." << std::endl << std::flush; }
             partialClique.push_back(cliqueVertex);
         }
     }
@@ -99,6 +101,12 @@ public:
         return "Ok";
     }
 
+////virtual void RemoveDominatedVerticesFromVector(std::vector<int> &vVerticesInP);
+
+virtual void RemoveDominatedVertices(std::vector<int> &dominatedVertices)
+{
+}
+
 protected: // methods
 
     void StoreGraphChanges();
@@ -113,6 +121,8 @@ protected: // members
     Isolates2 isolates;
     std::vector<std::vector<int>> vvCliqueVertices;
     std::vector<std::vector<int>> vvOtherRemovedVertices;
+    std::vector<std::vector<int>> vvPersistentCliqueVertices;
+    std::vector<std::vector<int>> vvPersistentOtherRemovedVertices;
     std::vector<std::vector<std::pair<int,int>>> vvAddedEdges;
     ArraySetsXPR m_Sets;
     std::vector<int> m_vCliqueVertices;
@@ -154,6 +164,7 @@ inline void ExperimentalReduction::MoveFromPToR(std::list<int> &partialClique, i
 ////    std::cout << __LINE__ << ": Checking P..." << std::endl;
 ////    CheckP();
 
+
     ApplyReductions(vertex, partialClique);
 
 ////    std::cout << __LINE__ << ": Checking P..." << std::endl;
@@ -173,7 +184,6 @@ inline void ExperimentalReduction::MoveFromPToR(std::list<int> &partialClique, i
 ////        if (!InP(cliqueVertex)) {
 ////            std::cout << "Moving clique vertex " << cliqueVertex << ", when it is not in P!" << std::endl << std::flush; 
 ////            CheckP();
-////        }
 
         m_Sets.MoveFromPToR(cliqueVertex);
 ////        partialClique.push_back(cliqueVertex);
@@ -211,6 +221,9 @@ inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, i
 #ifndef DO_PIVOT
     m_Sets.MoveFromPToX(vertex);
     isolates.RemoveVertex(vertex);
+////    vector<int> &vCliqueVertices(vvPersistentCliqueVertices.back());
+////    vector<int> &vOtherRemoved(vvPersistentOtherRemovedVertices.back());
+////    isolates.RemoveAllIsolates(vCliqueVertices, vOtherRemoved);
 #endif // DO_PIVOT
 
 ////    std::cout << "Moving " << vertex << " from R to X " << std::endl;
@@ -324,11 +337,23 @@ inline void ExperimentalReduction::ApplyReductions(int const vertex, std::list<i
     isolates.RemoveVertexAndNeighbors(vertex, vOtherRemoved);
     vCliqueVertices.push_back(vertex);
 
-#ifdef REMOVE_ISOLATES
-    isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges);
-    std::cout << "Removed " << vCliqueVertices.size() + vOtherRemoved.size() << "/" << m_Sets.SizeOfP() << " vertices in reduction" << std::endl;
-////    std::cout << "    Vertices: ";
+    int removed(vOtherRemoved.size() + 1);
 
+#ifdef REMOVE_ISOLATES
+    isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges, false /* use precomputed list of vertices to reduce */);
+////    std::cout << "Removed " << vCliqueVertices.size() + vOtherRemoved.size() - removed << "/" << m_Sets.SizeOfP() << " vertices in reduction" << std::endl;
+
+////    std::set<int> removedVertices;
+////    removedVertices.insert(vCliqueVertices.begin(), vCliqueVertices.end());
+////    removedVertices.insert(vOtherRemoved.begin(), vOtherRemoved.end());
+////    std::cout << "All removed vertices: ";
+////    for (int const removedVertex : removedVertices) {
+////        std::cout << removedVertex << " ";
+////    }
+////    std::cout << std::endl << std::flush;
+
+////    std::cout << "    Clique Vertices: ";
+////
 ////    for (int const cliqueVertex : vCliqueVertices) {
 ////        std::cout << cliqueVertex << " ";
 ////    }
