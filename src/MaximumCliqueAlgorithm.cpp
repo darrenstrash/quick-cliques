@@ -170,6 +170,8 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
 
 ////    ExecuteCallBacks(partialClique);
 
+    auto TestForNewClique = [this, &cliqueCount, &cliques, &partialClique]() {
+
     // if X is empty and P is empty, return partial clique as maximal
     if (partialClique.size() > m_uMaximumCliqueSize ) { ////m_pSets->PIsEmpty()) { //XAndPAreEmpty()) {
         cliqueCount++;
@@ -199,6 +201,9 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
                        #endif
                        partialClique );
     }
+    };
+
+    TestForNewClique();
 
     // avoid work if P is empty.
     if (m_pSets->PIsEmpty()) {
@@ -206,6 +211,7 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
         return;
     }
 
+////    cout << "RN: " << currentRecursionNode << ":";
     vector<int> vVerticesToEvaluate = std::move(m_pSets->ChoosePivotNonConst());
     vector<int> vEvaluatedVertices;
 
@@ -241,7 +247,8 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
 
 ////        m_pSets->UndoReduction(partialClique);
 
-        m_pSets->MoveFromRToX(partialClique, vertex);
+        bool const bEmptyBeforeMoveToX(m_pSets->PIsEmpty());
+        m_pSets->MoveFromRToX(partialClique, vVerticesToEvaluate, vertex);
 
         if (partialClique.size() + m_pSets->RemainingSizeEstimate() <= m_uMaximumCliqueSize) {
             break;
@@ -249,6 +256,10 @@ void MaximumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
         vertex = m_pSets->GetNextVertexToEvaluate(vVerticesToEvaluate);
     }
 
+    TestForNewClique();
+
+
+////    cout << "RN: " << currentRecursionNode << ":";
     // swap vertices that were moved to X back into P, for higher recursive calls.
     m_pSets->ReturnVerticesToP(partialClique, vEvaluatedVertices);
 

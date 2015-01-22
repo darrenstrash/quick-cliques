@@ -16,6 +16,7 @@
 #include <iostream>
 #include <utility>
 
+#define PERSISTENT_REMOVE_ISOLATES
 #define REMOVE_ISOLATES
 ////#define DO_PIVOT
 
@@ -34,9 +35,10 @@ public:
     virtual void MoveFromPToR(int const vertexInP) __attribute__((always_inline));
     virtual void MoveFromPToR(std::list<int> &partialClique, int const vertexInP);
     virtual void MoveFromRToX(int const vertexInP) __attribute__((always_inline));
-    virtual void MoveFromRToX(std::list<int> &partialClique, int const vertexInP);
+    virtual void MoveFromRToX(std::list<int> &partialClique, std::vector<int> &vVerticesToEvaluate, int const vertexInP);
 
     virtual void ReturnVerticesToP(std::vector<int> const &vVertices) __attribute__((always_inline));
+    virtual void ReturnVerticesToP(std::list<int> &partialClique, std::vector<int> const &vVertices) __attribute__((always_inline));
 
     std::vector<int> ChoosePivotNonConst() __attribute__((always_inline));
     bool InP(int const vertex) const __attribute__((always_inline));
@@ -121,15 +123,23 @@ protected: // members
     Isolates2 isolates;
     std::vector<std::vector<int>> vvCliqueVertices;
     std::vector<std::vector<int>> vvOtherRemovedVertices;
+    std::vector<std::vector<std::pair<int,int>>> vvAddedEdges;
     std::vector<std::vector<int>> vvPersistentCliqueVertices;
     std::vector<std::vector<int>> vvPersistentOtherRemovedVertices;
-    std::vector<std::vector<std::pair<int,int>>> vvAddedEdges;
+    std::vector<std::vector<std::pair<int,int>>> vvPersistentAddedEdges;
     ArraySetsXPR m_Sets;
     std::vector<int> m_vCliqueVertices;
 };
 
 inline void ExperimentalReduction::ReturnVerticesToP(std::vector<int> const &vVertices)
 {
+    std::cout << "FATAL ERROR: This function should not be called" << std::endl;
+    exit(1);
+}
+
+inline void ExperimentalReduction::ReturnVerticesToP(std::list<int> &partialClique, std::vector<int> const &vVertices)
+{
+
 #ifndef DO_PIVOT
     for (int const vertex : vVertices) {
         m_Sets.MoveFromXToP(vertex);
@@ -141,12 +151,51 @@ inline void ExperimentalReduction::ReturnVerticesToP(std::vector<int> const &vVe
 #ifdef REMOVE_ISOLATES
     isolates.ReplaceAllRemoved(vVertices);
 #endif
+
 #endif // DO_PIVOT
+
+#ifdef PERSISTENT_REMOVE_ISOLATES
+
+    // remove clique vertices from partial clique.
+    for (int const cliqueVertices : vvPersistentCliqueVertices.back()) {
+        partialClique.pop_back();
+    }
+
+    // put all removed vertices back into P.
+    // TODO/DS: not needed, because the higher level recursive call has correct P...?
+
+    // put all removed vertices back into graph.
+    isolates.ReplaceAllRemoved(vvPersistentCliqueVertices.back());
+    isolates.ReplaceAllRemoved(vvPersistentOtherRemovedVertices.back());
+
+    for (int const vertex : vvPersistentCliqueVertices.back()) {
+        m_Sets.MoveFromRToP(vertex);
+    }
+
+    for (int const vertex : vvPersistentOtherRemovedVertices.back()) {
+        m_Sets.MoveFromRToP(vertex);
+    }
+
+
+    ////    AddToAdjacencyList(vAddedEdges); // would need to add back to isolates graph too.
+
+    // remove sets for this recursive call;
+    vvPersistentCliqueVertices.pop_back();
+    vvPersistentOtherRemovedVertices.pop_back();
+    vvPersistentAddedEdges.pop_back();
+#endif //PERSISTENT_REMOVE_ISOLATES
+
 ////    PrintSummary(__LINE__);
 ////    std::cout << __LINE__ << ": CheckP = " << CheckP() << std::endl;
 
 ////    std::cout << "EndCheckPoint: ";
-////    PrintSummary(__LINE__);
+////    std::set<int> P;
+////    P.insert(m_Sets.GetP().begin(), m_Sets.GetP().end());
+////    for (int const vertex : P) {
+////        std::cout << vertex << " ";
+////    }
+////    std::cout << std::endl << std::flush;
+    ////    PrintSummary(__LINE__);
 }
 
 inline void ExperimentalReduction::MoveFromPToR(int const vertex)
@@ -213,17 +262,43 @@ inline void ExperimentalReduction::MoveFromRToX(int const vertex)
 }
 
 // DONE: need to verify
-inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, int const vertex)
+inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, std::vector<int> &vVerticesToEvaluate, int const vertex)
 {
-    RestoreState(partialClique);
+    RestoreState(partialClique);    // after Restoring State, the vertex is back in P
 
-    // after Restoring State, the vertex is back in P
 #ifndef DO_PIVOT
+    // Remove from P, and from subgraph
     m_Sets.MoveFromPToX(vertex);
     isolates.RemoveVertex(vertex);
-////    vector<int> &vCliqueVertices(vvPersistentCliqueVertices.back());
-////    vector<int> &vOtherRemoved(vvPersistentOtherRemovedVertices.back());
-////    isolates.RemoveAllIsolates(vCliqueVertices, vOtherRemoved);
+
+#ifdef PERSISTENT_REMOVE_ISOLATES
+    // apply reductions to new subgraph, add clique vertices to partialClique
+    // save them so we can undo them when returning vertices to P.
+    std::vector<int> vCliqueVertices;
+    std::vector<int> vOtherRemoved;
+    std::vector<std::pair<int,int>> &vAddedEdges(vvPersistentAddedEdges.back());
+    isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemoved, vAddedEdges, false /* consider only precomputed vertices */);
+
+    // add clique vertices to partial clique
+    partialClique.insert(partialClique.end(), vCliqueVertices.begin(), vCliqueVertices.end());
+
+    // remove them so the vertices aren't considered in future recursive calls
+    vVerticesToEvaluate.clear();
+    vVerticesToEvaluate.insert(vVerticesToEvaluate.end(), isolates.GetInGraph().begin(), isolates.GetInGraph().end());
+
+    // remove vertices from P
+    for (int const cliqueVertex : vCliqueVertices) {
+        m_Sets.RemoveFromP(cliqueVertex);
+    }
+    for (int const otherVertex : vOtherRemoved) {
+        m_Sets.RemoveFromP(otherVertex);
+    }
+
+    // save removed vertices, so we can restore them later.
+    vvPersistentCliqueVertices.back().insert(vvPersistentCliqueVertices.back().end(), vCliqueVertices.begin(), vCliqueVertices.end());
+    vvPersistentOtherRemovedVertices.back().insert(vvPersistentOtherRemovedVertices.back().end(), vOtherRemoved.begin(), vOtherRemoved.end());
+    vvPersistentAddedEdges.back().insert(vvPersistentAddedEdges.back().end(), vAddedEdges.begin(), vAddedEdges.end());
+#endif // PERSISTENT_REMOVE_ISOLATES
 #endif // DO_PIVOT
 
 ////    std::cout << "Moving " << vertex << " from R to X " << std::endl;
@@ -248,8 +323,20 @@ inline void ExperimentalReduction::MoveFromRToX(std::list<int> &partialClique, i
 inline std::vector<int> ExperimentalReduction::ChoosePivotNonConst()
 {
 
+#ifdef PERSISTENT_REMOVE_ISOLATES
+    vvPersistentCliqueVertices.push_back(std::vector<int>());
+    vvPersistentOtherRemovedVertices.push_back(std::vector<int>());
+    vvPersistentAddedEdges.push_back(std::vector<std::pair<int,int>>());
+#endif //PERSISTENT_REMOVE_ISOLATES
+
 ////    std::cout << "Checkpoint: ";
-////    PrintSummary(__LINE__);
+////    std::set<int> P;
+////    P.insert(m_Sets.GetP().begin(), m_Sets.GetP().end());
+////    for (int const vertex : P) {
+////        std::cout << vertex << " ";
+////    }
+////    std::cout << std::endl << std::flush;
+    ////PrintSummary(__LINE__);
 
 #ifdef NOT_DONE
     std::vector<int> vVerticesInP;
@@ -364,7 +451,7 @@ inline void ExperimentalReduction::ApplyReductions(int const vertex, std::list<i
 ////    std::cout << std::endl;
 
     partialClique.insert(partialClique.end(), vCliqueVertices.begin(), vCliqueVertices.end());
-    AddToAdjacencyList(vAddedEdges);
+////    AddToAdjacencyList(vAddedEdges);
 #else
     partialClique.push_back(vertex);
 #endif

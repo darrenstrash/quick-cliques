@@ -17,7 +17,7 @@ public:
     virtual void MoveFromPToR(int const vertexInP) __attribute__((always_inline)) = 0;
     virtual void MoveFromPToR(std::list<int> &partialClique, int const vertexInP) __attribute__((always_inline)) { MoveFromPToR(vertexInP); partialClique.push_back(vertexInP); }
     virtual void MoveFromRToX(int const vertexInP) __attribute__((always_inline)) = 0;
-    virtual void MoveFromRToX(std::list<int> &partialClique, int const vertexInP) __attribute__((always_inline)) { MoveFromRToX(vertexInP); partialClique.pop_back(); }
+    virtual void MoveFromRToX(std::list<int> &partialClique, std::vector<int> &vVerticesToEvaluate, int const vertexInP) __attribute__((always_inline)) { MoveFromRToX(vertexInP); partialClique.pop_back(); }
 
     virtual void ReturnVerticesToP(std::vector<int> const &vVertices) __attribute__((always_inline)) = 0;
     virtual void ReturnVerticesToP(std::list<int> &partialClique, std::vector<int> const &vVertices) __attribute__((always_inline)) { ReturnVerticesToP(vVertices); }
