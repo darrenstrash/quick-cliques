@@ -324,6 +324,8 @@ bool Isolates2::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertic
     return false;
 }
 
+
+// TODO/DS: need to add 2-neighbors to remaining.
 void Isolates2::RemoveVertex(int const vertex)
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
@@ -340,7 +342,7 @@ void Isolates2::RemoveVertex(int const vertex)
     neighbors[vertex].Clear();
 }
 
-
+//TODO/DS: need to add 2-neighbors to remaining.
 void Isolates2::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;

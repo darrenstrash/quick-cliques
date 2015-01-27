@@ -289,7 +289,7 @@ vector<list<int>> readInGraphAdjListEdgesPerLine(int &n, int &m, string const &f
 ////if (debug)        cout << (u+1) << " : " << endl << flush;
 ////if (debug)        cout << "Read     Line: " << line << endl << flush;
 ////if (debug)        cout << "Actually Read: ";
-        while (strm.good() && !strm.eof()) {
+        while (!line.empty() && strm.good() && !strm.eof()) {
             strm >> v;
             ////if (!strm.good()) break;
 ////if (debug)            cout << v << " ";

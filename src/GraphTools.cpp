@@ -2,6 +2,7 @@
 
 #include <set>
 #include <vector>
+#include <list>
 #include <map>
 #include <iostream>
 
@@ -48,6 +49,41 @@ void GraphTools::ComputeInducedSubgraph(vector<vector<int>> &graph, set<int> con
         }
         cout << endl;
     }
+}
+
+vector<int> GraphTools::OrderVerticesByDegree(vector<vector<int>> const &adjacencyList, bool const ascending)
+{
+    vector<int> vOrderedVertices(adjacencyList.size(), -1);
+
+    size_t maxDegree(0);
+    for (vector<int> const &neighbors : adjacencyList) {
+        maxDegree = max(maxDegree, neighbors.size());
+    }
+
+    vector<list<int>> vlVerticesByDegree(maxDegree + 1, list<int>());
+
+    for (size_t vertex = 0; vertex < adjacencyList.size(); ++vertex) {
+////        std::cout << "maxDegree=" << maxDegree << ", degree=" << adjacencyList[vertex].size() << endl << flush;
+        vlVerticesByDegree[adjacencyList[vertex].size()].push_back(vertex);
+    }
+
+    if (ascending) {
+        size_t index(0);
+        for (size_t degree = 0; degree <= maxDegree; ++degree) {
+            for (int const vertex : vlVerticesByDegree[degree]) {
+                vOrderedVertices[index++] = vertex;
+            }
+        }
+    } else {
+        size_t index(0);
+        for (size_t degree = 0; degree <= maxDegree; ++degree) {
+            for (int const vertex : vlVerticesByDegree[maxDegree - degree]) {
+                vOrderedVertices[index++] = vertex;
+            }
+        }
+    }
+
+    return vOrderedVertices;
 }
 
 // NOT CURRENTLY USED.
