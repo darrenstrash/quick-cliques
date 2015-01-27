@@ -167,6 +167,22 @@ bool CliqueTools::IsMaximalClique(vector<vector<int>> &adjacencyArray, list<int>
     return true;
 }
 
+bool CliqueTools::IsClique(vector<vector<char>> &adjacencyMatrix, list<int> const&clique, bool const verbose)
+{
+    for (int const vertex : clique) {
+        for (int const otherVertex : clique) {
+            if (vertex == otherVertex) continue;
+            if (!adjacencyMatrix[vertex][otherVertex]) {
+                cout << "clique test failed: " << vertex << " should not be in the same set with " << otherVertex << endl << flush;
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+
 bool CliqueTools::IsMaximalIndependentSet(vector<vector<int>> &adjacencyArray, list<int> const &vertexSet, bool const verbose)
 {
     size_t const setSize(vertexSet.size());

@@ -6,8 +6,8 @@
 class CliqueColoringStrategy : public ColoringStrategy
 {
 public:
-    CliqueColoringStrategy(std::vector<std::vector<int>> const &adjacencyList);
-    virtual void Color(std::vector<std::vector<int>> const &adjacencyList, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors);
+    CliqueColoringStrategy(std::vector<std::vector<char>> const &adjacencyMatrix);
+    virtual void Color(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors);
 ////    virtual void Recolor();
 ////    virtual void RemoveVertex(int const vertex);
 ////    virtual void PeekAtNextVertexAndColor(int &vertex, int &color);

@@ -26,6 +26,8 @@
 #include "DegeneracyAlgorithm.h"
 #include "FasterDegeneracyAlgorithm.h"
 
+#include "AdjacencyMatrixVertexSets.h"
+#include "AdjacencyListVertexSetsMax.h"
 #include "ReverseDegeneracyVertexSets.h"
 #include "AdjacencyListVertexSets.h"
 #include "DegeneracyVertexSets.h"
@@ -74,7 +76,7 @@ using namespace std;
 
 bool isValidAlgorithm(string const &name)
 {
-    return (name == "tomita" || name == "adjlist" || name == "generic-adjlist" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
+    return (name == "tomita" || name == "generic-adjmatrix" || name == "adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
             name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis");
 }
 
@@ -129,6 +131,7 @@ int main(int argc, char** argv)
     string const algorithm((mapCommandLineArgs.find("--algorithm") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--algorithm"] : "");
     bool   const computeCliqueGraph(mapCommandLineArgs.find("--compute-clique-graph") != mapCommandLineArgs.end());
     bool   const staging(mapCommandLineArgs.find("--staging") != mapCommandLineArgs.end());
+    bool   const findMaximumOnly(mapCommandLineArgs.find("--maximum") != mapCommandLineArgs.end());
 
     if (inputFile.empty()) {
         cout << "ERROR: Missing input file " << endl;
@@ -161,22 +164,27 @@ int main(int argc, char** argv)
         adjacencyList = readInGraphAdjList(n, m, inputFile);
     }
 
-    bool const bComputeAdjacencyMatrix(name == "tomita");
+    bool const bComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix");
 
     char** adjacencyMatrix(nullptr);
 
+    vector<vector<char>> vAdjacencyMatrix;
+
     if (bComputeAdjacencyMatrix) {
         adjacencyMatrix = (char**)Calloc(n, sizeof(char*));
+        vAdjacencyMatrix.resize(n);
 
         for(int i=0; i<n; i++) {
             adjacencyMatrix[i] = (char*)Calloc(n, sizeof(char));
+            vAdjacencyMatrix[i].resize(n);
             for(int const neighbor : adjacencyList[i]) {
                 adjacencyMatrix[i][neighbor] = 1; 
+                vAdjacencyMatrix[i][neighbor] = 1; 
             }
         }
     }
 
-    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis");
+    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis");
 
     vector<vector<int>> adjacencyArray;
 
@@ -192,19 +200,24 @@ int main(int argc, char** argv)
         adjacencyList.clear(); // does this free up memory? probably some...
     }
 
+    VertexSets *pSets(nullptr);
 
     if (name == "tomita") {
         pAlgorithm = new TomitaAlgorithm(adjacencyMatrix, n);
+    } else if (name == "generic-adjmatrix") {
+        pSets = new AdjacencyMatrixVertexSets(vAdjacencyMatrix);
     } else if (name == "adjlist") {
         pAlgorithm = new AdjacencyListAlgorithm(adjacencyArray);
     } else if (name == "generic-adjlist") {
-        AdjacencyListVertexSets *pSets = new AdjacencyListVertexSets(adjacencyArray);
-        pAlgorithm = new BronKerboschAlgorithm(pSets);
+        pSets = new AdjacencyListVertexSets(adjacencyArray);
+    } else if (name == "generic-adjlist-max") {
+        pSets = new AdjacencyListVertexSetsMax(adjacencyArray);
+        if (!findMaximumOnly) { cout << "Will only find maximum subgraph, algorithm does not support listing all subgraphs." << endl; }
+        pAlgorithm = new MaximumCliqueAlgorithm(pSets);
     } else if (name == "generic-degeneracy") {
-        DegeneracyVertexSets *pSets = new DegeneracyVertexSets(adjacencyArray);
-        pAlgorithm = new BronKerboschAlgorithm(pSets);
+        pSets = new DegeneracyVertexSets(adjacencyArray);
     } else if (name == "reverse-degeneracy") {
-        pAlgorithm = new BronKerboschAlgorithm(new ReverseDegeneracyVertexSets(adjacencyArray));
+        pSets = new ReverseDegeneracyVertexSets(adjacencyArray);
     } else if (name == "timedelay-adjlist") {
         pAlgorithm = new TimeDelayAdjacencyListAlgorithm(adjacencyArray);
     } else if (name == "timedelay-maxdegree") {
@@ -217,29 +230,26 @@ int main(int argc, char** argv)
         pAlgorithm = new FasterDegeneracyAlgorithm(adjacencyArray);
     } else if (name == "cache-degeneracy") {
         CacheEfficientDegeneracyVertexSets *pSets = new CacheEfficientDegeneracyVertexSets(adjacencyArray);
-        pAlgorithm = new BronKerboschAlgorithm(pSets);
     } else if (name == "mis") {
-        IndependentSets *pSets = new IndependentSets(adjacencyArray);
-        pAlgorithm = new BronKerboschAlgorithm(pSets);
+        pSets = new IndependentSets(adjacencyArray);
     } else if (name == "reduction-mis") {
-        IndependentSetsReduction *pSets = new IndependentSetsReduction(adjacencyArray);
-        pAlgorithm = new MaximumCliqueAlgorithm(pSets);
+        pSets = new IndependentSetsReduction(adjacencyArray);
     } else if (name == "experimental-mis") {
-        ExperimentalReduction *pSets = new ExperimentalReduction(adjacencyArray);
+        pSets = new ExperimentalReduction(adjacencyArray);
+        if (!findMaximumOnly) { cout << "Will only find maximum subgraph, algorithm does not support listing all subgraphs." << endl; }
         pAlgorithm = new MaximumCliqueAlgorithm(pSets);
     } else if (name == "degeneracy-mis") {
-        DegeneracyIndependentSets *pSets = new DegeneracyIndependentSets(adjacencyArray);
-        pAlgorithm = new MaximumCliqueAlgorithm(pSets);
+        pSets = new DegeneracyIndependentSets(adjacencyArray);
     } else if (name == "degeneracy-mis-2") {
-        DegeneracyIndependentSets2 *pSets = new DegeneracyIndependentSets2(adjacencyArray);
-        pAlgorithm = new MaximumCliqueAlgorithm(pSets);
+        pSets = new DegeneracyIndependentSets2(adjacencyArray);
     } else if (name == "degeneracy-min") {
-        DegeneracyIndependentSets *pSets = new DegeneracyIndependentSets(adjacencyArray);
+        pSets = new DegeneracyIndependentSets(adjacencyArray);
+        cout << "Will only find minimum subgraph, algorithm does not support listing all subgraphs, or finding maximum subgraph." << endl;
         pAlgorithm = new MinimumCliqueAlgorithm(pSets);
     } else if (name == "timedelay-degeneracy") {
         pAlgorithm = new TimeDelayDegeneracyAlgorithm(adjacencyList);
     } else if (name == "partial-match-degeneracy") {
-        pAlgorithm = new BronKerboschAlgorithm(new PartialMatchDegeneracyVertexSets(adjacencyArray));
+        pSets = new PartialMatchDegeneracyVertexSets(adjacencyArray);
     } else if (!computeCliqueGraph && !staging){
         cout << "ERROR: unrecognized algorithm name " << name << endl;
         return 1;
@@ -253,6 +263,12 @@ int main(int argc, char** argv)
         pAlgorithm = new Staging(adjacencyArray);
     }
 
+    if (!pAlgorithm && findMaximumOnly) {
+        pAlgorithm = new MaximumCliqueAlgorithm(pSets);
+    } else if (!pAlgorithm && !findMaximumOnly) {
+        pAlgorithm = new BronKerboschAlgorithm(pSets);
+    }
+
     auto printClique = [](list<int> const &clique) {
         cout << "Clique: ";
         for (int const vertex : clique) {
@@ -261,15 +277,27 @@ int main(int argc, char** argv)
         cout << endl;
     };
 
-    auto verifyIndependentSet = [&adjacencyArray](list<int> const &clique) {
-        bool const isIS = CliqueTools::IsIndependentSet(adjacencyArray, clique, true /* verbose */);
+    auto verifyMaximalCliqueArray = [&adjacencyArray](list<int> const &clique) {
+////        bool const isIS = CliqueTools::IsIndependentSet(adjacencyArray, clique, true /* verbose */);
+        bool const isIS = CliqueTools::IsMaximalClique(adjacencyArray, clique, true /* verbose */);
         if (!isIS) {
-            cout << "ERROR: Set " << (isIS ? "is" : "is not" ) << " and independent set!" << endl;
+            cout << "ERROR: Set " << (isIS ? "is" : "is not" ) << " a maximal clique!" << endl;
+        }
+    };
+
+    auto verifyCliqueMatrix = [&vAdjacencyMatrix](list<int> const &clique) {
+        bool const isIS = CliqueTools::IsClique(vAdjacencyMatrix, clique, true /* verbose */);
+        if (!isIS) {
+            cout << "ERROR: Set " << (isIS ? "is" : "is not" ) << " a clique!" << endl;
         }
     };
 
 ////    pAlgorithm->AddCallBack(printClique);
-    pAlgorithm->AddCallBack(verifyIndependentSet);
+    if (!bComputeAdjacencyMatrix) {
+        pAlgorithm->AddCallBack(verifyMaximalCliqueArray);
+    } else {
+        pAlgorithm->AddCallBack(verifyCliqueMatrix);
+    }
 
     // Run algorithm
     list<list<int>> cliques;

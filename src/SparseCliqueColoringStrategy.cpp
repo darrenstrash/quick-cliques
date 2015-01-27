@@ -1,4 +1,4 @@
-#include "CliqueColoringStrategy.h"
+#include "SparseCliqueColoringStrategy.h"
 #include "DegeneracyTools.h"
 
 #include <cmath>
@@ -7,12 +7,12 @@
 
 using namespace std;
 
-CliqueColoringStrategy::CliqueColoringStrategy(vector<vector<char>> const &adjacencyMatrix) : ColoringStrategy()////, m_Colors(adjacencyList.size(), -1) , m_VertexOrder()
+SparseCliqueColoringStrategy::SparseCliqueColoringStrategy(vector<vector<int>> const &adjacencyList) : ColoringStrategy(), m_vlColorToVertices(), m_vVertexToColor(adjacencyList.size(), -1), m_vNeighborHasColor()
 {
 ////    m_VertexOrder = std::move(GetVerticesInDegeneracyOrder(adjacencyList));
 }
 
-void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, vector<int> &vVerticesToReorder, vector<int> &vColors)
+void SparseCliqueColoringStrategy::Color(vector<vector<int>> const &adjacencyList, vector<int> &vVerticesToReorder, vector<int> &vColors)
 {
     if (vVerticesToReorder.empty()) return;
 
@@ -28,31 +28,33 @@ void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, 
 
     size_t maxColor(0);
 
-    vector<list<int>> vColorToVertex(vVerticesToReorder.size());
+    m_vlColorToVertices.resize(vVerticesToReorder.size());
+    m_vNeighborHasColor.resize(vVerticesToReorder.size(), false);
 
     size_t const numVerticesToReorder(vVerticesToReorder.size());
 
     for (int const vertex : vVerticesToReorder) {
         size_t color = 0;
-        for (list<int> const &verticesWithColor : vColorToVertex) {
-            bool hasNeighborWithColor(false);
-            if (verticesWithColor.empty()) break;
-            for (int const coloredVertex : verticesWithColor) {
-                // can be made more efficient?
-                hasNeighborWithColor = adjacencyMatrix[vertex][coloredVertex];
-                if (hasNeighborWithColor) {
-                    color++;
-                    break;
-                }
+        for (int const neighbor : adjacencyList[vertex]) {
+            if (m_vVertexToColor[neighbor] != -1) {
+                m_vNeighborHasColor[m_vVertexToColor[neighbor]] = true;
             }
+        }
 
-            if (!hasNeighborWithColor) {
+        for (size_t color = 0; color < m_vNeighborHasColor.size(); ++color) {
+            if (!m_vNeighborHasColor[color]) {
+                m_vlColorToVertices[color].push_back(vertex);
+                m_vVertexToColor[vertex] = color;
+                maxColor = max(maxColor, color);
                 break;
             }
         }
 
-        vColorToVertex[color].push_back(vertex);
-        maxColor = max(maxColor, color);
+        for (int const neighbor : adjacencyList[vertex]) {
+            if (m_vVertexToColor[neighbor] != -1) {
+                m_vNeighborHasColor[m_vVertexToColor[neighbor]] = false;
+            }
+        }
     }
 
 ////    cout << "maxColor=" << maxColor << ", numVertices=" << vVerticesToReorder.size() << endl;
@@ -60,11 +62,14 @@ void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, 
     int currentIndex(0);
     int currentColor(0);
     for (int currentColor = 0; currentColor <= maxColor; ++currentColor) {
-        for (int const vertex : vColorToVertex[currentColor]) {
+        for (int const vertex : m_vlColorToVertices[currentColor]) {
             vVerticesToReorder[currentIndex] = vertex;
             vColors[currentIndex] = currentColor;
             currentIndex++;
+
+            m_vVertexToColor[vertex] = -1; // reset all vertex colorings to be invalid
         }
+        m_vlColorToVertices[currentColor].clear();
     }
 
 #if 0

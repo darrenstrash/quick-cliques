@@ -1,27 +1,31 @@
-#ifndef ADJACENCY_LIST_VERTEX_SETS_H
-#define ADJACENCY_LIST_VERTEX_SETS_H
+#ifndef ADJACENCY_LIST_VERTEX_SETS_MAX_H
+#define ADJACENCY_LIST_VERTEX_SETS_MAX_H
 
 // local includes
 #include "VertexSets.h"
+#include "CliqueColoringStrategy.h"
+#include "SparseCliqueColoringStrategy.h"
 
 // system includes
 #include <vector>
+#include <set>
 #include <cstring> // memcopy
+#include <iostream>
 
-class AdjacencyListVertexSets : public VertexSets {
+class AdjacencyListVertexSetsMax : public VertexSets {
 public:
-    AdjacencyListVertexSets(std::vector<std::vector<int>> const &adjacencyList);
-    ~AdjacencyListVertexSets();
+    AdjacencyListVertexSetsMax(std::vector<std::vector<int>> &adjacencyList);
+    ~AdjacencyListVertexSetsMax();
 
-    AdjacencyListVertexSets           (AdjacencyListVertexSets const &sets) = delete;
-    AdjacencyListVertexSets& operator=(AdjacencyListVertexSets const &sets) = delete;
+    AdjacencyListVertexSetsMax           (AdjacencyListVertexSetsMax const &sets) = delete;
+    AdjacencyListVertexSetsMax& operator=(AdjacencyListVertexSetsMax const &sets) = delete;
 
     void MoveFromPToR(int const vertexInP) __attribute__((always_inline));
     void MoveFromRToX(int const vertexInP) __attribute__((always_inline));
 
     void ReturnVerticesToP(std::vector<int> const &vVertices) __attribute__((always_inline));
 
-    std::vector<int> ChoosePivot() const __attribute__((always_inline));
+    std::vector<int> ChoosePivotNonConst() __attribute__((always_inline));
     bool InP(int const vertex) const __attribute__((always_inline));
 
     bool PIsEmpty() const __attribute__((always_inline));
@@ -30,7 +34,26 @@ public:
     virtual size_t SizeOfX() const { return beginP - beginX; }
     virtual size_t SizeOfP() const { return beginR - beginP; }
 
+    virtual size_t RemainingSizeEstimate() const
+    {
+        if (stackColor.empty() || stackColor.back().empty()) return 0;
+        return stackColor.back().back();
+    }
+
     virtual size_t GetGraphSize() const { return m_AdjacencyList.size(); }
+
+    virtual int  GetNextVertexToEvaluate(std::vector<int> &/*vVertices*/)
+    {
+        if (stackP.empty() || stackP.back().empty()) return -1;
+
+        int const nextVertex(stackP.back().back());
+        stackP.back().pop_back();
+        stackColor.back().pop_back();
+
+        return nextVertex;
+    }
+
+    virtual void RemoveDominatedVerticesFromVector(std::vector<int> &vVerticesInP) {}
 
     void Initialize();
 
@@ -44,14 +67,18 @@ private: // members
     int beginX;
     int beginP;
     int beginR;
-    std::vector<std::vector<int>> const &m_AdjacencyList;
+    std::vector<std::vector<int>> &m_AdjacencyList;
     std::vector<int> vertexSets;
     std::vector<int> vertexLookup;
     std::vector<int> degree;
     std::vector<SetDelineator> m_lDelineators;
+    std::vector<std::vector<int>> stackP;
+    std::vector<std::vector<int>> stackColor;
+////    CliqueColoringStrategy coloringStrategy;
+    SparseCliqueColoringStrategy coloringStrategy;
 };
 
-inline void AdjacencyListVertexSets::ReturnVerticesToP(std::vector<int> const &vVertices)
+inline void AdjacencyListVertexSetsMax::ReturnVerticesToP(std::vector<int> const &vVertices)
 {
     for (int const vertex : vVertices) {
         int const vertexLocation = vertexLookup[vertex];
@@ -61,10 +88,14 @@ inline void AdjacencyListVertexSets::ReturnVerticesToP(std::vector<int> const &v
         vertexLookup[vertex] = beginP;
         vertexLookup[vertexSets[vertexLocation]] = vertexLocation;
     }
+
+    stackP.pop_back();
+    stackColor.pop_back();
 }
 
-inline void AdjacencyListVertexSets::MoveFromPToR(int const vertex)
+inline void AdjacencyListVertexSetsMax::MoveFromPToR(int const vertex)
 {
+////    std::cout << "Moving " << vertex << " from P To R" << std::endl << std::flush;
     int const vertexLocation = vertexLookup[vertex];
 
     //swap vertex into R and update beginR
@@ -115,10 +146,57 @@ inline void AdjacencyListVertexSets::MoveFromPToR(int const vertex)
     beginX = newBeginX;
     beginP = newBeginP;
     beginR = newBeginR;
+
+    // maintain order of items in P.
+    std::vector<int> &currentP    (stackP.back());
+    std::vector<int> &currentColor(stackColor.back());
+    std::vector<int> newP(currentP.size());
+    std::vector<int> newColor(currentP.size());
+
+    int index(0);
+    for (size_t vertexIndex = 0; vertexIndex < currentP.size(); ++vertexIndex) {
+        int const vertex(currentP[vertexIndex]);
+        if (InP(vertex)) {
+            newP[index] = vertex;
+            newColor[index] = currentColor[vertexIndex];
+            index++;
+        }
+    }
+    newP.resize(index);
+    newColor.resize(index);
+
+    coloringStrategy.Color(m_AdjacencyList, currentP, currentColor);
+
+    stackP.emplace_back(std::move(newP));
+    stackColor.emplace_back(std::move(newColor));
+
+#if 0
+    set<int> P;
+    for (int index = beginP; index < beginR; ++index) {
+        P.insert(vertexSets[index]);
+    }
+    for (int const vertex : P) {
+        std::cout << vertex << " ";
+    }
+    std::cout << std::endl << std::flush;
+#endif //1
 }
 
-inline void AdjacencyListVertexSets::MoveFromRToX(int const vertex)
+inline void AdjacencyListVertexSetsMax::MoveFromRToX(int const vertex)
 {
+
+#if 0
+    std::set<int> P;
+    for (int index = beginP; index < beginR; ++index) {
+        P.insert(vertexSets[index]);
+    }
+    for (int const vertex : P) {
+        std::cout << vertex << " ";
+    }
+    std::cout << "stackP-size=" << stackP.size() << ", current P has " << stackP.back().size() << " elements";
+    std::cout << std::endl << std::flush;
+#endif //1
+
     SetDelineator const &delineator = m_lDelineators.back();
 
     beginX = delineator.m_BeginX;
@@ -138,6 +216,20 @@ inline void AdjacencyListVertexSets::MoveFromRToX(int const vertex)
     beginP = beginP + 1;
     beginR = beginR + 1;
 
+    stackP.pop_back();
+    stackColor.pop_back();
+
+#if 0
+    P.clear();
+    for (int index = beginP; index < beginR; ++index) {
+        P.insert(vertexSets[index]);
+    }
+    for (int const vertex : P) {
+        std::cout << vertex << " ";
+    }
+    std::cout << "stackP-size=" << stackP.size() << ", current P has " << stackP.back().size() << " elements";
+    std::cout << std::endl << std::flush;
+#endif //1
 }
 
 /*! \brief Computes the vertex v in P union X that has the most neighbors in P,
@@ -149,8 +241,10 @@ inline void AdjacencyListVertexSets::MoveFromRToX(int const vertex)
   P \ {neighborhood of v} when this function completes.
  */
 
-inline std::vector<int> AdjacencyListVertexSets::ChoosePivot() const
+inline std::vector<int> AdjacencyListVertexSetsMax::ChoosePivotNonConst()
 {
+
+#if 0
     int pivot = -1;
     int maxIntersectionSize = -1;
     int i = beginX;
@@ -231,22 +325,34 @@ inline std::vector<int> AdjacencyListVertexSets::ChoosePivot() const
     pivotNonNeighbors.resize(numNonNeighbors);
 
     return pivotNonNeighbors;
+#endif // 0
+
+    // snapshot current P
+////    std::cout << "stackP-back-size (Before)=" << stackP.back().size() << std::endl;
+    std::vector<int> currentP(stackP.back());
+    stackP.emplace_back(std::move(currentP));
+////    std::cout << "stackP-back-size (After )=" << stackP.back().size() << std::endl;
+
+    std::vector<int> currentColor(stackColor.back());
+    stackColor.emplace_back(std::move(currentColor));
+
+    return stackP.back();
 }
 
-inline bool AdjacencyListVertexSets::InP(int const vertex) const
+inline bool AdjacencyListVertexSetsMax::InP(int const vertex) const
 {
     int const vertexLocation(vertexLookup[vertex]);
     return (vertexLocation >= beginP && vertexLocation < beginR);
 }
 
-inline bool AdjacencyListVertexSets::PIsEmpty() const
+inline bool AdjacencyListVertexSetsMax::PIsEmpty() const
 {
     return (beginP >= beginR);
 }
 
-inline bool AdjacencyListVertexSets::XAndPAreEmpty() const
+inline bool AdjacencyListVertexSetsMax::XAndPAreEmpty() const
 {
     return (beginX >= beginP && beginP >= beginR);
 }
 
-#endif //ADJACENCY_LIST_VERTEX_SETS_H
+#endif // ADJACENCY_LIST_VERTEX_SETS_MAX_H

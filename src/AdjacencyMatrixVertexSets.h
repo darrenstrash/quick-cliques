@@ -1,5 +1,5 @@
-#ifndef ADJACENCY_LIST_VERTEX_SETS_H
-#define ADJACENCY_LIST_VERTEX_SETS_H
+#ifndef ADJACENCY_MATRIX_VERTEX_SETS_H
+#define ADJACENCY_MATRIX_VERTEX_SETS_H
 
 // local includes
 #include "VertexSets.h"
@@ -8,13 +8,13 @@
 #include <vector>
 #include <cstring> // memcopy
 
-class AdjacencyListVertexSets : public VertexSets {
+class AdjacencyMatrixVertexSets : public VertexSets {
 public:
-    AdjacencyListVertexSets(std::vector<std::vector<int>> const &adjacencyList);
-    ~AdjacencyListVertexSets();
+    AdjacencyMatrixVertexSets(std::vector<std::vector<char>> const &adjacencyMatrix);
+    ~AdjacencyMatrixVertexSets();
 
-    AdjacencyListVertexSets           (AdjacencyListVertexSets const &sets) = delete;
-    AdjacencyListVertexSets& operator=(AdjacencyListVertexSets const &sets) = delete;
+    AdjacencyMatrixVertexSets           (AdjacencyMatrixVertexSets const &sets) = delete;
+    AdjacencyMatrixVertexSets& operator=(AdjacencyMatrixVertexSets const &sets) = delete;
 
     void MoveFromPToR(int const vertexInP) __attribute__((always_inline));
     void MoveFromRToX(int const vertexInP) __attribute__((always_inline));
@@ -30,7 +30,7 @@ public:
     virtual size_t SizeOfX() const { return beginP - beginX; }
     virtual size_t SizeOfP() const { return beginR - beginP; }
 
-    virtual size_t GetGraphSize() const { return m_AdjacencyList.size(); }
+    virtual size_t GetGraphSize() const { return m_AdjacencyMatrix.size(); }
 
     void Initialize();
 
@@ -44,14 +44,14 @@ private: // members
     int beginX;
     int beginP;
     int beginR;
-    std::vector<std::vector<int>> const &m_AdjacencyList;
+    std::vector<std::vector<char>> const &m_AdjacencyMatrix;
     std::vector<int> vertexSets;
     std::vector<int> vertexLookup;
     std::vector<int> degree;
     std::vector<SetDelineator> m_lDelineators;
 };
 
-inline void AdjacencyListVertexSets::ReturnVerticesToP(std::vector<int> const &vVertices)
+inline void AdjacencyMatrixVertexSets::ReturnVerticesToP(std::vector<int> const &vVertices)
 {
     for (int const vertex : vVertices) {
         int const vertexLocation = vertexLookup[vertex];
@@ -63,7 +63,7 @@ inline void AdjacencyListVertexSets::ReturnVerticesToP(std::vector<int> const &v
     }
 }
 
-inline void AdjacencyListVertexSets::MoveFromPToR(int const vertex)
+inline void AdjacencyMatrixVertexSets::MoveFromPToR(int const vertex)
 {
     int const vertexLocation = vertexLookup[vertex];
 
@@ -83,6 +83,31 @@ inline void AdjacencyListVertexSets::MoveFromPToR(int const vertex)
     // for each neighbor of vertex, ask if it is in X or P,
     // if it is, leave it there. Otherwise, swap it out.
     int j = 0;
+    for (int index = beginP-1; index >= beginX; index--) {
+        int const vertexInX = vertexSets[index];
+        if (m_AdjacencyMatrix[vertex][vertexInX]) {
+            //swap into X
+            newBeginX--;
+            vertexSets[index] = vertexSets[newBeginX];
+            vertexLookup[vertexSets[newBeginX]] = index;
+            vertexSets[newBeginX] = vertexInX;
+            vertexLookup[vertexInX] = newBeginX;
+        }
+    }
+
+    for (int index = beginP; index < beginR; index++) {
+        int const vertexInP = vertexSets[index];
+        if (m_AdjacencyMatrix[vertex][vertexInP]) {
+            //swap into P
+            vertexSets[index] = vertexSets[newBeginR];
+            vertexLookup[vertexSets[newBeginR]] = index;
+            vertexSets[newBeginR] = vertexInP;
+            vertexLookup[vertexInP] = newBeginR;
+            newBeginR++;
+        }
+    }
+
+#if 0
     while (j<degree[vertex]) {
         int const neighbor = m_AdjacencyList[vertex][j];
         int const neighborLocation = vertexLookup[neighbor];
@@ -109,6 +134,7 @@ inline void AdjacencyListVertexSets::MoveFromPToR(int const vertex)
 
         j++;
     }
+#endif // 0
 
     m_lDelineators.emplace_back(VertexSets::SetDelineator(beginX, beginP, beginR));
 
@@ -117,7 +143,7 @@ inline void AdjacencyListVertexSets::MoveFromPToR(int const vertex)
     beginR = newBeginR;
 }
 
-inline void AdjacencyListVertexSets::MoveFromRToX(int const vertex)
+inline void AdjacencyMatrixVertexSets::MoveFromRToX(int const vertex)
 {
     SetDelineator const &delineator = m_lDelineators.back();
 
@@ -149,8 +175,57 @@ inline void AdjacencyListVertexSets::MoveFromRToX(int const vertex)
   P \ {neighborhood of v} when this function completes.
  */
 
-inline std::vector<int> AdjacencyListVertexSets::ChoosePivot() const
+inline std::vector<int> AdjacencyMatrixVertexSets::ChoosePivot() const
 {
+    int pivot = -1;
+    int maxIntersectionSize = -1;
+
+    // loop through all vertices in P union X
+    int i = beginX;
+    while(i < beginR) {
+        int vertex = vertexSets[i];
+        int neighborCount = 0;
+
+        // count the number of neighbors vertex has in P.
+        int j = beginP;
+        while(j < beginR) {
+            if (m_AdjacencyMatrix[vertexSets[j]][vertex])
+                neighborCount++;
+
+            j++;
+        }
+
+        // if vertex has more neighbors in P, then update the pivot
+        if (neighborCount > maxIntersectionSize) {
+            maxIntersectionSize = neighborCount;
+            pivot = vertex;
+        }
+
+        i++;
+    }
+
+    // now pivot is the vertex with the most neighbors in P
+    size_t numNonNeighbors = 0;
+    std::vector<int> pivotNonNeighbors;
+
+    // make an array with the chosen pivot's non-neighbors
+    if(beginR-beginP-maxIntersectionSize > 0) {
+        pivotNonNeighbors.resize(beginR-beginP-maxIntersectionSize);
+
+        int j = beginP;
+        while (j < beginR) {
+            if (!m_AdjacencyMatrix[pivot][vertexSets[j]]) {
+                pivotNonNeighbors[numNonNeighbors] = vertexSets[j];
+                numNonNeighbors++;
+            }
+
+            j++;
+        }
+    }
+
+    return pivotNonNeighbors; 
+
+#if 0
     int pivot = -1;
     int maxIntersectionSize = -1;
     int i = beginX;
@@ -231,22 +306,23 @@ inline std::vector<int> AdjacencyListVertexSets::ChoosePivot() const
     pivotNonNeighbors.resize(numNonNeighbors);
 
     return pivotNonNeighbors;
+#endif // 0
 }
 
-inline bool AdjacencyListVertexSets::InP(int const vertex) const
+inline bool AdjacencyMatrixVertexSets::InP(int const vertex) const
 {
     int const vertexLocation(vertexLookup[vertex]);
     return (vertexLocation >= beginP && vertexLocation < beginR);
 }
 
-inline bool AdjacencyListVertexSets::PIsEmpty() const
+inline bool AdjacencyMatrixVertexSets::PIsEmpty() const
 {
     return (beginP >= beginR);
 }
 
-inline bool AdjacencyListVertexSets::XAndPAreEmpty() const
+inline bool AdjacencyMatrixVertexSets::XAndPAreEmpty() const
 {
     return (beginX >= beginP && beginP >= beginR);
 }
 
-#endif //ADJACENCY_LIST_VERTEX_SETS_H
+#endif //ADJACENCY_MATRIX_VERTEX_SETS_H
