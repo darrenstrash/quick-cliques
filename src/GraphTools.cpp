@@ -86,6 +86,52 @@ vector<int> GraphTools::OrderVerticesByDegree(vector<vector<int>> const &adjacen
     return vOrderedVertices;
 }
 
+vector<int> GraphTools::OrderVerticesByDegree(vector<vector<char>> const &adjacencyMatrix, vector<int> const &vDegree, bool const ascending)
+{
+    vector<int> vOrderedVertices(adjacencyMatrix.size(), -1);
+
+    size_t maxDegree(0);
+    for (int const degree : vDegree) {
+        maxDegree = max(maxDegree, static_cast<size_t>(degree));
+    }
+
+    vector<list<int>> vlVerticesByDegree(maxDegree + 1, list<int>());
+
+    for (size_t vertex = 0; vertex < adjacencyMatrix.size(); ++vertex) {
+////        std::cout << "maxDegree=" << maxDegree << ", degree=" << adjacencyList[vertex].size() << endl << flush;
+        vlVerticesByDegree[vDegree[vertex]].push_back(vertex);
+    }
+
+    if (ascending) {
+        size_t index(0);
+        for (size_t degree = 0; degree <= maxDegree; ++degree) {
+            for (int const vertex : vlVerticesByDegree[degree]) {
+                vOrderedVertices[index++] = vertex;
+            }
+        }
+    } else {
+        size_t index(0);
+        for (size_t degree = 0; degree <= maxDegree; ++degree) {
+            for (int const vertex : vlVerticesByDegree[maxDegree - degree]) {
+                vOrderedVertices[index++] = vertex;
+            }
+        }
+    }
+
+    return vOrderedVertices;
+}
+
+vector<int> GraphTools::OrderVerticesByDegree(vector<vector<char>> const &adjacencyMatrix, bool const ascending)
+{
+    vector<int> vDegree(adjacencyMatrix.size(), 0);
+    for (size_t u = 0; u < adjacencyMatrix.size(); ++u) {
+        for (size_t v = 0; v < adjacencyMatrix.size(); ++v) {
+            if (adjacencyMatrix[u][v]) vDegree[u]++;
+        }
+    }
+    return std::move(OrderVerticesByDegree(adjacencyMatrix, vDegree, ascending));
+}
+
 // NOT CURRENTLY USED.
 
 ////void GraphTools::RemoveVertices(vector<vector<int>> &adjacencyList, vector<int> const &vVertices)

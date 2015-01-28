@@ -26,6 +26,8 @@
 #include "DegeneracyAlgorithm.h"
 #include "FasterDegeneracyAlgorithm.h"
 
+#include "LightWeightMCQ.h"
+#include "AdjacencyMatrixVertexSetsMax.h"
 #include "AdjacencyMatrixVertexSets.h"
 #include "AdjacencyListVertexSetsMax.h"
 #include "ReverseDegeneracyVertexSets.h"
@@ -76,7 +78,7 @@ using namespace std;
 
 bool isValidAlgorithm(string const &name)
 {
-    return (name == "tomita" || name == "generic-adjmatrix" || name == "adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
+    return (name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" ||name == "adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
             name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis");
 }
 
@@ -164,7 +166,7 @@ int main(int argc, char** argv)
         adjacencyList = readInGraphAdjList(n, m, inputFile);
     }
 
-    bool const bComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix");
+    bool const bComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq");
 
     char** adjacencyMatrix(nullptr);
 
@@ -206,6 +208,10 @@ int main(int argc, char** argv)
         pAlgorithm = new TomitaAlgorithm(adjacencyMatrix, n);
     } else if (name == "generic-adjmatrix") {
         pSets = new AdjacencyMatrixVertexSets(vAdjacencyMatrix);
+    } else if (name == "generic-adjmatrix-max") {
+        pSets = new AdjacencyMatrixVertexSetsMax(vAdjacencyMatrix);
+    } else if (name == "mcq") {
+        pAlgorithm = new LightWeightMCQ(vAdjacencyMatrix);
     } else if (name == "adjlist") {
         pAlgorithm = new AdjacencyListAlgorithm(adjacencyArray);
     } else if (name == "generic-adjlist") {
@@ -292,7 +298,13 @@ int main(int argc, char** argv)
         }
     };
 
+    auto printCliqueSize = [](list<int> const &clique) {
+        cout << "Found clique of size " << clique.size() << endl << flush;
+    };
+
+    pAlgorithm->AddCallBack(printCliqueSize);
 ////    pAlgorithm->AddCallBack(printClique);
+
     if (!bComputeAdjacencyMatrix) {
         pAlgorithm->AddCallBack(verifyMaximalCliqueArray);
     } else {

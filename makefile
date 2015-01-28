@@ -5,6 +5,12 @@ BIN_DIR   = bin
 
 CFLAGS = -Winline -O2 -std=c++11 -g
 
+SOURCES_TMP += LightWeightMCQ.cpp
+SOURCES_TMP += AdjacencyMatrixVertexSetsMax.cpp
+SOURCES_TMP += AdjacencyMatrixVertexSets.cpp
+SOURCES_TMP += AdjacencyListVertexSetsMax.cpp
+SOURCES_TMP += SparseCliqueColoringStrategy.cpp
+SOURCES_TMP += CliqueColoringStrategy.cpp
 SOURCES_TMP += Isolates.cpp
 SOURCES_TMP += Isolates2.cpp
 SOURCES_TMP += ExperimentalReduction.cpp

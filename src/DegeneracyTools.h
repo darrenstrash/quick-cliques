@@ -109,4 +109,6 @@ int neighborListComparator(void* nl1, void* nl2);
 
 std::vector<NeighborListArray> computeMaximumLaterOrderArray(std::vector<std::vector<int>> &adjArray, int size);
 
+std::vector<int> GetVerticesInDegeneracyOrder(std::vector<std::vector<int>> &adjArray);
+
 #endif

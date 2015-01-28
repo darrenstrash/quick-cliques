@@ -12,6 +12,7 @@ public:
 ////    virtual void RemoveVertex(int const vertex);
 ////    virtual void PeekAtNextVertexAndColor(int &vertex, int &color);
 protected:
+    std::vector<std::vector<int>> m_ColorToVertices;
 ////    std::vector<int> m_Colors;
 ////    std::vector<int> m_VertexOrder;
 };

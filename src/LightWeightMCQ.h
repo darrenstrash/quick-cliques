@@ -21,5 +21,7 @@ private:
     CliqueColoringStrategy coloringStrategy;
     size_t m_uMaximumCliqueSize;
     std::vector<int> R;
+    std::vector<std::vector<int>> stackP;
+    std::vector<std::vector<int>> stackColors;
 };
 #endif

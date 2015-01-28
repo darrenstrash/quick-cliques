@@ -1,6 +1,7 @@
 #include "LightWeightMCQ.h"
 #include "GraphTools.h"
 
+#include <cmath>
 #include <iostream>
 
 using namespace std;
@@ -10,15 +11,43 @@ LightWeightMCQ::LightWeightMCQ(vector<vector<char>> const &vAdjacencyMatrix)
 , m_AdjacencyMatrix(vAdjacencyMatrix)
 , coloringStrategy(m_AdjacencyMatrix)
 , m_uMaximumCliqueSize(0)
+, stackP(vAdjacencyMatrix.size())
+, stackColors(vAdjacencyMatrix.size())
 {
 }
 
 long LightWeightMCQ::Run(list<std::list<int>> &cliques)
 {
-    vector<int> P(std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, false /* descending */)));
     R.reserve(m_AdjacencyMatrix.size());
 
-    vector<int> vColors(P.size(), 0);
+    for (int index = 1; index < stackP.size(); ++index) {
+        stackP.reserve(m_AdjacencyMatrix.size());
+        stackColors.reserve(m_AdjacencyMatrix.size());
+    }
+
+    size_t maxDegree(0);
+    {
+        vector<int> vDegree(m_AdjacencyMatrix.size(), 0);
+        for (size_t u = 0; u < m_AdjacencyMatrix.size(); ++u) {
+            for (size_t v = 0; v < m_AdjacencyMatrix.size(); ++v) {
+                if (m_AdjacencyMatrix[u][v]) vDegree[u]++;
+            }
+            maxDegree = max(maxDegree, static_cast<size_t>(vDegree[u]));
+        }
+
+        stackP[0] = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, vDegree, false /* descending */));
+    }
+    stackColors[0].reserve(m_AdjacencyMatrix.size());
+
+    // Initial coloring should be 1 to maxDegree, then the filled with maxDegree+1.
+    vector<int> &P(stackP[0]);
+    vector<int> &vColors(stackColors[0]);
+    for (int degree = 1; degree <= maxDegree; degree++ ) {
+        vColors.push_back(degree);
+    }
+
+    vColors.resize(m_AdjacencyMatrix.size(), maxDegree + 1);
+
     coloringStrategy.Color(m_AdjacencyMatrix, P, vColors);
 
     cliques.push_back(list<int>());
@@ -30,16 +59,23 @@ long LightWeightMCQ::Run(list<std::list<int>> &cliques)
 void LightWeightMCQ::RunRecursive(vector<int> &P, list<list<int>> &cliques, vector<int> &vColors)
 {
     coloringStrategy.Color(m_AdjacencyMatrix, P, vColors);
+
+    vector<int> &vNewP(stackP[R.size() + 1]);
+    vector<int> &vNewColors(stackColors[R.size() + 1]);
     while (!P.empty()) {
+        vNewP.resize(P.size());
+        vNewColors.resize(vColors.size());
         int const largestColor(vColors.back());
-        if (R.size() + largestColor < m_uMaximumCliqueSize) return;
+        if (R.size() + largestColor <= m_uMaximumCliqueSize) {
+            vNewColors.clear();
+            vNewP.clear();
+            return;
+        }
 
         vColors.pop_back();
         int const nextVertex(P.back()); P.pop_back();
         R.push_back(nextVertex);
 
-        vector<int> vNewP(P);
-        vector<int> vNewColors(vColors);
         size_t      uNewIndex(0);
         for (size_t index = 0; index < P.size(); index++) {
             int const vertex(P[index]);
@@ -65,6 +101,9 @@ void LightWeightMCQ::RunRecursive(vector<int> &P, list<list<int>> &cliques, vect
 
         R.pop_back();
     }
+
+    vNewColors.clear();
+    vNewP.clear();
 }
 
 LightWeightMCQ::~LightWeightMCQ()
