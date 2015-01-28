@@ -6,12 +6,12 @@
 
 using namespace std;
 
-vector<int> OrderingTools:: InitialOrderingMCQ(vector<vector<char>> const &adjacencyMatrix, vector<int> const &degree)
+vector<int> OrderingTools::InitialOrderingMCQ(vector<vector<char>> const &adjacencyMatrix, vector<int> const &degree)
 {
     return std::move(GraphTools::OrderVerticesByDegree(adjacencyMatrix, degree, false /* non-increasing order */));
 }
 
-vector<int> OrderingTools:: InitialOrderingMCR(vector<vector<char>> const &adjacencyMatrix)
+vector<int> OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatrix)
 {
     vector<int> vOrderedVertices(adjacencyMatrix.size(), -1);
 
@@ -52,8 +52,31 @@ vector<int> OrderingTools:: InitialOrderingMCR(vector<vector<char>> const &adjac
 
     while (numVerticesRemoved < size) {
         if (!verticesByDegree[currentDegree].empty()) {
-            int const vertex = verticesByDegree[currentDegree].front();
-            verticesByDegree[currentDegree].pop_front();
+
+            int vertex(-1);
+            if (verticesByDegree[currentDegree].size() > 1) {
+                // break ties by neighborhood-degree
+                size_t maxNeighborhoodDegree(0);
+                int    chosenVertex=verticesByDegree[currentDegree].front();
+                for (int const candidate : verticesByDegree[currentDegree]) {
+                    size_t neighborhoodDegree(0);
+                    for (int const neighbor : adjacencyArray[candidate]) {
+                        if (degree[neighbor] != -1) {
+                            neighborhoodDegree += degree[neighbor];
+                        }
+                    }
+
+                    if (neighborhoodDegree > maxNeighborhoodDegree) {
+                        maxNeighborhoodDegree = neighborhoodDegree;
+                        chosenVertex = candidate;
+                    }
+                }
+                vertex = chosenVertex;
+                verticesByDegree[currentDegree].erase(vertexLocator[vertex]);
+            } else {
+                vertex = verticesByDegree[currentDegree].front();
+                verticesByDegree[currentDegree].pop_front();
+            }
 
             vOrderingArray[vertex].vertex = vertex;
             vOrderingArray[vertex].orderNumber = numVerticesRemoved;

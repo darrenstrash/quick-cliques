@@ -36,12 +36,12 @@ long LightWeightMCQ::Run(list<std::list<int>> &cliques)
             maxDegree = max(maxDegree, static_cast<size_t>(vDegree[u]));
         }
 
-        stackP[0] = std::move(OrderingTools::InitialOrderingMCR(m_AdjacencyMatrix));
-////        stackP[0] = std::move(OrderingTools::InitialOrderingMCQ(m_AdjacencyMatrix, vDegree));
+////        stackP[0] = std::move(OrderingTools::InitialOrderingMCR(m_AdjacencyMatrix));
+        stackP[0] = std::move(OrderingTools::InitialOrderingMCQ(m_AdjacencyMatrix, vDegree));
     }
     stackColors[0].reserve(m_AdjacencyMatrix.size());
 
-    // Initial coloring should be 1 to maxDegree, then the filled with maxDegree+1.
+    // Initial coloring should be 1 to maxDegree, then the color the rest maxDegree+1.
     vector<int> &P(stackP[0]);
     vector<int> &vColors(stackColors[0]);
     for (int degree = 1; degree <= maxDegree; degree++ ) {
@@ -60,8 +60,6 @@ long LightWeightMCQ::Run(list<std::list<int>> &cliques)
 
 void LightWeightMCQ::RunRecursive(vector<int> &P, list<list<int>> &cliques, vector<int> &vColors)
 {
-    coloringStrategy.Color(m_AdjacencyMatrix, P, vColors);
-
     vector<int> &vNewP(stackP[R.size() + 1]);
     vector<int> &vNewColors(stackColors[R.size() + 1]);
     while (!P.empty()) {
@@ -98,6 +96,7 @@ void LightWeightMCQ::RunRecursive(vector<int> &P, list<list<int>> &cliques, vect
         }
 
         if (!vNewP.empty()) {
+            coloringStrategy.Color(m_AdjacencyMatrix, vNewP, vNewColors);
             RunRecursive(vNewP, cliques, vNewColors);
         }
 

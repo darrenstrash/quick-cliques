@@ -6,7 +6,6 @@
 namespace OrderingTools
 {
     std::vector<int> InitialOrderingMCQ(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> const &degree);
-
     std::vector<int> InitialOrderingMCR(std::vector<std::vector<char>> const &adjacencyMatrix);
 };
 
