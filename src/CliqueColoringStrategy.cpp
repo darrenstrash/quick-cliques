@@ -80,7 +80,7 @@ void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, 
 #endif // 0
 
 // verify that it is a valid coloring.
-#if DEBUG ////def DEBUG
+#ifdef DEBUG
     vector<int> vColor(adjacencyList.size(), -1);
     for (size_t index = 0; index < vVerticesToReorder.size(); ++index) {
         vColor[vVerticesToReorder[index]] = vColors[index];

@@ -1,4 +1,5 @@
 #include "LightWeightMCQ.h"
+#include "OrderingTools.h"
 #include "GraphTools.h"
 
 #include <cmath>
@@ -35,7 +36,8 @@ long LightWeightMCQ::Run(list<std::list<int>> &cliques)
             maxDegree = max(maxDegree, static_cast<size_t>(vDegree[u]));
         }
 
-        stackP[0] = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, vDegree, false /* descending */));
+        stackP[0] = std::move(OrderingTools::InitialOrderingMCR(m_AdjacencyMatrix));
+////        stackP[0] = std::move(OrderingTools::InitialOrderingMCQ(m_AdjacencyMatrix, vDegree));
     }
     stackColors[0].reserve(m_AdjacencyMatrix.size());
 
@@ -48,7 +50,7 @@ long LightWeightMCQ::Run(list<std::list<int>> &cliques)
 
     vColors.resize(m_AdjacencyMatrix.size(), maxDegree + 1);
 
-    coloringStrategy.Color(m_AdjacencyMatrix, P, vColors);
+////    coloringStrategy.Color(m_AdjacencyMatrix, P, vColors);
 
     cliques.push_back(list<int>());
 
