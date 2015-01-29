@@ -185,7 +185,7 @@ inline void AdjacencyMatrixVertexSetsMax::MoveFromPToR(int const vertex)
     newP.resize(index);
     newColor.resize(index);
 
-    coloringStrategy.Color(m_AdjacencyMatrix, currentP, currentColor);
+    coloringStrategy.Color(m_AdjacencyMatrix, currentP /* evaluation order */, currentP /* color order */, currentColor);
 
     stackP.emplace_back(std::move(newP));
     stackColor.emplace_back(std::move(newColor));

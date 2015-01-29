@@ -26,6 +26,8 @@
 #include "DegeneracyAlgorithm.h"
 #include "FasterDegeneracyAlgorithm.h"
 
+#include "LightWeightStaticOrderMCS.h"
+#include "LightWeightMCR.h"
 #include "LightWeightMCQ.h"
 #include "AdjacencyMatrixVertexSetsMax.h"
 #include "AdjacencyMatrixVertexSets.h"
@@ -78,7 +80,7 @@ using namespace std;
 
 bool isValidAlgorithm(string const &name)
 {
-    return (name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" ||name == "adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
+    return (name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
             name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis");
 }
 
@@ -166,7 +168,7 @@ int main(int argc, char** argv)
         adjacencyList = readInGraphAdjList(n, m, inputFile);
     }
 
-    bool const bComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq");
+    bool const bComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs");
 
     char** adjacencyMatrix(nullptr);
 
@@ -212,6 +214,10 @@ int main(int argc, char** argv)
         pSets = new AdjacencyMatrixVertexSetsMax(vAdjacencyMatrix);
     } else if (name == "mcq") {
         pAlgorithm = new LightWeightMCQ(vAdjacencyMatrix);
+    } else if (name == "mcr") {
+        pAlgorithm = new LightWeightMCQ(vAdjacencyMatrix);
+    } else if (name == "static-order-mcs") {
+        pAlgorithm = new LightWeightStaticOrderMCS(vAdjacencyMatrix);
     } else if (name == "adjlist") {
         pAlgorithm = new AdjacencyListAlgorithm(adjacencyArray);
     } else if (name == "generic-adjlist") {

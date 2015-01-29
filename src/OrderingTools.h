@@ -5,8 +5,8 @@
 
 namespace OrderingTools
 {
-    std::vector<int> InitialOrderingMCQ(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> const &degree);
-    std::vector<int> InitialOrderingMCR(std::vector<std::vector<char>> const &adjacencyMatrix);
+    void InitialOrderingMCQ(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> &vOrderedVertices, std::vector<int> &vColoring);
+    void InitialOrderingMCR(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> &vOrderedVertices, std::vector<int> &vColoring, size_t &cliqueSize);
 };
 
 #endif //ORDERING_TOOLS_H

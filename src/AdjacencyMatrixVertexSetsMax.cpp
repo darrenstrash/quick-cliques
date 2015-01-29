@@ -56,7 +56,7 @@ void AdjacencyMatrixVertexSetsMax::Initialize()
     stackP.emplace_back(std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, degree, false /* descending*/)));
     stackColor.emplace_back(vector<int>(m_AdjacencyMatrix.size(), 0));
 
-    coloringStrategy.Color(m_AdjacencyMatrix, stackP.back(), stackColor.back());
+    coloringStrategy.Color(m_AdjacencyMatrix, stackP.back() /* evaluation order */, stackP.back() /* color order */, stackColor.back());
 }
 
 void AdjacencyMatrixVertexSetsMax::PrintSummary(int const line) const

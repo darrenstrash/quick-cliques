@@ -28,6 +28,11 @@ void Algorithm::ExecuteCallBacks(std::list<int> const &vertexSet) const
     }
 }
 
+void Algorithm::SetName(string const &name)
+{
+    m_sName = name;
+}
+
 string Algorithm::GetName() const
 {
     return m_sName;

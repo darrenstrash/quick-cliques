@@ -1,4 +1,5 @@
 #ifndef LIGHTWEIGHT_MCQ_H
+#define LIGHTWEIGHT_MCQ_H
 
 #include "Algorithm.h"
 #include "CliqueColoringStrategy.h"
@@ -14,9 +15,9 @@ public:
 
     virtual long Run(std::list<std::list<int>> &cliques);
 
-    void RunRecursive(std::vector<int> &P, std::list<std::list<int>> &cliques, std::vector<int> &vColors);
+    virtual void RunRecursive(std::vector<int> &P, std::list<std::list<int>> &cliques, std::vector<int> &vColors);
 
-private:
+protected:
     std::vector<std::vector<char>> const &m_AdjacencyMatrix;
     CliqueColoringStrategy coloringStrategy;
     size_t m_uMaximumCliqueSize;

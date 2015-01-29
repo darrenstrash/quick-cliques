@@ -16,7 +16,7 @@ CliqueColoringStrategy::CliqueColoringStrategy(vector<vector<char>> const &adjac
 ////    m_VertexOrder = std::move(GetVerticesInDegeneracyOrder(adjacencyList));
 }
 
-void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, vector<int> &vVerticesToReorder, vector<int> &vColors)
+void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
 {
     if (vVerticesToReorder.empty()) return;
 
@@ -34,7 +34,7 @@ void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, 
 
     size_t const numVerticesToReorder(vVerticesToReorder.size());
 
-    for (int const vertex : vVerticesToReorder) {
+    for (int const vertex : vVertexOrder) {
         size_t color = 0;
         for (vector<int> const &verticesWithColor : m_ColorToVertices) {
             bool hasNeighborWithColor(false);

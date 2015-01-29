@@ -16,6 +16,7 @@ public:
     virtual long Run(std::list<std::list<int>> &cliques) = 0;
     virtual void Run() {}
 
+    void SetName(std::string const &name);
     std::string GetName() const;
 
     void AddCallBack(std::function<void(std::list<int> const&)> callback);
