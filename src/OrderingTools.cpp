@@ -93,7 +93,7 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
                     vector<int> remainingColors(remainingVertices.size(), 0);
                     CliqueColoringStrategy coloringStrategy(adjacencyMatrix);
                     coloringStrategy.Color(adjacencyMatrix, remainingVertices /* evaluation order */, remainingVertices /* color order */, remainingColors);
-                    //copy orderingt to output arrays
+                    //copy initial ordering to output arrays
                     for (size_t index = 0; index < remainingVertices.size(); ++index) {
                         vOrderedVertices[index] = remainingVertices[index];
                         vColoring[index] = remainingColors[index];
@@ -106,7 +106,7 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
                     return;
                 } else {
                     // break ties by neighborhood-degree
-                    size_t maxNeighborhoodDegree(0);
+                    size_t minNeighborhoodDegree(ULONG_MAX);
                     int    chosenVertex=verticesByDegree[currentDegree].front();
                     for (int const candidate : verticesByDegree[currentDegree]) {
                         size_t neighborhoodDegree(0);
@@ -116,8 +116,8 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
                             }
                         }
 
-                        if (neighborhoodDegree > maxNeighborhoodDegree) {
-                            maxNeighborhoodDegree = neighborhoodDegree;
+                        if (neighborhoodDegree < minNeighborhoodDegree) {
+                            minNeighborhoodDegree = neighborhoodDegree;
                             chosenVertex = candidate;
                         }
                     }
@@ -129,58 +129,18 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
                 verticesByDegree[currentDegree].pop_front();
             }
 
-            vOrderingArray[vertex].vertex = vertex;
-            vOrderingArray[vertex].orderNumber = numVerticesRemoved;
             vOrderedVertices[vOrderedVertices.size() - numVerticesRemoved - 1] = vertex;
 
             degree[vertex] = -1;
 
-            // will swap later neighbors to end of neighbor list
-            vector<int> &neighborList = adjacencyArray[vertex];
-
-            int splitPoint(neighborList.size());
-            for(int i=0; i < splitPoint; ++i) {
-                int const neighbor(neighborList[i]);
-                // if later neighbor, swap to end of neighborList (there are few of these)
-                if(degree[neighbor]!=-1) {
+            for (int const neighbor : adjacencyArray[vertex]) {
+                if (degree[neighbor] > -1)
+                {
                     verticesByDegree[degree[neighbor]].erase(vertexLocator[neighbor]);
-
-                    neighborList[i] = neighborList[--splitPoint];
-                    neighborList[splitPoint] = neighbor;
-                    i--;
-
                     degree[neighbor]--;
-
-                    if (degree[neighbor] != -1)
-                    {
-                        verticesByDegree[degree[neighbor]].push_front(neighbor);
-                        vertexLocator[neighbor] = verticesByDegree[degree[neighbor]].begin();
-                    }
+                    verticesByDegree[degree[neighbor]].push_front(neighbor);
+                    vertexLocator[neighbor] = verticesByDegree[degree[neighbor]].begin();
                 }
-                // earlier neighbor, do nothing.
-            }
-
-            // create space for later neighbors to ordering
-            vOrderingArray[vertex].laterDegree = neighborList.size() - splitPoint;
-            vOrderingArray[vertex].later.resize(neighborList.size() - splitPoint);
-
-            // create space for earlier neighbors to ordering
-            vOrderingArray[vertex].earlierDegree = splitPoint;
-            vOrderingArray[vertex].earlier.resize(splitPoint);
-
-            // fill in earlier and later neighbors
-            for (int i = 0; i < splitPoint; ++i) {
-////            cout << "earlier: " << vOrderingArray[vertex].earlier.size() << endl;
-////            cout << "split  : " << splitPoint << endl;
-////            cout << "earlier[" << i << "]" << endl;
-                vOrderingArray[vertex].earlier[i] = neighborList[i];
-            }
-
-            for (int i = splitPoint; i < neighborList.size(); ++i) {
-////            cout << "later  : " << vOrderingArray[vertex].later.size() << endl;
-////            cout << "split  : " << splitPoint << endl;
-////            cout << "later [" << i - splitPoint << "]" << endl;
-                vOrderingArray[vertex].later[i-splitPoint] = neighborList[i];
             }
 
             numVerticesRemoved++;
