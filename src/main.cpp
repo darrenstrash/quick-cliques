@@ -104,6 +104,17 @@ void ProcessCommandLineArgs(int const argc, char** argv, map<string,string> &map
     }
 }
 
+void PrintDebugWarning()
+{
+    cout << "\n\n\n\n\n" << flush;
+    cout << "#########################################################################" << endl << flush;
+    cout << "#                                                                       #" << endl << flush;
+    cout << "#    WARNING: Debugging is turned on. Don't believe the run times...    #" << endl << flush;
+    cout << "#                                                                       #" << endl << flush;
+    cout << "#########################################################################" << endl << flush;
+    cout << "\n\n\n\n\n" << flush;
+}
+
 void PrintExperimentalWarning()
 {
     cout << "WARNING: Quick Cliques v2.0beta. (Experimental)" << endl;
@@ -122,6 +133,9 @@ void RunUnitTests()
 int main(int argc, char** argv)
 {
     PrintExperimentalWarning();
+#ifdef DEBUG_MESSAGE
+    PrintDebugWarning();
+#endif //DEBUG_MESSAGE
     RunUnitTests();
 
     int failureCode(0);
@@ -334,6 +348,10 @@ int main(int argc, char** argv)
     }
 
     delete pAlgorithm; pAlgorithm = nullptr;
+
+#ifdef DEBUG_MESSAGE
+    PrintDebugWarning();
+#endif
 
     ////CommandLineOptions options = ParseCommandLineOptions(argc, argv);
 

@@ -42,7 +42,7 @@ long LightWeightStaticOrderMCS::Run(list<std::list<int>> &cliques)
         ExecuteCallBacks(cliques.back());
     }
 
-    vVertexOrder = P;
+    vVertexOrder = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, false /* non-increasing */));
 
     RunRecursive(P, vVertexOrder, cliques, vColors);
     return cliques.size();
@@ -66,18 +66,16 @@ void LightWeightStaticOrderMCS::RunRecursive(vector<int> &P, vector<int> &vVerte
         int const nextVertex(P.back()); P.pop_back();
         R.push_back(nextVertex);
 
+        vector<int> &vNewVertexOrder(stackOrder[R.size()]);
+        vNewVertexOrder.resize(vVertexOrder.size());
         {
-        size_t      uNewIndex(0);
-        for (size_t index = 0; index < P.size(); index++) {
-            int const vertex(P[index]);
-            if (m_AdjacencyMatrix[nextVertex][vertex]) {
-                vNewP[uNewIndex] = vertex;
-                vNewColors[uNewIndex] = vColors[index];
-                uNewIndex++;
+            size_t uNewIndex(0);
+            for (int const candidate : vVertexOrder) {
+                if (m_AdjacencyMatrix[nextVertex][candidate]) vNewVertexOrder[uNewIndex++] = candidate;
             }
-        }
-        vNewP.resize(uNewIndex);
-        vNewColors.resize(uNewIndex);
+            vNewVertexOrder.resize(uNewIndex);
+            vNewP.resize(uNewIndex);
+            vNewColors.resize(uNewIndex);
         }
 
         if (vNewP.empty() && R.size() > m_uMaximumCliqueSize) {
@@ -88,23 +86,24 @@ void LightWeightStaticOrderMCS::RunRecursive(vector<int> &P, vector<int> &vVerte
         }
 
         if (!vNewP.empty()) {
-            vector<int> &vNewVertexOrder(stackOrder[R.size()]);
-            vNewVertexOrder.resize(vVertexOrder.size());
-            {
-            size_t uNewIndex(0);
-            for (int const candidate : vVertexOrder) {
-                if (m_AdjacencyMatrix[nextVertex][candidate]) vNewVertexOrder[uNewIndex++] = candidate;
-            }
-            vNewVertexOrder.resize(uNewIndex);
-            }
-
-            // this slows things down way too much, we don't have to fill in newP or newColors before getting here. Try removing those.
             coloringStrategy.Color(m_AdjacencyMatrix, vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
             RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
             vNewVertexOrder.clear();
         }
 
         vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), nextVertex));
+        // try searching from end, might be faster in general...
+////        size_t indexAfterVertex(0);
+////        for (indexAfterVertex = vVertexOrder.size(); indexAfterVertex >= 1; indexAfterVertex--) {
+////            if (vVertexOrder[indexAfterVertex-1] == nextVertex) {
+////                break;
+////            }
+////        }
+////
+////        for (; indexAfterVertex < vVertexOrder.size(); indexAfterVertex++) {
+////            vVertexOrder[indexAfterVertex-1] = vVertexOrder[indexAfterVertex];
+////        }
+////        vVertexOrder.pop_back();
         R.pop_back();
     }
 
