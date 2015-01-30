@@ -1,4 +1,6 @@
 #include "GraphTools.h"
+#include "SparseArraySet.h"
+#include "ArraySet.h"
 
 #include <set>
 #include <vector>
@@ -147,3 +149,39 @@ vector<int> GraphTools::OrderVerticesByDegree(vector<vector<char>> const &adjace
 ////        }
 ////    }
 ////}
+
+vector<int> GraphTools::OrderVerticesByDegree(ArraySet const &inGraph, vector<SparseArraySet> const &neighborSets, bool const ascending)
+{
+    vector<int> vOrderedVertices(inGraph.Size(), -1);
+
+    size_t maxDegree(0);
+    for (SparseArraySet const &neighborSet : neighborSets) {
+        maxDegree = max(maxDegree, neighborSet.Size());
+    }
+
+    vector<list<int>> vlVerticesByDegree(maxDegree + 1, list<int>());
+
+    for (size_t vertex = 0; vertex < neighborSets.size(); ++vertex) {
+        if (!inGraph.Contains(vertex)) continue;
+////        std::cout << "maxDegree=" << maxDegree << ", degree=" << adjacencyList[vertex].size() << endl << flush;
+        vlVerticesByDegree[neighborSets[vertex].Size()].push_back(vertex);
+    }
+
+    if (ascending) {
+        size_t index(0);
+        for (size_t degree = 0; degree <= maxDegree; ++degree) {
+            for (int const vertex : vlVerticesByDegree[degree]) {
+                vOrderedVertices[index++] = vertex;
+            }
+        }
+    } else {
+        size_t index(0);
+        for (size_t degree = 0; degree <= maxDegree; ++degree) {
+            for (int const vertex : vlVerticesByDegree[maxDegree - degree]) {
+                vOrderedVertices[index++] = vertex;
+            }
+        }
+    }
+
+    return vOrderedVertices;
+}

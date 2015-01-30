@@ -1,4 +1,4 @@
-#include "LightWeightMCQ.h"
+#include "LightWeightMISQ.h"
 #include "OrderingTools.h"
 #include "GraphTools.h"
 
@@ -7,8 +7,8 @@
 
 using namespace std;
 
-LightWeightMCQ::LightWeightMCQ(vector<vector<char>> const &vAdjacencyMatrix)
-: Algorithm("MCQ")
+LightWeightMISQ::LightWeightMISQ(vector<vector<char>> const &vAdjacencyMatrix)
+: Algorithm("MISQ")
 , m_AdjacencyMatrix(vAdjacencyMatrix)
 , coloringStrategy(m_AdjacencyMatrix)
 , m_uMaximumCliqueSize(0)
@@ -20,18 +20,18 @@ LightWeightMCQ::LightWeightMCQ(vector<vector<char>> const &vAdjacencyMatrix)
 {
 }
 
-////void LightWeightMCQ::SetInvert(bool const invert)
+////void LightWeightMISQ::SetInvert(bool const invert)
 ////{
 ////    m_bInvert = invert;
 ////}
 
-void LightWeightMCQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
+void LightWeightMISQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
-    OrderingTools::InitialOrderingMCQ(m_AdjacencyMatrix, P, vColors);
+    OrderingTools::InitialOrderingMISQ(m_AdjacencyMatrix, P, vColors);
     vVertexOrder = P;
 }
 
-long LightWeightMCQ::Run(list<std::list<int>> &cliques)
+long LightWeightMISQ::Run(list<std::list<int>> &cliques)
 {
     R.reserve(m_AdjacencyMatrix.size());
 
@@ -55,25 +55,25 @@ long LightWeightMCQ::Run(list<std::list<int>> &cliques)
     return cliques.size();
 }
 
-void LightWeightMCQ::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)
+void LightWeightMISQ::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)
 {
     coloringStrategy.Color(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
 }
 
-void LightWeightMCQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
+void LightWeightMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
     vNewVertexOrder.resize(P.size());
     {
         size_t uNewIndex(0);
         for (int const candidate : P) {
 ////            if (!m_bInvert && m_AdjacencyMatrix[chosenVertex][candidate]) vNewVertexOrder[uNewIndex++] = candidate;
-            if (m_AdjacencyMatrix[chosenVertex][candidate]) vNewVertexOrder[uNewIndex++] = candidate;
+            if (!m_AdjacencyMatrix[chosenVertex][candidate]) vNewVertexOrder[uNewIndex++] = candidate;
         }
         vNewVertexOrder.resize(uNewIndex);
     }
 }
 
-void LightWeightMCQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
+void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
 {
     nodeCount++;
     vector<int> &vNewP(stackP[R.size() + 1]);
@@ -112,7 +112,7 @@ void LightWeightMCQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, lis
 }
 
 
-LightWeightMCQ::~LightWeightMCQ()
+LightWeightMISQ::~LightWeightMISQ()
 {
     cerr << "Largest Clique     : " << m_uMaximumCliqueSize << endl;
     cerr << "Node    Count      : " << nodeCount << endl;

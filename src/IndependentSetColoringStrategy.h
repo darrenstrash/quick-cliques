@@ -1,12 +1,12 @@
-#ifndef CLIQUE_COLORING_STRATEGY
-#define CLIQUE_COLORING_STRATEGY
+#ifndef IS_COLORING_STRATEGY
+#define IS_COLORING_STRATEGY
 
 #include "ColoringStrategy.h"
 
-class CliqueColoringStrategy : public ColoringStrategy
+class IndependentSetColoringStrategy : public ColoringStrategy
 {
 public:
-    CliqueColoringStrategy(std::vector<std::vector<char>> const &adjacencyMatrix);
+    IndependentSetColoringStrategy(std::vector<std::vector<char>> const &adjacencyMatrix);
     virtual void Color(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors);
     virtual void Recolor(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors, int const currentBestCliqueSize, int const currentCliqueSize);
     bool HasConflict(int const vertex, std::vector<int> const &vVerticesWithColor);
@@ -22,4 +22,4 @@ protected:
 ////    std::vector<int> m_VertexOrder;
 };
 
-#endif //CLIQUE_COLORING_STRATEGY
+#endif //IS_COLORING_STRATEGY

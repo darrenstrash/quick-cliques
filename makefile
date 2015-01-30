@@ -6,7 +6,13 @@ BIN_DIR   = bin
 CFLAGS = -Winline -O2 -std=c++11 -g
 #CFLAGS = -Winline -DDEBUG_MESSAGE -O0 -std=c++11 -g
 
+SOURCES_TMP += LightWeightReductionMISQ.cpp
+SOURCES_TMP += LightWeightFullMISS.cpp
+SOURCES_TMP += LightWeightStaticOrderMISS.cpp
+SOURCES_TMP += LightWeightMISR.cpp
+SOURCES_TMP += LightWeightMISQ.cpp
 SOURCES_TMP += OrderingTools.cpp
+SOURCES_TMP += LightWeightFullMCS.cpp
 SOURCES_TMP += LightWeightStaticOrderMCS.cpp
 SOURCES_TMP += LightWeightMCR.cpp
 SOURCES_TMP += LightWeightMCQ.cpp
@@ -14,6 +20,7 @@ SOURCES_TMP += AdjacencyMatrixVertexSetsMax.cpp
 SOURCES_TMP += AdjacencyMatrixVertexSets.cpp
 SOURCES_TMP += AdjacencyListVertexSetsMax.cpp
 SOURCES_TMP += SparseCliqueColoringStrategy.cpp
+SOURCES_TMP += IndependentSetColoringStrategy.cpp
 SOURCES_TMP += CliqueColoringStrategy.cpp
 SOURCES_TMP += Isolates.cpp
 SOURCES_TMP += Isolates2.cpp

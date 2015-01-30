@@ -17,7 +17,7 @@
 class Isolates2
 {
 public:
-    Isolates2(std::vector<std::vector<int>> &adjacencyArray);
+    Isolates2(std::vector<std::vector<int>> const &adjacencyArray);
     ~Isolates2();
 
     void RemoveVertexAndNeighbors(int const vertex, std::vector<int> &vRemoved);
@@ -35,16 +35,16 @@ public:
     ArraySet const& GetInGraph()  const { return inGraph;  }
     std::vector<SparseArraySet> const& Neighbors()  const { return neighbors;  }
 
-    void RemoveEdges(std::vector<std::pair<int,int>> const &vEdges);
+////    void RemoveEdges(std::vector<std::pair<int,int>> const &vEdges);
 
     int GetAlternativeVertex(int const vertex) const;
 
 protected: // methods
     bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices);
-    bool RemoveIsolatedPath      (int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
+////    bool RemoveIsolatedPath      (int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
 
 protected: // members
-    std::vector<std::vector<int>> &m_AdjacencyArray;
+    std::vector<std::vector<int>> const &m_AdjacencyArray;
 #ifdef SPARSE
     std::vector<SparseArraySet>     neighbors;
 #else

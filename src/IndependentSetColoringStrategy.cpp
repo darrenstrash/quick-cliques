@@ -1,4 +1,4 @@
-#include "CliqueColoringStrategy.h"
+#include "IndependentSetColoringStrategy.h"
 #include "DegeneracyTools.h"
 
 #include <cmath>
@@ -7,7 +7,7 @@
 
 using namespace std;
 
-CliqueColoringStrategy::CliqueColoringStrategy(vector<vector<char>> const &adjacencyMatrix) : ColoringStrategy(), m_AdjacencyMatrix(adjacencyMatrix), m_vvVerticesWithColor()////, m_Colors(adjacencyList.size(), -1) , m_VertexOrder()
+IndependentSetColoringStrategy::IndependentSetColoringStrategy(vector<vector<char>> const &adjacencyMatrix) : ColoringStrategy(), m_AdjacencyMatrix(adjacencyMatrix), m_vvVerticesWithColor()////, m_Colors(adjacencyList.size(), -1) , m_VertexOrder()
 {
     m_vvVerticesWithColor.resize(adjacencyMatrix.size());
     for (vector<int> vVertices : m_vvVerticesWithColor) {
@@ -16,7 +16,7 @@ CliqueColoringStrategy::CliqueColoringStrategy(vector<vector<char>> const &adjac
 ////    m_VertexOrder = std::move(GetVerticesInDegeneracyOrder(adjacencyList));
 }
 
-void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
+void IndependentSetColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
 {
     if (vVerticesToReorder.empty()) return;
 
@@ -41,7 +41,7 @@ void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, 
             if (verticesWithColor.empty()) break;
             for (int const coloredVertex : verticesWithColor) {
                 // can be made more efficient?
-                hasNeighborWithColor = adjacencyMatrix[vertex][coloredVertex];
+                hasNeighborWithColor = !adjacencyMatrix[vertex][coloredVertex];
                 if (hasNeighborWithColor) {
                     color++;
                     break;
@@ -95,7 +95,7 @@ void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, 
 #endif // DEBUG
 }
 
-void CliqueColoringStrategy::Recolor(vector<vector<char>> const &adjacencyMatrix, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors, int const currentBestCliqueSize, int const currentCliqueSize)
+void IndependentSetColoringStrategy::Recolor(vector<vector<char>> const &adjacencyMatrix, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors, int const currentBestCliqueSize, int const currentCliqueSize)
 {
     if (vVerticesToReorder.empty()) return;
 
@@ -122,7 +122,7 @@ void CliqueColoringStrategy::Recolor(vector<vector<char>> const &adjacencyMatrix
             if (verticesWithColor.empty()) break;
             for (int const coloredVertex : verticesWithColor) {
                 // can be made more efficient?
-                hasNeighborWithColor = adjacencyMatrix[vertex][coloredVertex];
+                hasNeighborWithColor = !adjacencyMatrix[vertex][coloredVertex];
                 if (hasNeighborWithColor) {
                     color++;
                     break;
@@ -181,12 +181,12 @@ void CliqueColoringStrategy::Recolor(vector<vector<char>> const &adjacencyMatrix
 #endif // DEBUG
 }
 
-bool CliqueColoringStrategy::HasConflict(int const vertex, vector<int> const &vVerticesWithColor)
+bool IndependentSetColoringStrategy::HasConflict(int const vertex, vector<int> const &vVerticesWithColor)
 {
     if (vVerticesWithColor.empty()) return false;
     for (int const coloredVertex : vVerticesWithColor) {
         // can be made more efficient?
-        if (m_AdjacencyMatrix[vertex][coloredVertex]) {
+        if (!m_AdjacencyMatrix[vertex][coloredVertex]) {
             return true;
         }
     }
@@ -194,12 +194,12 @@ bool CliqueColoringStrategy::HasConflict(int const vertex, vector<int> const &vV
     return false;
 }
 
-int CliqueColoringStrategy::GetConflictingVertex(int const vertex, vector<int> const &vVerticesWithColor)
+int IndependentSetColoringStrategy::GetConflictingVertex(int const vertex, vector<int> const &vVerticesWithColor)
 {
     int conflictingVertex(-1);
     int count(0);
     for (int const candidateVertex : vVerticesWithColor) {
-        if (m_AdjacencyMatrix[vertex][candidateVertex]) {
+        if (!m_AdjacencyMatrix[vertex][candidateVertex]) {
             conflictingVertex = candidateVertex;
             count++;
             if (count > 1) return -1;
@@ -208,7 +208,7 @@ int CliqueColoringStrategy::GetConflictingVertex(int const vertex, vector<int> c
     return conflictingVertex;
 }
 
-bool CliqueColoringStrategy::Repair(int const vertex, int const color)
+bool IndependentSetColoringStrategy::Repair(int const vertex, int const color)
 {
     for (int newColor = 0; newColor < color-1; newColor++) {
         int const conflictingVertex(GetConflictingVertex(vertex, m_vvVerticesWithColor[newColor]));

@@ -1,17 +1,17 @@
-#ifndef LIGHTWEIGHT_MCQ_H
-#define LIGHTWEIGHT_MCQ_H
+#ifndef LIGHTWEIGHT_MISQ_H
+#define LIGHTWEIGHT_MISQ_H
 
 #include "Algorithm.h"
-#include "CliqueColoringStrategy.h"
+#include "IndependentSetColoringStrategy.h"
 
 #include <vector>
 #include <list>
 
-class LightWeightMCQ : public Algorithm
+class LightWeightMISQ : public Algorithm
 {
 public:
-    LightWeightMCQ(std::vector<std::vector<char>> const &vAdjacencyMatrix);
-    virtual ~LightWeightMCQ();
+    LightWeightMISQ(std::vector<std::vector<char>> const &vAdjacencyMatrix);
+    virtual ~LightWeightMISQ();
 
     virtual long Run(std::list<std::list<int>> &cliques);
 
@@ -27,7 +27,7 @@ public:
 
 protected:
     std::vector<std::vector<char>> const &m_AdjacencyMatrix;
-    CliqueColoringStrategy coloringStrategy;
+    IndependentSetColoringStrategy coloringStrategy;
     size_t m_uMaximumCliqueSize;
     std::vector<int> R;
     std::vector<std::vector<int>> stackP;

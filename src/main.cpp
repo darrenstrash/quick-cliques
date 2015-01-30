@@ -26,6 +26,12 @@
 #include "DegeneracyAlgorithm.h"
 #include "FasterDegeneracyAlgorithm.h"
 
+#include "LightWeightReductionMISQ.h"
+#include "LightWeightFullMISS.h"
+#include "LightWeightStaticOrderMISS.h"
+#include "LightWeightMISR.h"
+#include "LightWeightMISQ.h"
+#include "LightWeightFullMCS.h"
 #include "LightWeightStaticOrderMCS.h"
 #include "LightWeightMCR.h"
 #include "LightWeightMCQ.h"
@@ -80,7 +86,7 @@ using namespace std;
 
 bool isValidAlgorithm(string const &name)
 {
-    return (name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
+    return (name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || 
             name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis");
 }
 
@@ -182,7 +188,9 @@ int main(int argc, char** argv)
         adjacencyList = readInGraphAdjList(n, m, inputFile);
     }
 
-    bool const bComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs");
+    bool const bComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "misr" || name == "static-order-miss" || name == "miss");
+
+    bool const addDiagonals(name == "misq" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-misq");
 
     char** adjacencyMatrix(nullptr);
 
@@ -196,13 +204,17 @@ int main(int argc, char** argv)
             adjacencyMatrix[i] = (char*)Calloc(n, sizeof(char));
             vAdjacencyMatrix[i].resize(n);
             for(int const neighbor : adjacencyList[i]) {
-                adjacencyMatrix[i][neighbor] = 1; 
+                adjacencyMatrix[i][neighbor]  = 1; 
                 vAdjacencyMatrix[i][neighbor] = 1; 
+            }
+            if (addDiagonals) {
+                adjacencyMatrix[i][i]  = 1;
+                vAdjacencyMatrix[i][i] = 1;
             }
         }
     }
 
-    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis");
+    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis" || name == "reduction-misq");
 
     vector<vector<int>> adjacencyArray;
 
@@ -229,9 +241,21 @@ int main(int argc, char** argv)
     } else if (name == "mcq") {
         pAlgorithm = new LightWeightMCQ(vAdjacencyMatrix);
     } else if (name == "mcr") {
-        pAlgorithm = new LightWeightMCQ(vAdjacencyMatrix);
+        pAlgorithm = new LightWeightMCR(vAdjacencyMatrix);
     } else if (name == "static-order-mcs") {
         pAlgorithm = new LightWeightStaticOrderMCS(vAdjacencyMatrix);
+    } else if (name == "mcs") {
+        pAlgorithm = new LightWeightFullMCS(vAdjacencyMatrix);
+    } else if (name == "misq") {
+        pAlgorithm = new LightWeightMISQ(vAdjacencyMatrix);
+    } else if (name == "misr") {
+        pAlgorithm = new LightWeightMISR(vAdjacencyMatrix);
+    } else if (name == "static-order-miss") {
+        pAlgorithm = new LightWeightStaticOrderMISS(vAdjacencyMatrix);
+    } else if (name == "miss") {
+        pAlgorithm = new LightWeightFullMISS(vAdjacencyMatrix);
+    } else if (name == "reduction-misq") {
+        pAlgorithm = new LightWeightReductionMISQ(vAdjacencyMatrix, adjacencyArray);
     } else if (name == "adjlist") {
         pAlgorithm = new AdjacencyListAlgorithm(adjacencyArray);
     } else if (name == "generic-adjlist") {
@@ -318,17 +342,25 @@ int main(int argc, char** argv)
         }
     };
 
+    auto verifyIndependentSetMatrix = [&vAdjacencyMatrix](list<int> const &clique) {
+        bool const isIS = CliqueTools::IsIndependentSet(vAdjacencyMatrix, clique, true /* verbose */);
+        if (!isIS) {
+            cout << "ERROR: Set " << (isIS ? "is" : "is not" ) << " a clique!" << endl;
+        }
+    };
+
     auto printCliqueSize = [](list<int> const &clique) {
         cout << "Found clique of size " << clique.size() << endl << flush;
     };
 
     pAlgorithm->AddCallBack(printCliqueSize);
-////    pAlgorithm->AddCallBack(printClique);
+    pAlgorithm->AddCallBack(printClique);
 
     if (!bComputeAdjacencyMatrix) {
         pAlgorithm->AddCallBack(verifyMaximalCliqueArray);
     } else {
-        pAlgorithm->AddCallBack(verifyCliqueMatrix);
+////        pAlgorithm->AddCallBack(verifyCliqueMatrix);
+        pAlgorithm->AddCallBack(verifyIndependentSetMatrix);
     }
 
     // Run algorithm

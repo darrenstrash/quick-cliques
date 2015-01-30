@@ -8,7 +8,7 @@
 
 using namespace std;
 
-Isolates2::Isolates2(vector<vector<int>> &adjacencyArray)
+Isolates2::Isolates2(vector<vector<int>> const &adjacencyArray)
  : m_AdjacencyArray(adjacencyArray)
  , neighbors(adjacencyArray.size())
  , inGraph(adjacencyArray.size())
@@ -55,16 +55,16 @@ Isolates2::~Isolates2()
 #endif // TIMERS
 }
 
-void Isolates2::RemoveEdges(vector<pair<int,int>> const &vEdges)
-{
-    for (pair<int,int> const &edge : vEdges) {
-        neighbors[edge.first].Remove(edge.second);
-        neighbors[edge.second].Remove(edge.first);
-
-        m_AdjacencyArray[edge.first].pop_back();
-        m_AdjacencyArray[edge.second].pop_back();
-    }
-}
+////void Isolates2::RemoveEdges(vector<pair<int,int>> const &vEdges)
+////{
+////    for (pair<int,int> const &edge : vEdges) {
+////        neighbors[edge.first].Remove(edge.second);
+////        neighbors[edge.second].Remove(edge.first);
+////
+////        m_AdjacencyArray[edge.first].pop_back();
+////        m_AdjacencyArray[edge.second].pop_back();
+////    }
+////}
 
 bool Isolates2::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
 {
@@ -249,6 +249,7 @@ bool Isolates2::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVert
     return false;
 }
 
+#if 0
 // TODO/DS: need to remember added edge, so we can remove it later.
 // TODO/DS: not currently working, proceeding without it.
 bool Isolates2::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges)
@@ -323,6 +324,7 @@ bool Isolates2::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertic
     }
     return false;
 }
+#endif //0
 
 
 // TODO/DS: need to add 2-neighbors to remaining.
@@ -648,7 +650,7 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
         }
 
         // need to do this after restoring variable inGraph
-        RemoveEdges(vAddedEdges); // TODO/DS: Put back...
+////        RemoveEdges(vAddedEdges); // TODO/DS: Put back...
 
 
 ////        for (int const removedVertex : vRemoved) {
