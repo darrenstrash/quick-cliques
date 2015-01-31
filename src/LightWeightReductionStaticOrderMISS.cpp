@@ -1,4 +1,4 @@
-#include "LightWeightStaticOrderMISS.h"
+#include "LightWeightReductionStaticOrderMISS.h"
 #include "OrderingTools.h"
 #include "GraphTools.h"
 
@@ -8,19 +8,19 @@
 
 using namespace std;
 
-LightWeightStaticOrderMISS::LightWeightStaticOrderMISS(vector<vector<char>> const &vAdjacencyMatrix)
-: LightWeightMISQ(vAdjacencyMatrix)
+LightWeightReductionStaticOrderMISS::LightWeightReductionStaticOrderMISS(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
+: LightWeightReductionMISQ(vAdjacencyMatrix, vAdjacencyArray)
 {
-    SetName("static-order-miss");
+    SetName("reduction-static-order-miss");
 }
 
-void LightWeightStaticOrderMISS::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
+void LightWeightReductionStaticOrderMISS::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
     OrderingTools::InitialOrderingMISR(m_AdjacencyMatrix, P, vColors, m_uMaximumCliqueSize);
     vVertexOrder = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, true /* non-decreasing */)); //// = P; //?
 }
 
-void LightWeightStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
+void LightWeightReductionStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
     vNewVertexOrder.resize(P.size());
     {
@@ -32,7 +32,7 @@ void LightWeightStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vecto
     }
 }
 
-void LightWeightStaticOrderMISS::PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex)
+void LightWeightReductionStaticOrderMISS::PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex)
 {
     ////        vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), chosenVertex));
     // try searching from end, might be faster in general...

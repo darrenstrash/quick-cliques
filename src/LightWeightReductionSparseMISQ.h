@@ -1,18 +1,18 @@
-#ifndef LIGHTWEIGHT_REDUCTION_MISQ_H
-#define LIGHTWEIGHT_REDUCTION_MISQ_H
+#ifndef LIGHTWEIGHT_REDUCTION_SPARSE_MISQ_H
+#define LIGHTWEIGHT_REDUCTION_SPARSE_MISQ_H
 
 #include "Algorithm.h"
-#include "IndependentSetColoringStrategy.h"
+#include "SparseIndependentSetColoringStrategy.h"
 #include "Isolates2.h"
 
 #include <vector>
 #include <list>
 
-class LightWeightReductionMISQ : public Algorithm
+class LightWeightReductionSparseMISQ : public Algorithm
 {
 public:
-    LightWeightReductionMISQ(std::vector<std::vector<char>> const &vAdjacencyMatrix, std::vector<std::vector<int>> const &vAdjacencyArray);
-    virtual ~LightWeightReductionMISQ();
+    LightWeightReductionSparseMISQ(std::vector<std::vector<char>> const &vAdjacencyMatrix, std::vector<std::vector<int>> const &vAdjacencyArray);
+    virtual ~LightWeightReductionSparseMISQ();
 
     virtual long Run(std::list<std::list<int>> &cliques);
 
@@ -28,8 +28,8 @@ public:
 
 protected:
     std::vector<std::vector<char>> const &m_AdjacencyMatrix;
-////    std::vector<std::vector<int>>  const &m_AdjacencyArray;
-    IndependentSetColoringStrategy coloringStrategy;
+    std::vector<std::vector<int>>  const &m_AdjacencyArray;
+    SparseIndependentSetColoringStrategy coloringStrategy;
     size_t m_uMaximumCliqueSize;
     std::vector<int> R;
     std::vector<std::vector<int>> stackP;
@@ -39,4 +39,4 @@ protected:
     Isolates2 isolates;
 ////    bool m_bInvert;
 };
-#endif //LIGHTWEIGHT_REDUCTION_MISQ_H
+#endif //LIGHTWEIGHT_REDUCTION_SPARSE_MISQ_H

@@ -12,7 +12,7 @@
 #include <ctime>
 
 ////#define TIMERS
-#define SPARSE
+////#define SPARSE
 
 class Isolates2
 {
@@ -33,7 +33,11 @@ public:
 
     ArraySet const& GetIsolates() const { return isolates; }
     ArraySet const& GetInGraph()  const { return inGraph;  }
+#ifdef SPARSE
     std::vector<SparseArraySet> const& Neighbors()  const { return neighbors;  }
+#else
+    std::vector<ArraySet> const& Neighbors()  const { return neighbors;  }
+#endif //SPARSE
 
 ////    void RemoveEdges(std::vector<std::pair<int,int>> const &vEdges);
 

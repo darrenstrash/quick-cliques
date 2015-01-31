@@ -1,4 +1,4 @@
-#include "LightWeightReductionMISQ.h"
+#include "LightWeightReductionSparseMISQ.h"
 #include "OrderingTools.h"
 #include "GraphTools.h"
 
@@ -7,10 +7,11 @@
 
 using namespace std;
 
-LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
+LightWeightReductionSparseMISQ::LightWeightReductionSparseMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
 : Algorithm("MISQ")
 , m_AdjacencyMatrix(vAdjacencyMatrix)
-, coloringStrategy(m_AdjacencyMatrix)
+, m_AdjacencyArray(vAdjacencyArray)
+, coloringStrategy(m_AdjacencyArray)
 , m_uMaximumCliqueSize(0)
 , stackP(vAdjacencyMatrix.size())
 , stackColors(vAdjacencyMatrix.size())
@@ -21,12 +22,12 @@ LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &v
 {
 }
 
-////void LightWeightReductionMISQ::SetInvert(bool const invert)
+////void LightWeightReductionSparseMISQ::SetInvert(bool const invert)
 ////{
 ////    m_bInvert = invert;
 ////}
 
-void LightWeightReductionMISQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
+void LightWeightReductionSparseMISQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
     P = std::move(GraphTools::OrderVerticesByDegree(isolates.GetInGraph(), isolates.Neighbors(), true /* non-decreasing*/));
 
@@ -50,7 +51,7 @@ void LightWeightReductionMISQ::InitializeOrder(std::vector<int> &P, std::vector<
     vVertexOrder = P;
 }
 
-long LightWeightReductionMISQ::Run(list<std::list<int>> &cliques)
+long LightWeightReductionSparseMISQ::Run(list<std::list<int>> &cliques)
 {
     R.reserve(m_AdjacencyMatrix.size());
 
@@ -93,12 +94,12 @@ long LightWeightReductionMISQ::Run(list<std::list<int>> &cliques)
     return cliques.size();
 }
 
-void LightWeightReductionMISQ::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)
+void LightWeightReductionSparseMISQ::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)
 {
-    coloringStrategy.Color(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
+    coloringStrategy.Color(m_AdjacencyArray, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
 }
 
-void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex, vector<int> &vCliqueVertices, vector<int> &vRemoved)
+void LightWeightReductionSparseMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex, vector<int> &vCliqueVertices, vector<int> &vRemoved)
 {
     vNewVertexOrder.resize(P.size());
     size_t uNewIndex(0);
@@ -109,7 +110,7 @@ void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<
     vNewVertexOrder.resize(uNewIndex);
 }
 
-void LightWeightReductionMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
+void LightWeightReductionSparseMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
 {
     int const recursionNode(nodeCount);
 ////    cout << "Node " << recursionNode << ":" << endl;
@@ -251,7 +252,7 @@ void LightWeightReductionMISQ::RunRecursive(vector<int> &P, vector<int> &vVertex
 }
 
 
-LightWeightReductionMISQ::~LightWeightReductionMISQ()
+LightWeightReductionSparseMISQ::~LightWeightReductionSparseMISQ()
 {
     cerr << "Largest Clique     : " << m_uMaximumCliqueSize << endl;
     cerr << "Node    Count      : " << nodeCount << endl;
