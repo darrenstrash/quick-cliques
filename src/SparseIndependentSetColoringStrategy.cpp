@@ -7,13 +7,13 @@
 
 using namespace std;
 
-SparseIndependentSetColoringStrategy::SparseIndependentSetColoringStrategy(vector<vector<int>> const &adjacencyArray) : ColoringStrategy(), m_AdjacencyArray(adjacencyArray), m_vvVerticesWithColor()////, m_Colors(adjacencyList.size(), -1) , m_VertexOrder()
+SparseIndependentSetColoringStrategy::SparseIndependentSetColoringStrategy(vector<vector<int>> const &adjacencyArray)
+ : ColoringStrategy()
+ , m_AdjacencyArray(adjacencyArray)
+ , m_vVertexToColor(adjacencyArray.size(), -1)
+ , m_vvVerticesWithColor(adjacencyArray.size())
+ , m_vNeighborColorCount(adjacencyArray.size(), 0)
 {
-    m_vvVerticesWithColor.resize(adjacencyArray.size());
-    for (vector<int> vVertices : m_vvVerticesWithColor) {
-        vVertices.reserve(adjacencyArray.size());
-    }
-////    m_VertexOrder = std::move(GetVerticesInDegeneracyOrder(adjacencyList));
 }
 
 void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adjacencyArray, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
@@ -30,12 +30,41 @@ void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adja
     cout << endl;
 #endif // 0
 
-    size_t maxColor(0);
+    int maxColor(-1);
 
     size_t const numVerticesToReorder(vVerticesToReorder.size());
 
     for (int const vertex : vVertexOrder) {
-        size_t color = 0;
+
+        // choose the smallest color of any non-neighbor vertex.
+#if 1
+        int uSmallestFreeColor = maxColor + 1;
+        // first count the number of neighbors with a given color
+        for (int const neighbor : m_AdjacencyArray[vertex]) {
+            if (m_vVertexToColor[neighbor] != -1) {
+                m_vNeighborColorCount[m_vVertexToColor[neighbor]]++;
+            }
+        }
+
+        // compare color counts to total number of vertices with the color
+        // if there is a difference, then there exists a non-neighbor with
+        // that color; otherwise the color is free. Pick the smallest such
+        // free color
+        for (int const neighbor : m_AdjacencyArray[vertex]) {
+            int const currentColor(m_vVertexToColor[neighbor]);
+            if (currentColor != -1 && static_cast<int>(m_vvVerticesWithColor[currentColor].size()) == m_vNeighborColorCount[currentColor]) {
+                uSmallestFreeColor = min(currentColor, uSmallestFreeColor);
+            }
+        }
+
+        // put color counts back to 0.
+        for (int const neighbor : m_AdjacencyArray[vertex]) {
+            if (m_vVertexToColor[neighbor] != -1) {
+                m_vNeighborColorCount[m_vVertexToColor[neighbor]] = 0;
+            }
+        }
+#else
+        int uSmallestFreeColor(0);
         for (vector<int> const &verticesWithColor : m_vvVerticesWithColor) {
             bool hasNeighborWithColor(false);
             if (verticesWithColor.empty()) break;
@@ -43,7 +72,7 @@ void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adja
                 // can be made more efficient?
                 hasNeighborWithColor = (find(adjacencyArray[vertex].begin(), adjacencyArray[vertex].end(), coloredVertex) == adjacencyArray[vertex].end());
                 if (hasNeighborWithColor) {
-                    color++;
+                    uSmallestFreeColor++;
                     break;
                 }
             }
@@ -52,9 +81,11 @@ void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adja
                 break;
             }
         }
+#endif // 1
 
-        m_vvVerticesWithColor[color].push_back(vertex);
-        maxColor = max(maxColor, color);
+        m_vvVerticesWithColor[uSmallestFreeColor].push_back(vertex);
+        m_vVertexToColor[vertex] = uSmallestFreeColor;
+        maxColor = max(maxColor, uSmallestFreeColor);
     }
 
 ////    cout << "maxColor=" << maxColor << ", numVertices=" << vVerticesToReorder.size() << endl;
@@ -66,6 +97,7 @@ void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adja
             vVerticesToReorder[currentIndex] = vertex;
             vColors[currentIndex] = currentColor+1;
             currentIndex++;
+            m_vVertexToColor[vertex] = -1;
         }
         m_vvVerticesWithColor[currentColor].clear();
     }

@@ -18,6 +18,8 @@ public:
 protected:
     std::vector<std::vector<int>> const &m_AdjacencyArray;
     std::vector<std::vector<int>> m_vvVerticesWithColor;
+    std::vector<int>              m_vVertexToColor;
+    std::vector<int>              m_vNeighborColorCount;
 ////    std::vector<int> m_Colors;
 ////    std::vector<int> m_VertexOrder;
 };
