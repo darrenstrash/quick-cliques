@@ -715,3 +715,12 @@ void InvertGraph(vector<list<int>> const &adjList)
         }
     }
 }
+
+string GetTimeInSeconds(clock_t delta) {
+    stringstream strm;
+
+    strm.precision(2);
+    strm.setf(std::ios::fixed, std::ios::floatfield);
+    strm << "[" << (double)(delta)/(double)(CLOCKS_PER_SEC) << "s]";
+    return strm.str();
+}

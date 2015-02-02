@@ -6,7 +6,10 @@ BIN_DIR   = bin
 CFLAGS = -Winline -O2 -std=c++11 -g
 #CFLAGS = -Winline -DDEBUG_MESSAGE -O0 -std=c++11 -g
 
+SOURCES_TMP += SparseIndependentSetColoringStrategy2.cpp
 SOURCES_TMP += SparseIndependentSetColoringStrategy.cpp
+SOURCES_TMP += LightWeightReductionSparseStaticOrderMISS.cpp
+SOURCES_TMP += LightWeightReductionSparseMISR.cpp
 SOURCES_TMP += LightWeightReductionSparseMISQ.cpp
 SOURCES_TMP += LightWeightReductionStaticOrderMISS.cpp
 SOURCES_TMP += LightWeightReductionMISR.cpp

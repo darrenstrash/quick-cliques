@@ -11,13 +11,13 @@ LightWeightReductionSparseMISQ::LightWeightReductionSparseMISQ(vector<vector<cha
 : Algorithm("MISQ")
 , m_AdjacencyMatrix(vAdjacencyMatrix)
 , m_AdjacencyArray(vAdjacencyArray)
-, coloringStrategy(m_AdjacencyArray)
 , m_uMaximumCliqueSize(0)
 , stackP(vAdjacencyMatrix.size())
 , stackColors(vAdjacencyMatrix.size())
 , stackOrder(vAdjacencyMatrix.size())
 , nodeCount(0)
 , isolates(vAdjacencyArray)
+, coloringStrategy(isolates.Neighbors())
 ////, m_bInvert(0)
 {
 }
@@ -74,13 +74,6 @@ long LightWeightReductionSparseMISQ::Run(list<std::list<int>> &cliques)
 
     cliques.push_back(list<int>());
 
-    if (R.size() > m_uMaximumCliqueSize) {
-        cliques.back().clear();
-        cliques.back().insert(cliques.back().end(), R.begin(), R.end());
-        ExecuteCallBacks(cliques.back());
-        m_uMaximumCliqueSize = R.size();
-    }
-
     InitializeOrder(P, vVertexOrder, vColors);
 
     if (R.size() < m_uMaximumCliqueSize) {
@@ -89,6 +82,39 @@ long LightWeightReductionSparseMISQ::Run(list<std::list<int>> &cliques)
         ExecuteCallBacks(cliques.back());
     }
 
+#ifdef REMOVE_INITIAL_ISOLATES
+    isolates.RemoveAllIsolates(0 /* unused*/, vCliqueVertices, vOtherVerticesNotUsed, vAddedEdgesNotUsed, true /* evaluate all vertices */);
+
+    cout << "Initial R has " << R.size() << " elements" << endl;
+
+    size_t uNewIndex(0);
+    for (size_t index = 0; index < P.size(); ++index) {
+        int const vertex(P[index]);
+        if (isolates.GetInGraph().Contains(vertex)) {
+            P[uNewIndex] = P[index];
+            vColors[uNewIndex] = vColors[index];
+            uNewIndex++;
+        }
+    }
+    P.resize(uNewIndex);
+    vColors.resize(uNewIndex);
+
+    uNewIndex = 0;
+    for (size_t index = 0; index < vVertexOrder.size(); ++index) {
+        int const vertex(vVertexOrder[index]);
+        if (isolates.GetInGraph().Contains(vertex)) {
+            vVertexOrder[uNewIndex++] = vVertexOrder[index];
+        }
+    }
+    vVertexOrder.resize(uNewIndex);
+
+#endif //REMOVE_INITIAL_ISOLATES
+
+    if (R.size() > m_uMaximumCliqueSize) {
+        cliques.back().clear();
+        cliques.back().insert(cliques.back().end(), R.begin(), R.end());
+        ExecuteCallBacks(cliques.back());
+    }
 
     RunRecursive(P, vVertexOrder, cliques, vColors);
     return cliques.size();
@@ -96,7 +122,7 @@ long LightWeightReductionSparseMISQ::Run(list<std::list<int>> &cliques)
 
 void LightWeightReductionSparseMISQ::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)
 {
-    coloringStrategy.Color(m_AdjacencyArray, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
+    coloringStrategy.Color(isolates.Neighbors(), vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
 }
 
 void LightWeightReductionSparseMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex, vector<int> &vCliqueVertices, vector<int> &vRemoved)

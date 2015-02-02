@@ -127,6 +127,8 @@ void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adja
 #endif // DEBUG
 }
 
+
+// TODO/DS: Recolor is not yet implemented in sparse framework.
 void SparseIndependentSetColoringStrategy::Recolor(vector<vector<int>> const &adjacencyArray, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors, int const currentBestCliqueSize, int const currentCliqueSize)
 {
     if (vVerticesToReorder.empty()) return;

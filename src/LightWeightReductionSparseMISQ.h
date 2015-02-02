@@ -2,7 +2,7 @@
 #define LIGHTWEIGHT_REDUCTION_SPARSE_MISQ_H
 
 #include "Algorithm.h"
-#include "SparseIndependentSetColoringStrategy.h"
+#include "SparseIndependentSetColoringStrategy2.h"
 #include "Isolates2.h"
 
 #include <vector>
@@ -29,7 +29,6 @@ public:
 protected:
     std::vector<std::vector<char>> const &m_AdjacencyMatrix;
     std::vector<std::vector<int>>  const &m_AdjacencyArray;
-    SparseIndependentSetColoringStrategy coloringStrategy;
     size_t m_uMaximumCliqueSize;
     std::vector<int> R;
     std::vector<std::vector<int>> stackP;
@@ -37,6 +36,7 @@ protected:
     std::vector<std::vector<int>> stackOrder;
     int nodeCount;
     Isolates2 isolates;
+    SparseIndependentSetColoringStrategy2 coloringStrategy;
 ////    bool m_bInvert;
 };
 #endif //LIGHTWEIGHT_REDUCTION_SPARSE_MISQ_H

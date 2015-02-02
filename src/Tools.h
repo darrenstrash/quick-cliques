@@ -137,5 +137,7 @@ void CheckReverseConsistency(int const lineNumber, size_t const recursionNumber,
 
 bool IsMaximalClique(std::list<int> const &clique, std::vector<std::vector<int>> const &adjacencyList);
 
+std::string GetTimeInSeconds(clock_t delta);
+
 #endif
 

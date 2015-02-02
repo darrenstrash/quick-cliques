@@ -49,13 +49,13 @@ long LightWeightMISQ::Run(list<std::list<int>> &cliques)
 
     InitializeOrder(P, vVertexOrder, vColors);
 
+    cliques.push_back(list<int>());
+
     if (R.size() < m_uMaximumCliqueSize) {
         cliques.back().clear();
         cliques.back().insert(cliques.back().end(), P.begin(), P.begin() + m_uMaximumCliqueSize);
         ExecuteCallBacks(cliques.back());
     }
-
-    cliques.push_back(list<int>());
 
     RunRecursive(P, vVertexOrder, cliques, vColors);
     return cliques.size();
@@ -87,6 +87,7 @@ void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, li
     while (!P.empty()) {
         int const largestColor(vColors.back());
         if (R.size() + largestColor <= m_uMaximumCliqueSize) {
+            ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
             return;
         }
 
@@ -109,9 +110,11 @@ void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, li
             m_uMaximumCliqueSize = R.size();
         }
 
-        PostProcessOrder(vVertexOrder, nextVertex);
+        ProcessOrderAfterRecursion(vVertexOrder, P, vColors, nextVertex);
         R.pop_back();
     }
+
+    ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
 
     vNewColors.clear();
     vNewP.clear();
