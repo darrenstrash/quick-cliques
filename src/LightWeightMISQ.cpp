@@ -13,9 +13,9 @@ LightWeightMISQ::LightWeightMISQ(vector<vector<char>> const &vAdjacencyMatrix)
 , m_AdjacencyMatrix(vAdjacencyMatrix)
 , coloringStrategy(m_AdjacencyMatrix)
 , m_uMaximumCliqueSize(0)
-, stackP(vAdjacencyMatrix.size())
-, stackColors(vAdjacencyMatrix.size())
-, stackOrder(vAdjacencyMatrix.size())
+, stackP(vAdjacencyMatrix.size() + 1)
+, stackColors(vAdjacencyMatrix.size() + 1)
+, stackOrder(vAdjacencyMatrix.size() + 1)
 , nodeCount(0)
 , depth(-1)
 , startTime(clock())
@@ -95,6 +95,7 @@ void LightWeightMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVe
 
 void LightWeightMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 {
+////    Color(vVertexOrder, P, vColors);
     if (chosenVertex != -1) R.pop_back();
 }
 
@@ -103,6 +104,7 @@ void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, li
     nodeCount++;
     vector<int> &vNewP(stackP[R.size() + 1]);
     vector<int> &vNewColors(stackColors[R.size() + 1]);
+    vector<int> &vNewVertexOrder(stackOrder[R.size()+1]);
 
     if (nodeCount%10000 == 0) {
         cout << "Evaluated " << nodeCount << " nodes. " << GetTimeInSeconds(clock() - startTime) << endl;
@@ -113,6 +115,7 @@ void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, li
         if (depth == 0) {
             cout << "Only " << P.size() << " more vertices to go! " << GetTimeInSeconds(clock() - startTime) << endl;
         }
+
         int const largestColor(vColors.back());
         if (R.size() + largestColor <= m_uMaximumCliqueSize) {
             ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
@@ -122,7 +125,6 @@ void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, li
         vColors.pop_back();
         int const nextVertex(P.back()); P.pop_back();
 
-        vector<int> &vNewVertexOrder(stackOrder[R.size()]);
         GetNewOrder(vNewVertexOrder, vVertexOrder, P, nextVertex);
 
         if (!vNewVertexOrder.empty()) {

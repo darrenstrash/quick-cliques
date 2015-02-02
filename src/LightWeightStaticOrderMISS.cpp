@@ -17,12 +17,17 @@ LightWeightStaticOrderMISS::LightWeightStaticOrderMISS(vector<vector<char>> cons
 void LightWeightStaticOrderMISS::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
     OrderingTools::InitialOrderingMISR(m_AdjacencyMatrix, P, vColors, m_uMaximumCliqueSize);
-    vVertexOrder = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, true /* non-decreasing */)); //// = P; //?
+    vVertexOrder = P; //std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, true /* non-decreasing */)); //// = P; //?
 }
 
 void LightWeightStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
-    vNewVertexOrder.resize(P.size());
+////    cout << "Old order: ";
+////    for (int const vertex : vVertexOrder) {
+////        cout << vertex << " ";
+////    }
+////    cout << endl;
+    vNewVertexOrder.resize(vVertexOrder.size());
     {
         size_t uNewIndex(0);
         for (int const candidate : vVertexOrder) {
@@ -30,12 +35,32 @@ void LightWeightStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vecto
         }
         vNewVertexOrder.resize(uNewIndex);
     }
+
+    R.push_back(chosenVertex);
+
+////    cout << "New order: ";
+////    for (int const vertex : vNewVertexOrder) {
+////        cout << vertex << " ";
+////    }
+////    cout << endl;
 }
 
-void LightWeightStaticOrderMISS::PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex)
+void LightWeightStaticOrderMISS::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 {
+    if (chosenVertex == -1) return;
+////    cout << "    order: ";
+////    for (int const vertex : vVertexOrder) {
+////        cout << vertex << " ";
+////    }
+////    cout << endl;
+////    cout << "# vertices=" << vVertexOrder.size() << endl << flush;
     ////        vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), chosenVertex));
     // try searching from end, might be faster in general...
+////    if (find(vVertexOrder.begin(), vVertexOrder.end(), chosenVertex) != vVertexOrder.end()) {
+////        cout << "vertex " << chosenVertex << " is in ordering..." << endl << flush;
+////    } else {
+////        cout << "vertex " << chosenVertex << " is not in ordering..." << endl << flush;
+////    }
     size_t indexAfterVertex(0);
     for (indexAfterVertex = vVertexOrder.size(); indexAfterVertex >= 1; indexAfterVertex--) {
         if (vVertexOrder[indexAfterVertex-1] == chosenVertex) {
@@ -46,5 +71,7 @@ void LightWeightStaticOrderMISS::PostProcessOrder(std::vector<int> &vVertexOrder
     for (; indexAfterVertex < vVertexOrder.size(); indexAfterVertex++) {
         vVertexOrder[indexAfterVertex-1] = vVertexOrder[indexAfterVertex];
     }
+
     vVertexOrder.pop_back();
+    if (chosenVertex != -1) R.pop_back();
 }

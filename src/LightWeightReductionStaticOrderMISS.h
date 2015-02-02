@@ -16,7 +16,7 @@ public:
 
     virtual void GetNewOrder(std::vector<int> &vNewVertexOrder, std::vector<int> &vVertexOrder, std::vector<int> const &P, int const chosenVertex);
 
-    virtual void PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex);
+////    virtual void PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex);
 
 protected:
     std::vector<std::vector<int>> stackOrder;

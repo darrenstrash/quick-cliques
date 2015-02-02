@@ -11,23 +11,25 @@ using namespace std;
 #define REMOVE_INITIAL_ISOLATES
 
 LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
-: Algorithm("reduction-misq")
-, m_AdjacencyMatrix(vAdjacencyMatrix)
-, coloringStrategy(m_AdjacencyMatrix)
-, m_uMaximumCliqueSize(0)
-, stackP(vAdjacencyMatrix.size())
-, stackColors(vAdjacencyMatrix.size())
-, stackOrder(vAdjacencyMatrix.size())
+: LightWeightMISQ(vAdjacencyMatrix)
+////, m_AdjacencyMatrix(vAdjacencyMatrix)
+, m_AdjacencyArray(vAdjacencyArray)
+////, coloringStrategy(m_AdjacencyMatrix)
+////, m_uMaximumCliqueSize(0)
+////, stackP(vAdjacencyMatrix.size())
+////, stackColors(vAdjacencyMatrix.size())
+////, stackOrder(vAdjacencyMatrix.size())
 , stackClique(vAdjacencyMatrix.size() + 1)
 , stackOther(vAdjacencyMatrix.size() + 1)
 , stackPersistentClique(vAdjacencyMatrix.size() + 1)
 , stackPersistentOther(vAdjacencyMatrix.size() + 1)
-, nodeCount(0)
-, depth(-1)
+////, nodeCount(0)
+////, depth(-1)
 , isolates(vAdjacencyArray)
-, startTime(clock())
+////, startTime(clock())
 ////, m_bInvert(0)
 {
+    SetName("reduction-misq");
 }
 
 ////void LightWeightReductionMISQ::SetInvert(bool const invert)
@@ -66,91 +68,13 @@ void Contains(vector<int> const &vVertices, int const vertex, int const lineNo)
     }
 }
 
-long LightWeightReductionMISQ::Run(list<std::list<int>> &cliques)
-{
-    R.reserve(m_AdjacencyMatrix.size());
-
-    // don't reserve for 0-th vectors, they get std::move'd by InitialOrdering
-    for (int index = 1; index < stackP.size(); ++index) {
-        stackP.reserve(m_AdjacencyMatrix.size());
-        stackColors.reserve(m_AdjacencyMatrix.size());
-        stackOrder.reserve(m_AdjacencyMatrix.size());
-    }
-
-    // Initial coloring should be 1 to maxDegree, then the color the rest maxDegree+1.
-    vector<int> &P(stackP[0]);
-    vector<int> &vColors(stackColors[0]);
-    vector<int> &vVertexOrder(stackOrder[0]);
-
-    vector<int> &vCliqueVertices(R);
-    vector<int> vOtherVerticesNotUsed;
-    vector<pair<int,int>> vAddedEdgesNotUsed;
-
-    cliques.push_back(list<int>());
-
-    InitializeOrder(P, vVertexOrder, vColors);
-
-    if (R.size() < m_uMaximumCliqueSize) {
-        cliques.back().clear();
-        cliques.back().insert(cliques.back().end(), P.begin(), P.begin() + m_uMaximumCliqueSize);
-        ExecuteCallBacks(cliques.back());
-    }
-
-#ifdef REMOVE_INITIAL_ISOLATES
-    
-    ProcessOrderAfterRecursion(vVertexOrder, P, vColors, -1 /* no vertex chosen for removal */);
-////    isolates.RemoveAllIsolates(0 /* unused*/, vCliqueVertices, vOtherVerticesNotUsed, vAddedEdgesNotUsed, true /* evaluate all vertices */);
-////
-////    cout << "Initial R has " << R.size() << " elements" << endl;
-////////    Contains(vCliqueVertices, 5975, __LINE__);
-////////    Contains(vCliqueVertices, 4202, __LINE__);
-////////    Contains(R, 5975, __LINE__);
-////////    Contains(R, 4202, __LINE__);
-////
-////    size_t uNewIndex(0);
-////    for (size_t index = 0; index < P.size(); ++index) {
-////        int const vertex(P[index]);
-////        if (isolates.GetInGraph().Contains(vertex)) {
-////            P[uNewIndex] = P[index];
-////            vColors[uNewIndex] = vColors[index];
-////            uNewIndex++;
-////        }
-////    }
-////    P.resize(uNewIndex);
-////    vColors.resize(uNewIndex);
-////
-////    uNewIndex = 0;
-////    for (size_t index = 0; index < vVertexOrder.size(); ++index) {
-////        int const vertex(vVertexOrder[index]);
-////        if (isolates.GetInGraph().Contains(vertex)) {
-////            vVertexOrder[uNewIndex++] = vVertexOrder[index];
-////        }
-////    }
-////    vVertexOrder.resize(uNewIndex);
-
-    if (R.size() > m_uMaximumCliqueSize) {
-        cliques.back().clear();
-        cliques.back().insert(cliques.back().end(), R.begin(), R.end());
-        ExecuteCallBacks(cliques.back());
-    }
-#endif //REMOVE_INITIAL_ISOLATES
-    
-    depth++;
-    RunRecursive(P, vVertexOrder, cliques, vColors);
-    return cliques.size();
-}
-
-void LightWeightReductionMISQ::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)
-{
-    coloringStrategy.Color(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
-}
-
 void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
+    vector<pair<int,int>> vAddedEdgesUnused;
     isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
-    ////        isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+    isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
     vNewVertexOrder.resize(P.size());
     size_t uNewIndex(0);
     for (int const candidate : P) {
@@ -247,6 +171,8 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
 ////            Color(vVertexOrder/* evaluation order */, P /* color order */, vColors);
 
         }
+
+        Color(vVertexOrder, P, vColors);
 }
 
 void LightWeightReductionMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)
@@ -263,81 +189,4 @@ void LightWeightReductionMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVerte
 
     vCliqueVerticesToReplace.clear();
     vRemovedVerticesToReplace.clear();
-}
-
-void LightWeightReductionMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
-{
-    int const recursionNode(nodeCount);
-////    cout << "Node " << recursionNode << ":" << endl;
-    nodeCount++;
-    vector<int> &vNewP(stackP[R.size() + 1]);
-    vector<int> &vNewColors(stackColors[R.size() + 1]);
-    if (nodeCount%10000 == 0) {
-        cout << "Evaluated " << nodeCount << " nodes. " << GetTimeInSeconds(clock() - startTime) << endl;
-    }
-
-    while (!P.empty()) {
-
-        if (depth == 0) {
-            cout << "Only " << P.size() << " more vertices to go! " << GetTimeInSeconds(clock() - startTime) << endl;
-        }
-
-        int const largestColor(vColors.back());
-        if (R.size() + largestColor <= m_uMaximumCliqueSize) {
-            ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
-            return;
-        }
-
-        vColors.pop_back();
-        int const nextVertex(P.back()); P.pop_back();
-////        R.push_back(nextVertex); // gets pushed back with other clique vertices...
-////        cout << "Adding " << nextVertex << " to clique" << endl;
-
-        vector<int> &vNewVertexOrder(stackOrder[R.size()]);
-        GetNewOrder(vNewVertexOrder, vVertexOrder, P, nextVertex);
-
-////        Contains(R, 5975, __LINE__);
-////        Contains(R, 4202, __LINE__);
-
-////        Contains(vCliqueVertices, 5975, __LINE__);
-////        Contains(vCliqueVertices, 4202, __LINE__);
-
-        if (!vNewVertexOrder.empty()) {
-            vNewP.resize(vNewVertexOrder.size());
-            vNewColors.resize(vNewVertexOrder.size());
-            Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
-            depth++;
-            RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
-            depth--;
-        } else if (R.size() > m_uMaximumCliqueSize) {
-            cliques.back().clear();
-            cliques.back().insert(cliques.back().end(), R.begin(), R.end());
-            ExecuteCallBacks(cliques.back());
-            m_uMaximumCliqueSize = R.size();
-        }
-
-        bool bPIsEmpty(P.empty());
-        ProcessOrderAfterRecursion(vVertexOrder, P, vColors, nextVertex);
-
-        if (!bPIsEmpty && P.empty()) {
-            if (R.size() > m_uMaximumCliqueSize) {
-                cliques.back().clear();
-                cliques.back().insert(cliques.back().end(), R.begin(), R.end());
-                ExecuteCallBacks(cliques.back());
-                m_uMaximumCliqueSize = R.size();
-            }
-        }
-    }
-
-    ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
-
-    vNewColors.clear();
-    vNewP.clear();
-}
-
-
-LightWeightReductionMISQ::~LightWeightReductionMISQ()
-{
-    cerr << "Largest Clique     : " << m_uMaximumCliqueSize << endl;
-    cerr << "Node    Count      : " << nodeCount << endl;
 }

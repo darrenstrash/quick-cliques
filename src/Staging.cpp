@@ -1,7 +1,7 @@
 // local includes
 #include "Staging.h"
 #include "CliqueTools.h"
-#include "Isolates.h"
+#include "Isolates2.h"
 
 // system includes
 #include <vector>
@@ -383,27 +383,47 @@ void Staging::Run()
     cout << "Removed " << removed.size() << " vertices." << endl << flush;
     cout << "Found independent set of size: " << isolates.size() << endl << flush;
 #else
-    cout << "Applying New      Reductions..." << endl << flush;
+    cerr << "Applying New      Reductions..." << endl << flush;
 
-    Isolates isolates(m_AdjacencyList);
+    Isolates2 isolates(m_AdjacencyList);
 
-    cout << "Removing isolates..." << endl;
+    cerr << "Removing isolates..." << endl;
     vector<int> vRemoved;
     vector<int> vIsolates;
     set<int>    setRemoved;
     vector<pair<int,int>> vAddedEdges;
-    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges);
+    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
 
     list<int> independentSet;
     for (int const vertex : vIsolates) {
         independentSet.push_back(vertex);
     }
 
-
     vRemoved.insert(vRemoved.end(), vIsolates.begin(), vIsolates.end());
     setRemoved.insert(vRemoved.begin(), vRemoved.end());
 
-    cout << "# vertices remaining in graph: " << m_AdjacencyList.size() - vRemoved.size() << "/" << m_AdjacencyList.size() << endl << flush;
+    cerr << "# vertices remaining in graph: " << m_AdjacencyList.size() - vRemoved.size() << "/" << m_AdjacencyList.size() << endl << flush;
+
+    size_t numVertices(0);
+    size_t numEdges(0);
+
+    map<int,int> vertexRemap;
+    for (int const vertex : isolates.GetInGraph()) {
+        if (!isolates.Neighbors()[vertex].Empty()) {
+            numEdges += isolates.Neighbors()[vertex].Size();
+            vertexRemap[vertex] = numVertices;
+            numVertices++;
+        }
+    }
+
+    cout << numVertices << endl;
+    cout << numEdges << endl;
+
+    for (int const vertex : isolates.GetInGraph()) {
+        for (int const neighbor : isolates.Neighbors()[vertex]) {
+            cout << vertexRemap[vertex] << "," << vertexRemap[neighbor] << endl;
+        }
+    }
 
     // as of now, this loop helps find a really small Independent set, this is to help limit the recursion depth.
     // need to expand this into a branch-and-bound, pick the vertices that constrain the search the most, to keep

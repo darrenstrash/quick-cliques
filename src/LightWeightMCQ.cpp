@@ -49,13 +49,13 @@ long LightWeightMCQ::Run(list<std::list<int>> &cliques)
 
     InitializeOrder(P, vVertexOrder, vColors);
 
+    cliques.push_back(list<int>());
+
     if (R.size() < m_uMaximumCliqueSize) {
         cliques.back().clear();
         cliques.back().insert(cliques.back().end(), P.begin(), P.begin() + m_uMaximumCliqueSize);
         ExecuteCallBacks(cliques.back());
     }
-
-    cliques.push_back(list<int>());
 
     RunRecursive(P, vVertexOrder, cliques, vColors);
     return cliques.size();

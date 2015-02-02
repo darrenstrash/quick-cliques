@@ -11,7 +11,7 @@ using namespace std;
 LightWeightFullMISS::LightWeightFullMISS(vector<vector<char>> const &vAdjacencyMatrix)
 : LightWeightStaticOrderMISS(vAdjacencyMatrix)
 {
-    SetName("mcs");
+    SetName("miss");
 }
 
 void LightWeightFullMISS::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)

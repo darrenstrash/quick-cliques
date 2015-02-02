@@ -10,7 +10,7 @@ using namespace std;
 LightWeightReductionMISR::LightWeightReductionMISR(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
 : LightWeightReductionMISQ(vAdjacencyMatrix, vAdjacencyArray)
 {
-    SetName("reduction-mcr");
+    SetName("reduction-misr");
 }
 
 void LightWeightReductionMISR::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
