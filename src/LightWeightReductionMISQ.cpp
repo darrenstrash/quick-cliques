@@ -145,8 +145,12 @@ void LightWeightReductionMISQ::Color(std::vector<int> const &vVertexOrder, std::
     coloringStrategy.Color(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
 }
 
-void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex, vector<int> &vCliqueVertices, vector<int> &vRemoved)
+void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
+    vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
+    vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
+    isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
+    ////        isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
     vNewVertexOrder.resize(P.size());
     size_t uNewIndex(0);
     for (int const candidate : P) {
@@ -154,6 +158,8 @@ void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<
         if (isolates.GetInGraph().Contains(candidate)) vNewVertexOrder[uNewIndex++] = candidate;
     }
     vNewVertexOrder.resize(uNewIndex);
+
+    R.insert(R.end(), vCliqueVertices.begin(), vCliqueVertices.end());
 }
 
 void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
@@ -288,12 +294,7 @@ void LightWeightReductionMISQ::RunRecursive(vector<int> &P, vector<int> &vVertex
 ////        cout << "Adding " << nextVertex << " to clique" << endl;
 
         vector<int> &vNewVertexOrder(stackOrder[R.size()]);
-        vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(nextVertex);
-        vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
-        isolates.RemoveVertexAndNeighbors(nextVertex, vRemoved);
-////        isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
-        GetNewOrder(vNewVertexOrder, vVertexOrder, P, nextVertex, vCliqueVertices, vRemoved);
-        R.insert(R.end(), vCliqueVertices.begin(), vCliqueVertices.end());
+        GetNewOrder(vNewVertexOrder, vVertexOrder, P, nextVertex);
 
 ////        Contains(R, 5975, __LINE__);
 ////        Contains(R, 4202, __LINE__);

@@ -1,6 +1,7 @@
 #include "LightWeightMISQ.h"
 #include "OrderingTools.h"
 #include "GraphTools.h"
+#include "Tools.h"
 
 #include <cmath>
 #include <iostream>
@@ -16,6 +17,8 @@ LightWeightMISQ::LightWeightMISQ(vector<vector<char>> const &vAdjacencyMatrix)
 , stackColors(vAdjacencyMatrix.size())
 , stackOrder(vAdjacencyMatrix.size())
 , nodeCount(0)
+, depth(-1)
+, startTime(clock())
 ////, m_bInvert(0)
 {
 }
@@ -57,6 +60,15 @@ long LightWeightMISQ::Run(list<std::list<int>> &cliques)
         ExecuteCallBacks(cliques.back());
     }
 
+    ProcessOrderAfterRecursion(vVertexOrder, P, vColors, -1 /* no vertex chosen for removal */);
+
+    if (R.size() > m_uMaximumCliqueSize) {
+        cliques.back().clear();
+        cliques.back().insert(cliques.back().end(), R.begin(), R.end());
+        ExecuteCallBacks(cliques.back());
+    }
+
+    depth++;
     RunRecursive(P, vVertexOrder, cliques, vColors);
     return cliques.size();
 }
@@ -77,6 +89,13 @@ void LightWeightMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVe
         }
         vNewVertexOrder.resize(uNewIndex);
     }
+
+    R.push_back(chosenVertex);
+}
+
+void LightWeightMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
+{
+    if (chosenVertex != -1) R.pop_back();
 }
 
 void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
@@ -84,7 +103,16 @@ void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, li
     nodeCount++;
     vector<int> &vNewP(stackP[R.size() + 1]);
     vector<int> &vNewColors(stackColors[R.size() + 1]);
+
+    if (nodeCount%10000 == 0) {
+        cout << "Evaluated " << nodeCount << " nodes. " << GetTimeInSeconds(clock() - startTime) << endl;
+    }
+
     while (!P.empty()) {
+
+        if (depth == 0) {
+            cout << "Only " << P.size() << " more vertices to go! " << GetTimeInSeconds(clock() - startTime) << endl;
+        }
         int const largestColor(vColors.back());
         if (R.size() + largestColor <= m_uMaximumCliqueSize) {
             ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
@@ -93,7 +121,6 @@ void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, li
 
         vColors.pop_back();
         int const nextVertex(P.back()); P.pop_back();
-        R.push_back(nextVertex);
 
         vector<int> &vNewVertexOrder(stackOrder[R.size()]);
         GetNewOrder(vNewVertexOrder, vVertexOrder, P, nextVertex);
@@ -102,7 +129,9 @@ void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, li
             vNewP.resize(vNewVertexOrder.size());
             vNewColors.resize(vNewVertexOrder.size());
             Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
+            depth++;
             RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
+            depth--;
         } else if (R.size() > m_uMaximumCliqueSize) {
             cliques.back().clear();
             cliques.back().insert(cliques.back().end(), R.begin(), R.end());
@@ -110,8 +139,17 @@ void LightWeightMISQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, li
             m_uMaximumCliqueSize = R.size();
         }
 
+        bool bPIsEmpty(P.empty());
         ProcessOrderAfterRecursion(vVertexOrder, P, vColors, nextVertex);
-        R.pop_back();
+
+        if (!bPIsEmpty && P.empty()) {
+            if (R.size() > m_uMaximumCliqueSize) {
+                cliques.back().clear();
+                cliques.back().insert(cliques.back().end(), R.begin(), R.end());
+                ExecuteCallBacks(cliques.back());
+                m_uMaximumCliqueSize = R.size();
+            }
+        }
     }
 
     ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
