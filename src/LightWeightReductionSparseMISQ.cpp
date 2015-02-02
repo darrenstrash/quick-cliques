@@ -261,10 +261,8 @@ void LightWeightReductionSparseMISQ::RunRecursive(vector<int> &P, vector<int> &v
                 ExecuteCallBacks(cliques.back());
                 m_uMaximumCliqueSize = R.size();
             }
-
         }
     }
-
 
     isolates.ReplaceAllRemoved(vCliqueVerticesToReplace);
     isolates.ReplaceAllRemoved(vRemovedVerticesToReplace);
