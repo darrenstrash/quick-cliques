@@ -19,6 +19,7 @@ LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &v
 ////, stackP(vAdjacencyMatrix.size())
 ////, stackColors(vAdjacencyMatrix.size())
 ////, stackOrder(vAdjacencyMatrix.size())
+////, stackX(vAdjacencyMatrix.size() + 1)
 , stackClique(vAdjacencyMatrix.size() + 1)
 , stackOther(vAdjacencyMatrix.size() + 1)
 , stackPersistentClique(vAdjacencyMatrix.size() + 1)
@@ -88,6 +89,7 @@ void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<
 
 void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 {
+////        stackX[depth+1].push_back(chosenVertex);
         std::vector<int> &vCliqueVertices(stackClique[depth+1]);
         std::vector<int> &vRemoved(stackOther[depth+1]);
         // return R back to the state it was at the beginning of the loop.
@@ -190,3 +192,13 @@ void LightWeightReductionMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVerte
     vCliqueVerticesToReplace.clear();
     vRemovedVerticesToReplace.clear();
 }
+
+////void LightWeightReductionMISQ::PrintState() const
+////{
+////    cout << "(";
+////    for (size_t index = 0; index < stackP.size(); ++index) {
+////        cout << stackP[index];
+////        if (index+1 != stackP.size()) cout << ", ";
+////    }
+////    cout << ")" << endl << flush;
+////}

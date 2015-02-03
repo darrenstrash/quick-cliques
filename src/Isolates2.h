@@ -14,7 +14,7 @@
 ////#define TIMERS
 ////#define SPARSE
 
-class Isolates2
+template <typename NeighborSet> class Isolates2
 {
 public:
     Isolates2(std::vector<std::vector<int>> const &adjacencyArray);
@@ -36,7 +36,7 @@ public:
 #ifdef SPARSE
     std::vector<SparseArraySet> const& Neighbors()  const { return neighbors;  }
 #else
-    std::vector<ArraySet> const& Neighbors()  const { return neighbors;  }
+    std::vector<NeighborSet> const& Neighbors()  const { return neighbors;  }
 #endif //SPARSE
 
 ////    void RemoveEdges(std::vector<std::pair<int,int>> const &vEdges);
@@ -52,7 +52,7 @@ protected: // members
 #ifdef SPARSE
     std::vector<SparseArraySet>     neighbors;
 #else
-    std::vector<ArraySet>     neighbors;
+    std::vector<NeighborSet>     neighbors;
 #endif // SPARSE
     ArraySet inGraph;
     ArraySet isolates;

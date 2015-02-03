@@ -3,6 +3,7 @@
 
 #include "LightWeightMISQ.h"
 #include "IndependentSetColoringStrategy.h"
+#include "ArraySet.h"
 #include "Isolates2.h"
 
 #include <ctime>
@@ -21,14 +22,17 @@ public:
     virtual void ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex);
     virtual void ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors);
 
+////    virtual void PrintState() const;
+
 protected:
     std::vector<std::vector<int>>  const &m_AdjacencyArray;
 ////    std::vector<std::vector<int>> stackOrder;
+////    std::vector<std::vector<int>> stackX;
     std::vector<std::vector<int>> stackClique;
     std::vector<std::vector<int>> stackOther;
     std::vector<std::vector<int>> stackPersistentClique;
     std::vector<std::vector<int>> stackPersistentOther;
-    Isolates2 isolates;
+    Isolates2<ArraySet> isolates;
 ////    bool m_bInvert;
 };
 #endif //LIGHTWEIGHT_REDUCTION_MISQ_H

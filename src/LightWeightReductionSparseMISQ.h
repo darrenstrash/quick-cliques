@@ -3,6 +3,7 @@
 
 #include "MaxSubgraphAlgorithm.h"
 #include "SparseIndependentSetColoringStrategy.h"
+#include "ArraySet.h"
 #include "Isolates2.h"
 
 #include <vector>
@@ -28,6 +29,6 @@ protected:
     std::vector<std::vector<int>> stackOther;
     std::vector<std::vector<int>> stackPersistentClique;
     std::vector<std::vector<int>> stackPersistentOther;
-    Isolates2 isolates;
+    Isolates2<ArraySet> isolates; // TODO/DS: replace with SparseArraySet
 };
 #endif //LIGHTWEIGHT_REDUCTION_SPARSE_MISQ_H

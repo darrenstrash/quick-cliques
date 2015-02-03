@@ -1,4 +1,6 @@
 #include "Isolates2.h"
+#include "ArraySet.h"
+#include "SparseArraySet.h"
 
 #include <vector>
 #include <set>
@@ -8,7 +10,8 @@
 
 using namespace std;
 
-Isolates2::Isolates2(vector<vector<int>> const &adjacencyArray)
+template <typename NeighborSet>
+Isolates2<NeighborSet>::Isolates2(vector<vector<int>> const &adjacencyArray)
  : m_AdjacencyArray(adjacencyArray)
  , neighbors(adjacencyArray.size())
  , inGraph(adjacencyArray.size())
@@ -32,7 +35,7 @@ Isolates2::Isolates2(vector<vector<int>> const &adjacencyArray)
 #ifdef SPARSE
         neighbors[u].Resize(m_AdjacencyArray[u].size());
 #else
-        neighbors[u].Resize(m_AdjacencyArray.size());
+        neighbors[u].InitializeFromAdjacencyArray(m_AdjacencyArray, u);
 #endif // SPARSE
         for (int const vertex : m_AdjacencyArray[u]) {
             neighbors[u].Insert(vertex);
@@ -40,7 +43,8 @@ Isolates2::Isolates2(vector<vector<int>> const &adjacencyArray)
     }
 }
 
-Isolates2::~Isolates2()
+template <typename NeighborSet>
+Isolates2<NeighborSet>::~Isolates2()
 {
 
 #ifdef TIMERS
@@ -66,7 +70,8 @@ Isolates2::~Isolates2()
 ////    }
 ////}
 
-bool Isolates2::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
+template <typename NeighborSet>
+bool Isolates2<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
 {
 ////    bool const debug(vertex==40653);
 ////    if (vertex == 31) {
@@ -328,7 +333,8 @@ bool Isolates2::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertic
 
 
 // TODO/DS: need to add 2-neighbors to remaining.
-void Isolates2::RemoveVertex(int const vertex)
+template <typename NeighborSet>
+void Isolates2<NeighborSet>::RemoveVertex(int const vertex)
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
 ////    cout << __LINE__ << ": calling remove" << endl << flush;
@@ -345,7 +351,8 @@ void Isolates2::RemoveVertex(int const vertex)
 }
 
 //TODO/DS: need to add 2-neighbors to remaining.
-void Isolates2::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
+template <typename NeighborSet>
+void Isolates2<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
 ////    cout << __LINE__ << ": calling remove" << endl << flush;
@@ -385,7 +392,8 @@ void Isolates2::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved
 ////    cout << __LINE__ << ": Cleared neighbors: " << vertex << endl << flush;
 }
 
-void Isolates2::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges, bool bConsiderAllVertices)
+template <typename NeighborSet>
+void Isolates2<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges, bool bConsiderAllVertices)
 {
 ////    if (find (vIsolateVertices.begin(), vIsolateVertices.end(), 31) != vIsolateVertices.end())
 ////        cout << "Calling RemoveAllIsolates with 31 in the isolate set!" << endl;
@@ -458,7 +466,8 @@ void Isolates2::RemoveAllIsolates(int const independentSetSize, vector<int> &vIs
 #endif // TIMERS
 }
 
-void Isolates2::ReplaceAllRemoved(vector<int> const &vRemoved)
+template <typename NeighborSet>
+void Isolates2<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
 {
 #ifdef TIMERS
     clock_t startClock = clock();
@@ -486,7 +495,8 @@ void Isolates2::ReplaceAllRemoved(vector<int> const &vRemoved)
     #endif // TIMERS
 }
 
-int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
+template <typename NeighborSet>
+int Isolates2<NeighborSet>::NextVertexToRemove(std::vector<int> &vVertices)
 {
 #ifdef TIMERS
     clock_t startClock = clock();
@@ -558,7 +568,7 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
 #ifdef SPARSE
         SparseArraySet &neighborSet(neighbors[vertex]);
 #else
-        ArraySet &neighborSet(neighbors[vertex]);
+        NeighborSet &neighborSet(neighbors[vertex]);
 #endif // SPARSE
         neighborSet.SaveState(); // checkpoint the neighbors so we can easily restore them after test-removing vertices.
     }
@@ -576,7 +586,7 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
 #ifdef SPARSE
         vector<SparseArraySet> savedNeighbors(neighbors);
 #else
-        vector<ArraySet> savedNeighbors(neighbors);
+        vector<NeighborSet> savedNeighbors(neighbors);
 #endif // SPARSE
 #endif // DEBUG
 
@@ -663,7 +673,7 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
 #ifdef SPARSE
             SparseArraySet &neighborSet(neighbors[vertex]);
 #else
-            ArraySet &neighborSet(neighbors[vertex]);
+            NeighborSet &neighborSet(neighbors[vertex]);
 #endif // SPARSE
             neighborSet.RestoreState(); // checkpoint the neighbors so we can easily restore them after test-removing vertices.
             neighborSet.SaveState();
@@ -709,7 +719,7 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
 #ifdef SPARSE
         SparseArraySet &neighborSet(neighbors[vertex]);
 #else
-        ArraySet &neighborSet(neighbors[vertex]);
+        NeighborSet &neighborSet(neighbors[vertex]);
 #endif // SPARSE
         neighborSet.RestoreState();
     }
@@ -736,14 +746,16 @@ int Isolates2::NextVertexToRemove(std::vector<int> &vVertices)
     return -1;
 }
 
-int Isolates2::NextVertexToRemove()
+template <typename NeighborSet>
+int Isolates2<NeighborSet>::NextVertexToRemove()
 {
     vector<int> vVertices;
     vVertices.insert(vVertices.end(), inGraph.begin(), inGraph.end());
     return NextVertexToRemove(vVertices);
 }
 
-int Isolates2::GetAlternativeVertex(int const vertex) const
+template <typename NeighborSet>
+int Isolates2<NeighborSet>::GetAlternativeVertex(int const vertex) const
 {
     map<int,int>::const_iterator cit(m_AlternativeVertices.find(vertex));
     if (cit != m_AlternativeVertices.end()) {
@@ -751,4 +763,8 @@ int Isolates2::GetAlternativeVertex(int const vertex) const
     }
     return -1;
 }
+
+template class Isolates2<ArraySet>;
+template class Isolates2<SparseArraySet>;
+
 

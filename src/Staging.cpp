@@ -385,7 +385,7 @@ void Staging::Run()
 #else
     cerr << "Applying New      Reductions..." << endl << flush;
 
-    Isolates2 isolates(m_AdjacencyList);
+    Isolates2<SparseArraySet> isolates(m_AdjacencyList);
 
     cerr << "Removing isolates..." << endl;
     vector<int> vRemoved;

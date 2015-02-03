@@ -25,6 +25,14 @@ public:
         m_Elements.resize(size, -1);
     }
 
+    void InitializeFromAdjacencyArray(std::vector<std::vector<int>> const &adjacencyArray, int const vertex)
+    {
+        Resize(adjacencyArray[vertex].size());
+        for (int const neighbor : adjacencyArray[vertex]) {
+            Insert(neighbor);
+        }
+    }
+
     void PrintSummary() const
     {
         std::cout << "Array[" << m_iBegin << ":" << m_iEnd << "] : ";

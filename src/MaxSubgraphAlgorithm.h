@@ -26,6 +26,8 @@ public:
 
     virtual void RunRecursive(std::vector<int> &P, std::vector<int> &vVertexOrder, std::list<std::list<int>> &cliques, std::vector<int> &vColors);
 
+    virtual void PrintState() const;
+
 protected:
     size_t m_uMaximumCliqueSize;
     std::vector<int> R;

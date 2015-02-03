@@ -120,7 +120,7 @@ protected: // members
     std::vector<int> vertexLookup;
     std::vector<int> degree;
     std::vector<SetDelineator> m_lDelineators;
-    Isolates2 isolates;
+    Isolates2<SparseArraySet> isolates;
     std::vector<std::vector<int>> vvCliqueVertices;
     std::vector<std::vector<int>> vvOtherRemovedVertices;
     std::vector<std::vector<std::pair<int,int>>> vvAddedEdges;

@@ -23,9 +23,9 @@ LightWeightReductionSparseMISQ::LightWeightReductionSparseMISQ(vector<vector<int
 {
     R.reserve(m_AdjacencyArray.size());
 
-    stackP.resize(m_AdjacencyArray.size());
-    stackColors.resize(m_AdjacencyArray.size());
-    stackOrder.resize(m_AdjacencyArray.size());
+    stackP.resize(m_AdjacencyArray.size() + 1);
+    stackColors.resize(m_AdjacencyArray.size() + 1);
+    stackOrder.resize(m_AdjacencyArray.size() + 1);
 }
 
 ////void LightWeightReductionSparseMISQ::SetInvert(bool const invert)
