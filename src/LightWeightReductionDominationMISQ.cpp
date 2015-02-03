@@ -1,7 +1,8 @@
-#include "LightWeightReductionMISQ.h"
+#include "LightWeightReductionDominationMISQ.h"
 #include "OrderingTools.h"
 #include "GraphTools.h"
 #include "Tools.h"
+#include "Reducer.h"
 
 #include <cmath>
 #include <iostream>
@@ -10,7 +11,7 @@ using namespace std;
 
 #define REMOVE_INITIAL_ISOLATES
 
-LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
+LightWeightReductionDominationMISQ::LightWeightReductionDominationMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
 : LightWeightMISQ(vAdjacencyMatrix)
 ////, m_AdjacencyMatrix(vAdjacencyMatrix)
 , m_AdjacencyArray(vAdjacencyArray)
@@ -19,36 +20,39 @@ LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &v
 ////, stackP(vAdjacencyMatrix.size())
 ////, stackColors(vAdjacencyMatrix.size())
 ////, stackOrder(vAdjacencyMatrix.size())
-////, stackX(vAdjacencyMatrix.size() + 1)
+, stackX(vAdjacencyMatrix.size() + 1)
 , stackClique(vAdjacencyMatrix.size() + 1)
 , stackOther(vAdjacencyMatrix.size() + 1)
 , stackPersistentClique(vAdjacencyMatrix.size() + 1)
 , stackPersistentOther(vAdjacencyMatrix.size() + 1)
 ////, nodeCount(0)
 ////, depth(-1)
-, isolates(vAdjacencyArray)
+////, isolates(vAdjacencyArray)
+, reducer(vAdjacencyArray)
 ////, startTime(clock())
 ////, m_bInvert(0)
 {
-    SetName("reduction-misq");
+    SetName("reduction-domination-misq");
 }
 
-////void LightWeightReductionMISQ::SetInvert(bool const invert)
+////void LightWeightReductionDominationMISQ::SetInvert(bool const invert)
 ////{
 ////    m_bInvert = invert;
 ////}
 
-void LightWeightReductionMISQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
+void LightWeightReductionDominationMISQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
-    P = std::move(GraphTools::OrderVerticesByDegree(isolates.GetInGraph(), isolates.Neighbors(), true /* non-decreasing*/));
+////    P = std::move(GraphTools::OrderVerticesByDegree(isolates.GetInGraph(), isolates.Neighbors(), true /* non-decreasing*/));
+    P = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyArray, true /* non-decreasing*/));
 
     size_t maxDegree(0);
-#ifdef SPARSE
-    for (SparseArraySet const &neighborSet : isolates.Neighbors()) {
-#else
-    for (ArraySet const &neighborSet : isolates.Neighbors()) {
-#endif //SPARSE
-        maxDegree = max(maxDegree, neighborSet.Size());
+////#ifdef SPARSE
+////    for (SparseArraySet const &neighborSet : isolates.Neighbors()) {
+////#else
+////    for (ArraySet const &neighborSet : isolates.Neighbors()) {
+////#endif //SPARSE
+    for (vector<int> const &vNeighbors : m_AdjacencyArray) {
+        maxDegree = max(maxDegree, vNeighbors.size());
     }
 
     vColors.reserve(P.size());
@@ -62,34 +66,36 @@ void LightWeightReductionMISQ::InitializeOrder(std::vector<int> &P, std::vector<
     vVertexOrder = P;
 }
 
-////void Contains(vector<int> const &vVertices, int const vertex, int const lineNo)
-////{
-////    if (find(vVertices.begin(), vVertices.end(), vertex) != vVertices.end()) {
-////        cout << lineNo << ": vector contains " << vertex << endl << flush;
-////    }
-////}
+void Contains(vector<int> const &vVertices, int const vertex, int const lineNo)
+{
+    if (find(vVertices.begin(), vVertices.end(), vertex) != vVertices.end()) {
+        cout << lineNo << ": vector contains " << vertex << endl << flush;
+    }
+}
 
-void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
+void LightWeightReductionDominationMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
     vector<pair<int,int>> vAddedEdgesUnused;
-    isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
-    isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+////    isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
+////    isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+    reducer.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
+    reducer.Reduce(vCliqueVertices, vRemoved);
     vNewVertexOrder.resize(P.size());
     size_t uNewIndex(0);
     for (int const candidate : P) {
 ////    if (!m_bInvert && m_AdjacencyMatrix[chosenVertex][candidate]) vNewVertexOrder[uNewIndex++] = candidate;
-        if (isolates.GetInGraph().Contains(candidate)) vNewVertexOrder[uNewIndex++] = candidate;
+////        if (isolates.GetInGraph().Contains(candidate)) vNewVertexOrder[uNewIndex++] = candidate;
+        if (reducer.InRemainingGraph(candidate)) vNewVertexOrder[uNewIndex++] = candidate;
     }
     vNewVertexOrder.resize(uNewIndex);
 
     R.insert(R.end(), vCliqueVertices.begin(), vCliqueVertices.end());
 }
 
-void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
+void LightWeightReductionDominationMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 {
-////        stackX[depth+1].push_back(chosenVertex);
         std::vector<int> &vCliqueVertices(stackClique[depth+1]);
         std::vector<int> &vRemoved(stackOther[depth+1]);
         // return R back to the state it was at the beginning of the loop.
@@ -110,20 +116,48 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
 ////            cout << otherVertex << " ";
 ////        }
 ////        cout << endl;
-        isolates.ReplaceAllRemoved(vCliqueVertices);
-        isolates.ReplaceAllRemoved(vRemoved);
+////        isolates.ReplaceAllRemoved(vCliqueVertices);
+////        isolates.ReplaceAllRemoved(vRemoved);
+        reducer.ReplaceVertices(vCliqueVertices);
+        reducer.ReplaceVertices(vRemoved);
 
         vCliqueVertices.clear();
         vRemoved.clear();
 
-        if (chosenVertex != -1) isolates.RemoveVertex(chosenVertex);
+////        if (chosenVertex != -1) isolates.RemoveVertex(chosenVertex);
+        if (chosenVertex != -1) reducer.RemoveVertex(chosenVertex);
 
         // remove vertices
         vector<int> vTempCliqueVertices;
         vector<int> vTempRemovedVertices;
         vector<pair<int,int>> vAddedEdgesUnused;
 
-        isolates.RemoveAllIsolates(0 /*unused*/,vTempCliqueVertices, vTempRemovedVertices, vAddedEdgesUnused, false /* only consider changed vertices */);
+////        isolates.RemoveAllIsolates(0 /*unused*/,vTempCliqueVertices, vTempRemovedVertices, vAddedEdgesUnused, chosenVertex == -1 /* consider all or only changed vertices */);
+        if (chosenVertex == -1) {
+            reducer.InitialReduce(vTempCliqueVertices);
+        } else {
+            reducer.Reduce(vTempCliqueVertices, vTempRemovedVertices);
+        }
+
+////        vector<bool> vMarkedVertices(m_AdjacencyArray.size(), false);
+////        // TODO/DS: remove dominated vertices...
+////        vector<int> &X(stackX[depth+1]); X.push_back(chosenVertex);
+////        for (int const p : P) {
+////            vMarkedVertices[p] = true;
+////            for (int const neighborP : isolates.Neighbors()[p]) {
+////                vMarkedVertices[neighborP] = true;
+////            }
+////
+////            for (int const x : X) {
+////            for (int const neighborX : m_AdjacencyArray[x]) {
+////                vMarkedVertices[neighborX] = isolates.GetInGraph().Contains(neighborX);
+////            }
+////                // check for dominatation. p in P can't have neighbors that x in X does not
+////
+////                //if dominates
+////                // vTempOtherRemovedVertices
+////            }
+////        }
 
         R.insert(R.end(), vTempCliqueVertices.begin(), vTempCliqueVertices.end());
 
@@ -146,12 +180,14 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
 ////            cout << endl;
 ////        }
 
-        if (P.size() != isolates.GetInGraph().Size()) { // if false?
+////        if (P.size() != isolates.GetInGraph().Size()) { // if false?
+        if (P.size() != reducer.RemainingGraphSize()) { // if false?
 ////            cout << __LINE__ << ": This should not be triggered!" << endl;
             size_t uNewIndex(0);
             // pull vertices out of P and vColors
             for (size_t index = 0; index < P.size(); ++index) {
-                if (isolates.GetInGraph().Contains(P[index])) {
+////                if (isolates.GetInGraph().Contains(P[index])) {
+                if (reducer.InRemainingGraph(P[index])) {
                     P[uNewIndex] = P[index];
                     vColors[uNewIndex] = vColors[index];
                     uNewIndex++;
@@ -163,7 +199,8 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
             // pull vertices out of vVertexOrder
             uNewIndex = 0;
             for (size_t index = 0; index < vVertexOrder.size(); ++index) {
-                if (isolates.GetInGraph().Contains(vVertexOrder[index])) {
+////                if (isolates.GetInGraph().Contains(vVertexOrder[index])) {
+                if (reducer.InRemainingGraph(vVertexOrder[index])) {
                     vVertexOrder[uNewIndex++] = vVertexOrder[index];
                 }
             }
@@ -177,13 +214,15 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
         Color(vVertexOrder, P, vColors);
 }
 
-void LightWeightReductionMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)
+void LightWeightReductionDominationMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)
 {
     vector<int> &vCliqueVerticesToReplace(stackPersistentClique[depth+1]);
     vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
 
-    isolates.ReplaceAllRemoved(vCliqueVerticesToReplace);
-    isolates.ReplaceAllRemoved(vRemovedVerticesToReplace);
+////    isolates.ReplaceAllRemoved(vCliqueVerticesToReplace);
+////    isolates.ReplaceAllRemoved(vRemovedVerticesToReplace);
+    reducer.ReplaceVertices(vCliqueVerticesToReplace);
+    reducer.ReplaceVertices(vRemovedVerticesToReplace);
 
     for (int const cliqueVertex : vCliqueVerticesToReplace) {
         R.pop_back();
@@ -193,7 +232,7 @@ void LightWeightReductionMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVerte
     vRemovedVerticesToReplace.clear();
 }
 
-////void LightWeightReductionMISQ::PrintState() const
+////void LightWeightReductionDominationMISQ::PrintState() const
 ////{
 ////    cout << "(";
 ////    for (size_t index = 0; index < stackP.size(); ++index) {
