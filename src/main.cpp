@@ -193,7 +193,7 @@ int main(int argc, char** argv)
         adjacencyList = readInGraphAdjList(n, m, inputFile);
     }
 
-    bool const bComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-sparse-misq" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "misr" || name == "static-order-miss" || name == "miss");
+    bool const bComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "misr" || name == "static-order-miss" || name == "miss");
 
     bool const addDiagonals(name == "misq" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-sparse-misq" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss");
 
@@ -266,11 +266,11 @@ int main(int argc, char** argv)
     } else if (name == "reduction-static-order-miss") {
         pAlgorithm = new LightWeightReductionStaticOrderMISS(vAdjacencyMatrix, adjacencyArray);
     } else if (name == "reduction-sparse-misq") {
-        pAlgorithm = new LightWeightReductionSparseMISQ(vAdjacencyMatrix, adjacencyArray);
+        pAlgorithm = new LightWeightReductionSparseMISQ(adjacencyArray);
     } else if (name == "reduction-sparse-misr") {
-        pAlgorithm = new LightWeightReductionSparseMISR(vAdjacencyMatrix, adjacencyArray);
+        pAlgorithm = new LightWeightReductionSparseMISR(adjacencyArray);
     } else if (name == "reduction-sparse-static-order-miss") {
-        pAlgorithm = new LightWeightReductionSparseStaticOrderMISS(vAdjacencyMatrix, adjacencyArray);
+        pAlgorithm = new LightWeightReductionSparseStaticOrderMISS(adjacencyArray);
     } else if (name == "adjlist") {
         pAlgorithm = new AdjacencyListAlgorithm(adjacencyArray);
     } else if (name == "generic-adjlist") {
@@ -369,7 +369,7 @@ int main(int argc, char** argv)
     };
 
     pAlgorithm->AddCallBack(printCliqueSize);
-////    pAlgorithm->AddCallBack(printClique);
+    pAlgorithm->AddCallBack(printClique);
 
     if (!bComputeAdjacencyMatrix) {
         pAlgorithm->AddCallBack(verifyMaximalCliqueArray);

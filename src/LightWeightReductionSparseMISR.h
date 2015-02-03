@@ -10,7 +10,7 @@
 class LightWeightReductionSparseMISR : public LightWeightReductionSparseMISQ
 {
 public:
-    LightWeightReductionSparseMISR(std::vector<std::vector<char>> const &vAdjacencyMatrix, std::vector<std::vector<int>> const &adjacencyArray);
+    LightWeightReductionSparseMISR(std::vector<std::vector<int>> const &adjacencyArray);
 
     virtual void InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors);
 };

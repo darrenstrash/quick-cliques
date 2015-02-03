@@ -2,6 +2,7 @@
 #include "DegeneracyTools.h"
 #include "GraphTools.h"
 #include "CliqueColoringStrategy.h"
+#include "SparseIndependentSetColoringStrategy.h"
 
 #include <vector>
 #include <iostream>
@@ -105,7 +106,14 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
 
                 // if remaining graph is regular.
                 if ((size - numVerticesRemoved) == verticesByDegree[currentDegree].size()) {
-////                    cout << "Remaining graph of " << verticesByDegree[currentDegree].size() << " vertices is regular with degree " << currentDegree << endl;
+                    cout << "Remaining graph of " << verticesByDegree[currentDegree].size() << " vertices is regular with degree " << currentDegree << endl;
+                    cout << "Vertices: ";
+                    for (int const lastVertex : verticesByDegree[currentDegree]) {
+////                        if (vColoring.size() - index < 10)
+                            cout << lastVertex << " ";
+                    }
+                    cout << endl;
+
 
                     // if regular, and degree is # vertices - 1, then it's a clique.
                     if (static_cast<int>(verticesByDegree[currentDegree].size()) == currentDegree + 1) {
@@ -131,6 +139,19 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
                     for (size_t index = remainingColors.size(); index < vColoring.size(); ++index) {
                         vColoring[index] = min(vColoring[index-1] + 1, static_cast<int>(maxDegree + 1));
                     }
+
+                    cout << "All vertices: ";
+                    for (size_t index = 0; index < vOrderedVertices.size(); ++index) {
+////                        if (vColoring.size() - index < 10)
+                            cout << vOrderedVertices[index] << " ";
+                    }
+                    cout << endl;
+                    cout << "All colors: ";
+                    for (size_t index = 0; index < vColoring.size(); ++index) {
+////                        if (vColoring.size() - index < 10)
+                            cout << vColoring[index] << " ";
+                    }
+                    cout << endl;
 #else
                     
                     int const lastIndexWithSmallerColor(min(remainingVertices.size() + maxDegree - maxColor, size-1));
@@ -166,10 +187,12 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
                     }
                     vertex = chosenVertex;
                     verticesByDegree[currentDegree].erase(vertexLocator[vertex]);
+                    cout << "Choosing multi vertex: " << vertex << " with degree " << degree[vertex] << " and neighborhood " << minNeighborhoodDegree << endl << flush;
                 }
             } else {
                 vertex = verticesByDegree[currentDegree].front();
                 verticesByDegree[currentDegree].pop_front();
+                cout << "Choosing solo  vertex: " << vertex << " with degree " << degree[vertex] << endl << flush;
             }
 
             vOrderedVertices[vOrderedVertices.size() - numVerticesRemoved - 1] = vertex;
@@ -195,21 +218,12 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
     }
 }
 
-void OrderingTools::InitialOrderingMISR(vector<vector<char>> const &adjacencyMatrix, vector<int> &vOrderedVertices, vector<int> &vColoring, size_t &cliqueSize)
+void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArray, vector<int> &vOrderedVertices, vector<int> &vColoring, size_t &cliqueSize)
 {
-    vOrderedVertices.resize(adjacencyMatrix.size(), -1);
-    vColoring.resize(adjacencyMatrix.size(), -1);
+    vOrderedVertices.resize(adjacencyArray.size(), -1);
+    vColoring.resize(adjacencyArray.size(), -1);
 
-    // create an adjacencyArray, much faster for degeneracy ordering.
-    vector<vector<int>> adjacencyArray(adjacencyMatrix.size());
-    for (int vertex = 0; vertex < adjacencyMatrix.size(); ++vertex) {
-        for (int otherVertex = 0; otherVertex < adjacencyMatrix.size(); ++otherVertex) {
-            if (vertex == otherVertex) continue;
-            if (!adjacencyMatrix[vertex][otherVertex]) {
-                adjacencyArray[vertex].push_back(otherVertex);
-            }
-        }
-    }
+    vector<bool> vMarkedVertices(adjacencyArray.size());
 
     size_t const size(adjacencyArray.size());
 
@@ -226,15 +240,19 @@ void OrderingTools::InitialOrderingMISR(vector<vector<char>> const &adjacencyMat
     // lists of vertices indexed by degree
 
     size_t maxDegree(0);
+    size_t maxCoDegree(0);
     for(size_t i = 0; i < size; i++) {
         degree[i] = adjacencyArray[i].size();
         verticesByDegree[degree[i]].push_front(i);
         vertexLocator[i] = verticesByDegree[degree[i]].begin();
 
         maxDegree = max(maxDegree, adjacencyArray[i].size());
+        maxCoDegree = max(maxCoDegree, size - adjacencyArray[i].size() - 1);
     }
 
-    int currentDegree = 0;
+    // perform degeneracy ordering in complement graph.
+
+    int currentDegree = maxDegree;
     int numVerticesRemoved = 0;
 
     vector<NeighborListArray> vOrderingArray(size);
@@ -246,18 +264,25 @@ void OrderingTools::InitialOrderingMISR(vector<vector<char>> const &adjacencyMat
             if (verticesByDegree[currentDegree].size() > 1) {
 
                 // if remaining graph is regular.
-                if ((size - numVerticesRemoved) == verticesByDegree[currentDegree].size()) {
-////                    cout << "Remaining graph of " << verticesByDegree[currentDegree].size() << " vertices is regular with degree " << currentDegree << endl;
+                if (currentDegree == 0) { ////(size - numVerticesRemoved) == verticesByDegree[currentDegree].size()) {
+                    cout << "Remaining graph of " << verticesByDegree[currentDegree].size() << " vertices is regular with degree " << (size - numVerticesRemoved - currentDegree - 1) << endl;
+                    cout << "Vertices: ";
+                    for (int const lastVertex : verticesByDegree[currentDegree]) {
+////                        if (vColoring.size() - index < 10)
+                            cout << lastVertex << " ";
+                    }
+                    cout << endl;
 
                     // if regular, and degree is # vertices - 1, then it's a clique.
-                    if (static_cast<int>(verticesByDegree[currentDegree].size()) == currentDegree + 1) {
-                        cliqueSize = currentDegree + 1;
+                    if (currentDegree == 0) { /////static_cast<int>(verticesByDegree[currentDegree].size()) == (size - (currentDegree + 1))) { // TODO/DS put in the proper check for independent set...
+                        cliqueSize = verticesByDegree[currentDegree].size();
                     }
 
                     vector<int> remainingVertices(verticesByDegree[currentDegree].begin(), verticesByDegree[currentDegree].end());
                     vector<int> remainingColors(remainingVertices.size(), 0);
-                    CliqueColoringStrategy coloringStrategy(adjacencyMatrix);
-                    coloringStrategy.Color(adjacencyMatrix, remainingVertices /* evaluation order */, remainingVertices /* color order */, remainingColors);
+////                    CliqueColoringStrategy coloringStrategy(adjacencyMatrix);
+                    SparseIndependentSetColoringStrategy coloringStrategy(adjacencyArray); // TODO/DS: Validate.
+                    coloringStrategy.Color(adjacencyArray, remainingVertices /* evaluation order */, remainingVertices /* color order */, remainingColors);
                     //copy initial ordering to output arrays
 
 ////                    int maxColor(0);
@@ -268,13 +293,25 @@ void OrderingTools::InitialOrderingMISR(vector<vector<char>> const &adjacencyMat
 ////                        maxColor = max(maxColor, vColoring[index]);
                     }
 
-                    // simpler
 #if 1
+                    // simpler
                     for (size_t index = remainingColors.size(); index < vColoring.size(); ++index) {
-                        vColoring[index] = min(vColoring[index-1] + 1, static_cast<int>(maxDegree + 1));
+                        vColoring[index] = min(vColoring[index-1] + 1, static_cast<int>(maxCoDegree + 1));
                     }
+
+                    cout << "All vertices: ";
+                    for (size_t index = 0; index < vOrderedVertices.size(); ++index) {
+////                        if (vColoring.size() - index < 10)
+                            cout << vOrderedVertices[index] << " ";
+                    }
+                    cout << endl;
+                    cout << "All colors: ";
+                    for (size_t index = 0; index < vColoring.size(); ++index) {
+////                        if (vColoring.size() - index < 10)
+                            cout << vColoring[index] << " ";
+                    }
+                    cout << endl;
 #else
-                    
                     int const lastIndexWithSmallerColor(min(remainingVertices.size() + maxDegree - maxColor, size-1));
                     int currentColor = maxColor + 1;
                     while (index <= lastIndexWithSmallerColor) {
@@ -292,26 +329,38 @@ void OrderingTools::InitialOrderingMISR(vector<vector<char>> const &adjacencyMat
                 } else {
                     // break ties by neighborhood-degree
                     size_t minNeighborhoodDegree(ULONG_MAX);
+////                    cout << "currentDegree= " << currentDegree << endl << flush;
                     int    chosenVertex=verticesByDegree[currentDegree].front();
                     for (int const candidate : verticesByDegree[currentDegree]) {
-                        size_t neighborhoodDegree(0);
+                        size_t coNeighborhoodDegree(0);
                         for (int const neighbor : adjacencyArray[candidate]) {
-                            if (degree[neighbor] != -1) {
-                                neighborhoodDegree += degree[neighbor];
+                            vMarkedVertices[neighbor] = true;
+                        }
+
+                        // iterate over all non-neighbors, and add up their non neighbors
+                        for (int nonNeighbor = 0; nonNeighbor < adjacencyArray.size(); ++nonNeighbor) {
+                            if (degree[nonNeighbor] != -1 && !vMarkedVertices[nonNeighbor]) {
+                                coNeighborhoodDegree += (size - numVerticesRemoved - degree[nonNeighbor] - 1);
                             }
                         }
 
-                        if (neighborhoodDegree < minNeighborhoodDegree || (neighborhoodDegree == minNeighborhoodDegree && candidate > chosenVertex)) {
-                            minNeighborhoodDegree = neighborhoodDegree;
+                        for (int const neighbor : adjacencyArray[candidate]) {
+                            vMarkedVertices[neighbor] = false;
+                        }
+
+                        if (coNeighborhoodDegree < minNeighborhoodDegree || (coNeighborhoodDegree == minNeighborhoodDegree && candidate > chosenVertex)) {
+                            minNeighborhoodDegree = coNeighborhoodDegree;
                             chosenVertex = candidate;
                         }
                     }
                     vertex = chosenVertex;
                     verticesByDegree[currentDegree].erase(vertexLocator[vertex]);
+                    cout << "Choosing multi vertex: " << vertex << " with degree " << (size - numVerticesRemoved - degree[vertex] - 1) << " and neighborhood " << minNeighborhoodDegree << endl << flush;
                 }
             } else {
                 vertex = verticesByDegree[currentDegree].front();
                 verticesByDegree[currentDegree].pop_front();
+                cout << "Choosing solo  vertex: " << vertex << " with degree " << (size - numVerticesRemoved - degree[vertex] - 1) << endl << flush;
             }
 
             vOrderedVertices[vOrderedVertices.size() - numVerticesRemoved - 1] = vertex;
@@ -329,10 +378,40 @@ void OrderingTools::InitialOrderingMISR(vector<vector<char>> const &adjacencyMat
             }
 
             numVerticesRemoved++;
-            currentDegree = 0;
+            ////currentDegree = numVertices-1; // degrees can't grow...
         }
         else {
-            currentDegree++;
+            currentDegree--;
         }
     }
+}
+
+void OrderingTools::InitialOrderingMISR(vector<vector<char>> const &adjacencyMatrix, vector<int> &vOrderedVertices, vector<int> &vColoring, size_t &cliqueSize)
+{
+#if 0
+    // create an adjacencyArray, much faster for degeneracy ordering.
+
+    vector<vector<int>> adjacencyArray(adjacencyMatrix.size());
+    for (int vertex = 0; vertex < adjacencyMatrix.size(); ++vertex) {
+        for (int otherVertex = 0; otherVertex < adjacencyMatrix.size(); ++otherVertex) {
+            if (vertex == otherVertex) continue;
+            if (!adjacencyMatrix[vertex][otherVertex]) {
+                adjacencyArray[vertex].push_back(otherVertex);
+            }
+        }
+    }
+
+    OrderingTools::InitialOrderingMISR(adjacencyArray, vOrderedVertices, vColoring, cliqueSize);
+#else
+    vector<vector<char>> coAdjacencyMatrix(adjacencyMatrix.size());
+    for (int u = 0; u < adjacencyMatrix.size(); ++u) {
+        coAdjacencyMatrix[u].resize(adjacencyMatrix.size());
+        for (int v = 0; v < adjacencyMatrix.size(); ++v) {
+            if (u==v) continue;
+            coAdjacencyMatrix[u][v] = !adjacencyMatrix[u][v];
+        }
+    }
+
+    OrderingTools::InitialOrderingMCR(coAdjacencyMatrix, vOrderedVertices, vColoring, cliqueSize);
+#endif //0
 }
