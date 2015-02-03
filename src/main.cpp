@@ -369,7 +369,7 @@ int main(int argc, char** argv)
     };
 
     pAlgorithm->AddCallBack(printCliqueSize);
-    pAlgorithm->AddCallBack(printClique);
+////    pAlgorithm->AddCallBack(printClique);
 
     if (!bComputeAdjacencyMatrix) {
         pAlgorithm->AddCallBack(verifyMaximalCliqueArray);

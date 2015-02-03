@@ -17,7 +17,7 @@ LightWeightReductionSparseStaticOrderMISS::LightWeightReductionSparseStaticOrder
 void LightWeightReductionSparseStaticOrderMISS::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
     OrderingTools::InitialOrderingMISR(m_AdjacencyArray, P, vColors, m_uMaximumCliqueSize);
-    vVertexOrder = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyArray, true /* non-decreasing */)); //// = P; //?
+    vVertexOrder = P; ////std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyArray, true /* non-decreasing */)); //// = P; //?
 }
 
 void LightWeightReductionSparseStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
