@@ -70,15 +70,58 @@ void LightWeightReductionMISQ::InitializeOrder(std::vector<int> &P, std::vector<
 ////    }
 ////}
 
+size_t LightWeightReductionMISQ::ComputeConnectedComponents(vector<vector<int>> &vComponents)
+{
+    ArraySet remaining = isolates.GetInGraph();
+
+    Set currentSearch;
+    Set evaluated;
+
+    size_t componentCount(0);
+    vComponents.clear();
+
+    if (!remaining.Empty()) {
+        int const startVertex = *remaining.begin();
+        currentSearch.Insert(startVertex);
+        remaining.Remove(startVertex);
+        componentCount++;
+        vComponents.resize(componentCount);
+    }
+
+    while (!remaining.Empty() && !currentSearch.Empty()) {
+        int const nextVertex(*currentSearch.begin());
+        evaluated.Insert(nextVertex);
+        vComponents[componentCount - 1].push_back(nextVertex);
+        currentSearch.Remove(nextVertex);
+        remaining.Remove(nextVertex);
+        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
+            if (!evaluated.Contains(neighbor)) {
+                currentSearch.Insert(neighbor);
+            }
+        }
+
+        if (currentSearch.Empty() && !remaining.Empty()) {
+            int const startVertex = *remaining.begin();
+            currentSearch.Insert(startVertex);
+            remaining.Remove(startVertex);
+            componentCount++;
+            vComponents.resize(componentCount);
+        }
+    }
+
+    return componentCount;
+}
+
+
 void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
     vector<pair<int,int>> vAddedEdgesUnused;
     isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
-    cout << "Size of clique before reduction: " << R.size() << endl;
+////    cout << "Size of clique before reduction: " << R.size() << endl;
     isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
-    cout << __LINE__ << ": Removed " << vCliqueVertices.size() + vRemoved.size() << " vertices " << endl;
+////    cout << __LINE__ << ": Removed " << vCliqueVertices.size() + vRemoved.size() << " vertices " << endl;
     vNewVertexOrder.resize(P.size());
     size_t uNewIndex(0);
     for (int const candidate : P) {
@@ -88,6 +131,16 @@ void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<
     vNewVertexOrder.resize(uNewIndex);
 
     R.insert(R.end(), vCliqueVertices.begin(), vCliqueVertices.end());
+
+////    vector<vector<int>> vComponents;
+////    cerr << "size of subgraph             : " << isolates.GetInGraph().Size() << endl << flush;
+////    cerr << "# connected components       : " << ComputeConnectedComponents(vComponents) << endl << flush;
+////    cerr << "size of connected components : ";
+////    cout << "[ ";
+////    for (vector<int> const& vComponent : vComponents) {
+////        cout << vComponent.size() << " ";
+////    }
+////    cout << "]" << endl << flush;
 }
 
 void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
@@ -126,9 +179,9 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
         vector<int> vTempRemovedVertices;
         vector<pair<int,int>> vAddedEdgesUnused;
 
-        cout << "Size of clique before reduction: " << R.size() << endl;
+////        cout << "Size of clique before reduction: " << R.size() << endl;
         isolates.RemoveAllIsolates(0 /*unused*/,vTempCliqueVertices, vTempRemovedVertices, vAddedEdgesUnused, chosenVertex == -1 /* either consider all (true) or consider only changed vertices (false) */);
-        cout << __LINE__ << ": Removed " << vTempCliqueVertices.size() + vTempRemovedVertices.size() << " vertices " << endl;
+////        cout << __LINE__ << ": Removed " << vTempCliqueVertices.size() + vTempRemovedVertices.size() << " vertices " << endl;
 
         R.insert(R.end(), vTempCliqueVertices.begin(), vTempCliqueVertices.end());
 

@@ -14,6 +14,7 @@ MaxSubgraphAlgorithm::MaxSubgraphAlgorithm(string const &name)
 , nodeCount(0)
 , depth(-1)
 , startTime(clock())
+, m_bQuiet(false)
 ////, m_bInvert(0)
 {
 }
@@ -53,6 +54,36 @@ long MaxSubgraphAlgorithm::Run(list<std::list<int>> &cliques)
     return cliques.size();
 }
 
+////long MaxSubgraphAlgorithm::Run(vector<int> const &startingVertices, list<std::list<int>> &cliques)
+////{
+////    vector<int> &P(stackP[0]);
+////    vector<int> &vColors(stackColors[0]);
+////    vector<int> &vVertexOrder(stackOrder[0]);
+////
+////    InitializeOrder(P, vVertexOrder, vColors);
+////
+////    cliques.push_back(list<int>());
+////
+////    if (R.size() < m_uMaximumCliqueSize) {
+////        cliques.back().clear();
+////        cliques.back().insert(cliques.back().end(), P.begin(), P.begin() + m_uMaximumCliqueSize);
+////        ExecuteCallBacks(cliques.back());
+////    }
+////
+////    ProcessOrderAfterRecursion(vVertexOrder, P, vColors, -1 /* no vertex chosen for removal */);
+////
+////    if (R.size() > m_uMaximumCliqueSize) {
+////        cliques.back().clear();
+////        cliques.back().insert(cliques.back().end(), R.begin(), R.end());
+////        ExecuteCallBacks(cliques.back());
+////        m_uMaximumCliqueSize = R.size();
+////    }
+////
+////    depth++;
+////    RunRecursive(P, vVertexOrder, cliques, vColors);
+////    return cliques.size();
+////}
+
 void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
 {
     nodeCount++;
@@ -60,15 +91,25 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
     vector<int> &vNewColors(stackColors[R.size()+1]);
     vector<int> &vNewVertexOrder(stackOrder[R.size()+1]);
 
+////    cout << depth << ": P: ";
+////    for (int const p : P) {
+////        cout << p << " ";
+////    }
+////    cout << endl;
+
     if (nodeCount%10000 == 0) {
-        cout << "Evaluated " << nodeCount << " nodes. " << GetTimeInSeconds(clock() - startTime) << endl;
-        PrintState();
+        if (!m_bQuiet) {
+            cout << "Evaluated " << nodeCount << " nodes. " << GetTimeInSeconds(clock() - startTime) << endl;
+        }
+////        PrintState();
     }
 
     while (!P.empty()) {
 
         if (depth == 0) {
-            cout << "Only " << P.size() << " more vertices to go! " << GetTimeInSeconds(clock() - startTime) << endl;
+            if (!m_bQuiet) {
+                cout << "Only " << P.size() << " more vertices to go! " << GetTimeInSeconds(clock() - startTime) << endl;
+            }
         }
 
         int const largestColor(vColors.back());
@@ -122,8 +163,10 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
 
 MaxSubgraphAlgorithm::~MaxSubgraphAlgorithm()
 {
-    cerr << "Largest Clique     : " << m_uMaximumCliqueSize << endl;
-    cerr << "Node    Count      : " << nodeCount << endl;
+    if (!m_bQuiet) {
+        cerr << "Largest Clique     : " << m_uMaximumCliqueSize << endl;
+        cerr << "Node    Count      : " << nodeCount << endl;
+    }
 }
 
 void MaxSubgraphAlgorithm::PrintState() const

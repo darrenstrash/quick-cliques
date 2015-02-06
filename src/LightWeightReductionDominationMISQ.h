@@ -30,7 +30,7 @@ protected:
     std::vector<std::vector<int>> stackOther;
     std::vector<std::vector<int>> stackPersistentClique;
     std::vector<std::vector<int>> stackPersistentOther;
-    Reducer reducer;
+    IsolateDominationReducer reducer;
 ////    bool m_bInvert;
 };
 #endif //LIGHTWEIGHT_REDUCTION_DOMINATION_MISQ_H

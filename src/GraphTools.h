@@ -17,6 +17,9 @@ namespace GraphTools
     std::vector<int> OrderVerticesByDegree(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> const &vDegree, bool const ascending);
     std::vector<int> OrderVerticesByDegree(std::vector<std::vector<char>> const &adjacencyMatrix, bool const ascending);
 ////    void RemoveVertices(vector<vector<int>> &adjacencyList, vector<int> const &vVertices);
+
+    template<typename IsolatesType>
+    void ComputeConnectedComponents(IsolatesType const &isolates, std::vector<std::vector<int>> &vComponents, size_t const uNumVertices);
 };
 
 #endif //GRAPH_TOOLS_H

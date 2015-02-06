@@ -24,14 +24,14 @@ void LightWeightReductionSparseStaticOrderMISS::GetNewOrder(vector<int> &vNewVer
 {
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
-    vector<pair<int,int>> vAddedEdgesUnused;
-    isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
-    isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+    vector<int> vUnused;
+    reducer.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
+    reducer.Reduce(vUnused, vCliqueVertices, vRemoved);
     vNewVertexOrder.resize(vVertexOrder.size());
     size_t uNewIndex(0);
     for (int const candidate : vVertexOrder) {
 ////    if (!m_bInvert && m_AdjacencyMatrix[chosenVertex][candidate]) vNewVertexOrder[uNewIndex++] = candidate;
-        if (isolates.GetInGraph().Contains(candidate)) vNewVertexOrder[uNewIndex++] = candidate;
+        if (reducer.InRemainingGraph(candidate)) vNewVertexOrder[uNewIndex++] = candidate;
     }
     vNewVertexOrder.resize(uNewIndex);
 

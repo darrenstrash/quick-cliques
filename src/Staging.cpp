@@ -2,6 +2,10 @@
 #include "Staging.h"
 #include "CliqueTools.h"
 #include "Isolates2.h"
+#include "LightWeightReductionMISR.h"
+#include "LightWeightMISQ.h"
+#include "LightWeightStaticOrderMISS.h"
+#include "LightWeightReductionStaticOrderMISS.h"
 
 // system includes
 #include <vector>
@@ -288,7 +292,46 @@ template <typename C> bool ReplaceRemovedVertices(vector<vector<int>> const &adj
     return true;
 }
 
+size_t ComputeConnectedComponents(Isolates2<SparseArraySet> const &isolates, vector<vector<int>> &vComponents) {
+    ArraySet remaining = isolates.GetInGraph();
 
+    Set currentSearch;
+    Set evaluated;
+
+    size_t componentCount(0);
+    vComponents.clear();
+
+    if (!remaining.Empty()) {
+        int const startVertex = *remaining.begin();
+        currentSearch.Insert(startVertex);
+        remaining.Remove(startVertex);
+        componentCount++;
+        vComponents.resize(componentCount);
+    }
+
+    while (!remaining.Empty() && !currentSearch.Empty()) {
+        int const nextVertex(*currentSearch.begin());
+        evaluated.Insert(nextVertex);
+        vComponents[componentCount - 1].push_back(nextVertex);
+        currentSearch.Remove(nextVertex);
+        remaining.Remove(nextVertex);
+        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
+            if (!evaluated.Contains(neighbor)) {
+                currentSearch.Insert(neighbor);
+            }
+        }
+
+        if (currentSearch.Empty() && !remaining.Empty()) {
+            int const startVertex = *remaining.begin();
+            currentSearch.Insert(startVertex);
+            remaining.Remove(startVertex);
+            componentCount++;
+            vComponents.resize(componentCount);
+        }
+    }
+
+    return componentCount;
+}
 
 void Staging::Run()
 {
@@ -394,16 +437,64 @@ void Staging::Run()
     vector<pair<int,int>> vAddedEdges;
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
 
-    list<int> independentSet;
-    for (int const vertex : vIsolates) {
-        independentSet.push_back(vertex);
-    }
-
     vRemoved.insert(vRemoved.end(), vIsolates.begin(), vIsolates.end());
     setRemoved.insert(vRemoved.begin(), vRemoved.end());
 
-    cerr << "# vertices remaining in graph: " << m_AdjacencyList.size() - vRemoved.size() << "/" << m_AdjacencyList.size() << endl << flush;
+    vector<vector<int>> vComponents;
 
+    cerr << "# vertices remaining in graph: " << m_AdjacencyList.size() - vRemoved.size() << "/" << m_AdjacencyList.size() << endl << flush;
+    cerr << "# connected components       : " << ComputeConnectedComponents(isolates, vComponents) << endl << flush;
+    cerr << "size of connected components : ";
+    cout << "[ ";
+    for (vector<int> const& vComponent : vComponents) {
+        cout << vComponent.size() << " ";
+    }
+    cout << "]" << endl << flush;
+
+    vector<int> realClique(vIsolates);
+
+    for (vector<int> const &vComponent : vComponents) {
+        map<int,int> vertexRemap;
+        map<int,int> reverseMap;
+        int newVertex(0);
+        vector<vector<char>> adjacencyMatrix(vComponent.size(), vector<char>());
+        vector<vector<int>> adjacencyArray(vComponent.size(), vector<int>());
+        for (int const vertex : vComponent) {
+            vertexRemap[vertex] = newVertex++;
+            reverseMap[newVertex-1] = vertex;
+            adjacencyMatrix[newVertex-1].resize(vComponent.size());
+        }
+
+////        cout << "Matrix resized to " << vComponent.size() << "x" << vComponent.size() << endl << flush;
+
+        for (int const vertex : vComponent) {
+            int const newVertex(vertexRemap[vertex]);
+            for (int const neighbor : m_AdjacencyList[vertex]) {
+                if (vertexRemap.find(neighbor) != vertexRemap.end()) {
+                    int const newNeighbor(vertexRemap[neighbor]);
+////                    cout << "Adding edge " << newVertex << "," << newNeighbor << endl << flush;
+                    adjacencyMatrix[newVertex][newNeighbor] = 1;
+                    adjacencyArray[newVertex].push_back(newNeighbor);
+                }
+            }
+        }
+
+        list<list<int>> result;
+
+////        LightWeightReductionMISR algorithm(adjacencyMatrix, adjacencyArray);
+////        LightWeightStaticOrderMISS algorithm(adjacencyMatrix);
+////        LightWeightMISQ algorithm(adjacencyMatrix);
+        LightWeightReductionStaticOrderMISS algorithm(adjacencyMatrix, adjacencyArray);
+        algorithm.Run(result);
+        if (!result.empty())
+            for (int const vertex : result.back()) {
+                realClique.push_back(reverseMap[vertex]);
+            }
+    }
+
+    cout << "Total clique size: " << realClique.size() << endl << flush;
+
+#if 0
     size_t numVertices(0);
     size_t numEdges(0);
 
@@ -424,6 +515,7 @@ void Staging::Run()
             cout << vertexRemap[vertex] << "," << vertexRemap[neighbor] << endl;
         }
     }
+#endif // 0
 
     // as of now, this loop helps find a really small Independent set, this is to help limit the recursion depth.
     // need to expand this into a branch-and-bound, pick the vertices that constrain the search the most, to keep

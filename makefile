@@ -6,6 +6,13 @@ BIN_DIR   = bin
 CFLAGS = -Winline -O2 -std=c++11 -g
 #CFLAGS = -Winline -DDEBUG_MESSAGE -O0 -std=c++11 -g
 
+
+SOURCES_TMP += ConnectedComponentMISS.cpp
+#SOURCES_TMP += LightWeightSparseFullMCS.cpp
+#SOURCES_TMP += LightWeightSparseStaticOrderMCS.cpp
+#SOURCES_TMP += LightWeightSparseMCR.cpp
+SOURCES_TMP += LightWeightSparseMCQ.cpp
+SOURCES_TMP += LightWeightReductionDominationMISR.cpp
 SOURCES_TMP += Reducer.cpp
 SOURCES_TMP += LightWeightReductionDominationMISQ.cpp
 SOURCES_TMP += MaxSubgraphAlgorithm.cpp

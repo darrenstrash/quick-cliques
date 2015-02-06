@@ -32,6 +32,23 @@ void OrderingTools::InitialOrderingMCQ(vector<vector<char>> const &adjacencyMatr
     vColoring.resize(adjacencyMatrix.size(), maxDegree + 1);
 }
 
+void OrderingTools::InitialOrderingMCQ(vector<vector<int>> const &adjacencyArray, vector<int> &vOrderedVertices, vector<int> &vColoring)
+{
+    size_t maxDegree(0);
+    for (vector<int> const &vNeighbor : adjacencyArray) {
+        maxDegree = max(maxDegree, vNeighbor.size());
+    }
+
+    vOrderedVertices = std::move(GraphTools::OrderVerticesByDegree(adjacencyArray, false /* non-increasing order */));
+    vColoring.reserve(adjacencyArray.size());
+    vColoring.clear();
+    for (int degree = 1; degree <= maxDegree; degree++ ) {
+        vColoring.push_back(degree);
+    }
+
+    vColoring.resize(adjacencyArray.size(), maxDegree + 1);
+}
+
 void OrderingTools::InitialOrderingMISQ(vector<vector<char>> const &adjacencyMatrix, vector<int> &vOrderedVertices, vector<int> &vColoring)
 {
     size_t maxDegree(0);

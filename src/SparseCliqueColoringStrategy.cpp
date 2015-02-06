@@ -12,7 +12,7 @@ SparseCliqueColoringStrategy::SparseCliqueColoringStrategy(vector<vector<int>> c
 ////    m_VertexOrder = std::move(GetVerticesInDegeneracyOrder(adjacencyList));
 }
 
-void SparseCliqueColoringStrategy::Color(vector<vector<int>> const &adjacencyList, vector<int> &vVerticesToReorder, vector<int> &vColors)
+void SparseCliqueColoringStrategy::Color(vector<vector<int>> const &adjacencyList, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
 {
     if (vVerticesToReorder.empty()) return;
 
@@ -33,7 +33,7 @@ void SparseCliqueColoringStrategy::Color(vector<vector<int>> const &adjacencyLis
 
     size_t const numVerticesToReorder(vVerticesToReorder.size());
 
-    for (int const vertex : vVerticesToReorder) {
+    for (int const vertex : vVertexOrder) {
         size_t color = 0;
         for (int const neighbor : adjacencyList[vertex]) {
             if (m_vVertexToColor[neighbor] != -1) {
@@ -64,7 +64,7 @@ void SparseCliqueColoringStrategy::Color(vector<vector<int>> const &adjacencyLis
     for (int currentColor = 0; currentColor <= maxColor; ++currentColor) {
         for (int const vertex : m_vlColorToVertices[currentColor]) {
             vVerticesToReorder[currentIndex] = vertex;
-            vColors[currentIndex] = currentColor;
+            vColors[currentIndex] = currentColor + 1;
             currentIndex++;
 
             m_vVertexToColor[vertex] = -1; // reset all vertex colorings to be invalid
@@ -95,4 +95,9 @@ void SparseCliqueColoringStrategy::Color(vector<vector<int>> const &adjacencyLis
         }
     }
 #endif // DEBUG
+}
+
+void SparseCliqueColoringStrategy::Color(vector<vector<int>> const &adjacencyList, vector<int> &vVerticesToReorder, vector<int> &vColors)
+{
+    Color(adjacencyList, vVerticesToReorder, vVerticesToReorder, vColors);
 }

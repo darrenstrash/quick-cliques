@@ -18,7 +18,7 @@ CliqueColoringStrategy::CliqueColoringStrategy(vector<vector<char>> const &adjac
 
 void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
 {
-    if (vVerticesToReorder.empty()) return;
+    if (vVertexOrder.empty()) return;
 
 #if 0
     cout << "Coloring (in ): ";
@@ -32,7 +32,7 @@ void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, 
 
     size_t maxColor(0);
 
-    size_t const numVerticesToReorder(vVerticesToReorder.size());
+    size_t const numVerticesToReorder(vVertexOrder.size());
 
     for (int const vertex : vVertexOrder) {
         size_t color = 0;

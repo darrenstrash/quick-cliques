@@ -15,6 +15,7 @@ public:
     virtual ~MaxSubgraphAlgorithm();
 
     virtual long Run(std::list<std::list<int>> &cliques);
+////    virtual long Run(vector<int> const &startingVertices, std::list<std::list<int>> &cliques);
 
     virtual void Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors) = 0;
 
@@ -26,7 +27,12 @@ public:
 
     virtual void RunRecursive(std::vector<int> &P, std::vector<int> &vVertexOrder, std::list<std::list<int>> &cliques, std::vector<int> &vColors);
 
+    virtual void SetQuiet(bool const quiet) { m_bQuiet = quiet; }
+
     virtual void PrintState() const;
+
+    virtual void SetNodeCount(size_t const count) { nodeCount = count; }
+    virtual size_t GetNodeCount() { return nodeCount; }
 
 protected:
     size_t m_uMaximumCliqueSize;
@@ -34,9 +40,10 @@ protected:
     std::vector<std::vector<int>> stackP;
     std::vector<std::vector<int>> stackColors;
     std::vector<std::vector<int>> stackOrder;
-    int nodeCount;
+    size_t nodeCount;
     int depth;
     clock_t startTime;
+    bool    m_bQuiet;
 ////    bool m_bInvert;
 };
 #endif // MAX_SUBGRAPH_ALGORITHM_H

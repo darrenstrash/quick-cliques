@@ -8,16 +8,23 @@
 using namespace std;
 
 LightWeightMCQ::LightWeightMCQ(vector<vector<char>> const &vAdjacencyMatrix)
-: Algorithm("MCQ")
+: MaxSubgraphAlgorithm("mcq")
 , m_AdjacencyMatrix(vAdjacencyMatrix)
 , coloringStrategy(m_AdjacencyMatrix)
-, m_uMaximumCliqueSize(0)
-, stackP(vAdjacencyMatrix.size() + 1)
-, stackColors(vAdjacencyMatrix.size() + 1)
-, stackOrder(vAdjacencyMatrix.size() + 1)
-, nodeCount(0)
 ////, m_bInvert(0)
 {
+    R.reserve(m_AdjacencyMatrix.size());
+
+    stackP.resize(m_AdjacencyMatrix.size() + 1);
+    stackColors.resize(m_AdjacencyMatrix.size() + 1);
+    stackOrder.resize(m_AdjacencyMatrix.size() + 1);
+
+    // don't reserve for 0-th vectors, they get std::move'd by InitialOrdering
+    for (int index = 0; index < stackP.size(); ++index) {
+        stackP[index].reserve(m_AdjacencyMatrix.size());
+        stackColors[index].reserve(m_AdjacencyMatrix.size());
+        stackOrder[index].reserve(m_AdjacencyMatrix.size());
+    }
 }
 
 ////void LightWeightMCQ::SetInvert(bool const invert)
@@ -31,43 +38,24 @@ void LightWeightMCQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVer
     vVertexOrder = P;
 }
 
-long LightWeightMCQ::Run(list<std::list<int>> &cliques)
-{
-    R.reserve(m_AdjacencyMatrix.size());
-
-    // don't reserve for 0-th vectors, they get std::move'd by InitialOrdering
-    for (int index = 1; index < stackP.size(); ++index) {
-        stackP.reserve(m_AdjacencyMatrix.size());
-        stackColors.reserve(m_AdjacencyMatrix.size());
-        stackOrder.reserve(m_AdjacencyMatrix.size());
-    }
-
-    // Initial coloring should be 1 to maxDegree, then the color the rest maxDegree+1.
-    vector<int> &P(stackP[0]);
-    vector<int> &vColors(stackColors[0]);
-    vector<int> &vVertexOrder(stackOrder[0]);
-
-    InitializeOrder(P, vVertexOrder, vColors);
-
-    cliques.push_back(list<int>());
-
-    if (R.size() < m_uMaximumCliqueSize) {
-        cliques.back().clear();
-        cliques.back().insert(cliques.back().end(), P.begin(), P.begin() + m_uMaximumCliqueSize);
-        ExecuteCallBacks(cliques.back());
-    }
-
-    RunRecursive(P, vVertexOrder, cliques, vColors);
-    return cliques.size();
-}
-
 void LightWeightMCQ::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)
 {
     coloringStrategy.Color(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
+////    cout << "Colors:";
+////    for (int const color : vColors) {
+////        cout << color << " ";
+////    }
+////    cout << endl;
 }
 
 void LightWeightMCQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
+////    cout << "OldP    :";
+////    for (int const vertex : P) {
+////        cout << vertex << " ";
+////    }
+////    cout << endl;
+
     vNewVertexOrder.resize(P.size());
     {
         size_t uNewIndex(0);
@@ -77,49 +65,18 @@ void LightWeightMCQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVer
         }
         vNewVertexOrder.resize(uNewIndex);
     }
+
+////    cout << "NewOrder:";
+////    for (int const vertex : vNewVertexOrder) {
+////        cout << vertex << " ";
+////    }
+////    cout << endl;
+
+
+    R.push_back(chosenVertex);
 }
 
-void LightWeightMCQ::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
+void LightWeightMCQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 {
-    nodeCount++;
-    vector<int> &vNewP(stackP[R.size() + 1]);
-    vector<int> &vNewColors(stackColors[R.size() + 1]);
-    while (!P.empty()) {
-        int const largestColor(vColors.back());
-        if (R.size() + largestColor <= m_uMaximumCliqueSize) {
-            return;
-        }
-
-        vColors.pop_back();
-        int const nextVertex(P.back()); P.pop_back();
-        R.push_back(nextVertex);
-
-        vector<int> &vNewVertexOrder(stackOrder[R.size()]);
-        GetNewOrder(vNewVertexOrder, vVertexOrder, P, nextVertex);
-
-        if (!vNewVertexOrder.empty()) {
-            vNewP.resize(vNewVertexOrder.size());
-            vNewColors.resize(vNewVertexOrder.size());
-            Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
-            RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
-        } else if (R.size() > m_uMaximumCliqueSize) {
-            cliques.back().clear();
-            cliques.back().insert(cliques.back().end(), R.begin(), R.end());
-            ExecuteCallBacks(cliques.back());
-            m_uMaximumCliqueSize = R.size();
-        }
-
-        PostProcessOrder(vVertexOrder, nextVertex);
-        R.pop_back();
-    }
-
-    vNewColors.clear();
-    vNewP.clear();
-}
-
-
-LightWeightMCQ::~LightWeightMCQ()
-{
-    cerr << "Largest Clique     : " << m_uMaximumCliqueSize << endl;
-    cerr << "Node    Count      : " << nodeCount << endl;
+    if (chosenVertex != -1) R.pop_back();
 }

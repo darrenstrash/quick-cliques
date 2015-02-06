@@ -31,6 +31,11 @@ void LightWeightStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vecto
     {
         size_t uNewIndex(0);
         for (int const candidate : vVertexOrder) {
+////            cout << depth << ": accessing " << chosenVertex << "," << candidate << " in " << m_AdjacencyMatrix.size() << "," << m_AdjacencyMatrix[chosenVertex].size() << endl << flush;
+////            cout << depth << ": put in index " << uNewIndex << "/" << vNewVertexOrder.size() << endl << flush;
+////            cout << depth << ": size of stackP : " << stackP.size() << endl;
+////            cout << depth << ": size of stackOrder: " << stackOrder.size() << endl;
+            if (chosenVertex == candidate) continue;
             if (!m_AdjacencyMatrix[chosenVertex][candidate]) vNewVertexOrder[uNewIndex++] = candidate;
         }
         vNewVertexOrder.resize(uNewIndex);
@@ -47,6 +52,7 @@ void LightWeightStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vecto
 
 void LightWeightStaticOrderMISS::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 {
+////    cout << "LightWeightStaticOrderMISS::ProcessOrderAfterRecursion" << endl;
     if (chosenVertex == -1) return;
 ////    cout << "    order: ";
 ////    for (int const vertex : vVertexOrder) {
@@ -73,5 +79,5 @@ void LightWeightStaticOrderMISS::ProcessOrderAfterRecursion(std::vector<int> &vV
     }
 
     vVertexOrder.pop_back();
-    if (chosenVertex != -1) R.pop_back();
+    R.pop_back();
 }

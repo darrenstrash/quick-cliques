@@ -1,6 +1,7 @@
 #include "GraphTools.h"
 #include "SparseArraySet.h"
 #include "ArraySet.h"
+#include "Isolates2.h"
 
 #include <set>
 #include <vector>
@@ -221,3 +222,47 @@ vector<int> GraphTools::OrderVerticesByDegree(ArraySet const &inGraph, vector<Sp
 
     return vOrderedVertices;
 }
+
+template<typename IsolatesType>
+void GraphTools::ComputeConnectedComponents(IsolatesType const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices) {
+    ArraySet remaining = isolates.GetInGraph();
+
+    ArraySet currentSearch(uNumVertices);
+    vector<bool> evaluated(uNumVertices, 0);
+
+    size_t componentCount(0);
+    vComponents.clear();
+
+    if (!remaining.Empty()) {
+        int const startVertex = *remaining.begin();
+        currentSearch.Insert(startVertex);
+        remaining.Remove(startVertex);
+        componentCount++;
+        vComponents.resize(componentCount);
+    }
+
+    while (!remaining.Empty() && !currentSearch.Empty()) {
+        int const nextVertex(*currentSearch.begin());
+        evaluated[nextVertex] = true;
+        vComponents[componentCount - 1].push_back(nextVertex);
+        currentSearch.Remove(nextVertex);
+        remaining.Remove(nextVertex);
+        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
+            if (!evaluated[neighbor]) {
+                currentSearch.Insert(neighbor);
+            }
+        }
+
+        if (currentSearch.Empty() && !remaining.Empty()) {
+            int const startVertex = *remaining.begin();
+            currentSearch.Insert(startVertex);
+            remaining.Remove(startVertex);
+            componentCount++;
+            vComponents.resize(componentCount);
+        }
+    }
+}
+
+template
+void GraphTools::ComputeConnectedComponents<Isolates2<ArraySet>>(Isolates2<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
+

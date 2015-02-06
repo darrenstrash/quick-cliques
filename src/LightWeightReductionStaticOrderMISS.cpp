@@ -36,23 +36,17 @@ void LightWeightReductionStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrd
     vNewVertexOrder.resize(uNewIndex);
 
     R.insert(R.end(), vCliqueVertices.begin(), vCliqueVertices.end());
-}
 
-////void LightWeightReductionStaticOrderMISS::PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex)
-////{
-////    if (chosenVertex == -1) return;
-////    ////        vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), chosenVertex));
-////    // try searching from end, might be faster in general...
-////    size_t indexAfterVertex(0);
-////    for (indexAfterVertex = vVertexOrder.size(); indexAfterVertex >= 1; indexAfterVertex--) {
-////        if (vVertexOrder[indexAfterVertex-1] == chosenVertex) {
-////            break;
-////        }
-////    }
-////
-////    for (; indexAfterVertex < vVertexOrder.size(); indexAfterVertex++) {
-////        vVertexOrder[indexAfterVertex-1] = vVertexOrder[indexAfterVertex];
-////    }
-////    vVertexOrder.pop_back();
-////    R.pop_back();
-////}
+    vector<vector<int>> vComponents;
+    GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
+
+    if (vComponents.size() > 1) {
+        cerr << "# connected components       : " << vComponents.size() << endl << flush;
+        cerr << "size of connected components : ";
+        cout << "[ ";
+        for (vector<int> const& vComponent : vComponents) {
+            cout << vComponent.size() << " ";
+        }
+        cout << "]" << endl << flush;
+    }
+}

@@ -29,9 +29,9 @@ LightWeightMISQ::LightWeightMISQ(vector<vector<char>> const &vAdjacencyMatrix)
 
     // don't reserve for 0-th vectors, they get std::move'd by InitialOrdering
     for (int index = 0; index < stackP.size(); ++index) {
-        stackP.reserve(m_AdjacencyMatrix.size());
-        stackColors.reserve(m_AdjacencyMatrix.size());
-        stackOrder.reserve(m_AdjacencyMatrix.size());
+        stackP[index].reserve(m_AdjacencyMatrix.size());
+        stackColors[index].reserve(m_AdjacencyMatrix.size());
+        stackOrder[index].reserve(m_AdjacencyMatrix.size());
     }
 }
 
@@ -58,6 +58,11 @@ void LightWeightMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVe
         size_t uNewIndex(0);
         for (int const candidate : P) {
 ////            if (!m_bInvert && m_AdjacencyMatrix[chosenVertex][candidate]) vNewVertexOrder[uNewIndex++] = candidate;
+////            cout << depth << ": accessing " << chosenVertex << "," << candidate << " in " << m_AdjacencyMatrix.size() << "," << m_AdjacencyMatrix[chosenVertex].size() << endl << flush;
+////            cout << depth << ": put in index " << uNewIndex << "/" << vNewVertexOrder.size() << endl << flush;
+////            cout << depth << ": size of stackP : " << stackP.size() << endl;
+////            cout << depth << ": size of stackOrder: " << stackOrder.size() << endl;
+            if (chosenVertex == candidate) continue;
             if (!m_AdjacencyMatrix[chosenVertex][candidate]) vNewVertexOrder[uNewIndex++] = candidate;
         }
         vNewVertexOrder.resize(uNewIndex);
@@ -68,6 +73,7 @@ void LightWeightMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVe
 
 void LightWeightMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 {
+////    cout << "LightWeightMISQ::ProcessOrderAfterRecursion" << endl;
 ////    Color(vVertexOrder, P, vColors);
     if (chosenVertex != -1) R.pop_back();
 }
