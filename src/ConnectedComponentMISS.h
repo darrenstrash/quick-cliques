@@ -11,6 +11,7 @@ class ConnectedComponentMISS : public LightWeightReductionMISQ
 {
 public:
     ConnectedComponentMISS(std::vector<std::vector<char>> const &vAdjacencyMatrix, std::vector<std::vector<int>> const &vAdjacencyArray);
+    ~ConnectedComponentMISS();
 
     virtual void InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors);
 
@@ -21,6 +22,9 @@ public:
 #endif // 0
 
 ////    virtual void PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex);
+protected:
+    size_t m_uSubgraphDepth;
+    std::vector<int> m_vSubgraphClique;
 };
 
 #endif // CONNECTED_COMPONENT_MISS_H

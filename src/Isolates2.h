@@ -43,6 +43,8 @@ public:
 
     int GetAlternativeVertex(int const vertex) const;
 
+    void SetConnectedComponent(std::vector<int> const &vVertices);
+
 protected: // methods
     bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices);
 ////    bool RemoveIsolatedPath      (int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
@@ -68,6 +70,7 @@ protected: // members
     clock_t removeDuringNextTimer;
     clock_t replaceDuringNextTimer;
     #endif // TIMERS
+    bool m_bConnectedComponentMode;
 };
 
 #endif //ISOLATES_H

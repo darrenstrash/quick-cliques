@@ -28,6 +28,7 @@ Isolates2<NeighborSet>::Isolates2(vector<vector<int>> const &adjacencyArray)
  , removeDuringNextTimer(0)
  , replaceDuringNextTimer(0)
  #endif // TIMERS
+ , m_bConnectedComponentMode(false)
 {
     for (size_t u=0; u < adjacencyArray.size(); ++u) {
         remaining.Insert(u);
@@ -764,7 +765,19 @@ int Isolates2<NeighborSet>::GetAlternativeVertex(int const vertex) const
     return -1;
 }
 
+// vVertices needs to be a subset of the graph, otherwise this will
+// fail horribly.
+template <typename NeighborSet>
+void Isolates2<NeighborSet>::SetConnectedComponent(vector<int> const &vVertices)
+{
+    inGraph.Clear();
+    for (int const vertex : vVertices) {
+        inGraph.Insert(vertex);
+    }
+
+    m_bConnectedComponentMode = true;
+}
+
 template class Isolates2<ArraySet>;
 template class Isolates2<SparseArraySet>;
-
 
