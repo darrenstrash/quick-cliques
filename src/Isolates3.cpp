@@ -18,7 +18,7 @@ Isolates3<NeighborSet>::Isolates3(vector<vector<int>> const &adjacencyArray)
  , isolates(adjacencyArray.size())
  , remaining(adjacencyArray.size())
  , vMarkedVertices(adjacencyArray.size(), false)
-//// , vRecentlyRemoved(adjacencyArray.size(), false)
+ , vRecentlyRemovedVertices(adjacencyArray.size(), false)
  , m_AlternativeVertices()
 #ifdef TIMERS
  , timer(0)
@@ -217,6 +217,7 @@ bool Isolates3<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 ////            cout << __LINE__ << ": calling remove" << endl << flush;
             inGraph.Remove(neighbor);
             remaining.Remove(neighbor);
+            vRecentlyRemovedVertices[neighbor] = true;
         }
 
 ////        if (!inGraph.Contains(vertex)) {
@@ -224,6 +225,7 @@ bool Isolates3<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 ////        }
 
 ////        cout << __LINE__ << ": calling remove" << endl << flush;
+        vRecentlyRemovedVertices[vertex] = true;
         inGraph.Remove(vertex);
         isolates.Insert(vertex);
         vIsolateVertices.push_back(vertex);
@@ -240,11 +242,18 @@ bool Isolates3<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
                 }
 
                 if (nNeighbor != vertex) {
+                    SwapToEnd(m_ReorderedAdjacencyArray[nNeighbor], neighbor);
                     neighbors[nNeighbor].Remove(neighbor);
                 }
             }
             neighbors[neighbor].Clear();
         }
+
+        vRecentlyRemovedVertices[vertex] = false;
+        for (int const neighbor : neighbors[vertex]) {
+            vRecentlyRemovedVertices[neighbor] = false;
+        }
+
         neighbors[vertex].Clear();
 
 ////    if (vertex == 21952) {
@@ -336,6 +345,7 @@ bool Isolates3::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertic
 template <typename NeighborSet>
 void Isolates3<NeighborSet>::SwapToEnd(vector<int> &vVertices, int const vertexToSwap)
 {
+#if 0
     size_t vertexIndex = ULONG_MAX;
     for (size_t index = 0; index < vVertices.size(); ++index) {
         if (vVertices[index] == vertexToSwap)
@@ -352,6 +362,23 @@ void Isolates3<NeighborSet>::SwapToEnd(vector<int> &vVertices, int const vertexT
     if (vertexIndex == ULONG_MAX) {
         cout << "ERROR: Couldn't swap out vertex..." << endl;
     }
+#else
+
+    // swap all !ingraph vertices to end, stop when we reach a
+    // vertex that is not in the graph, and hasn't been recently removed.
+    size_t indexFollowingLastInGraph(0);
+    for (size_t index = 0; index < vVertices.size(); ++index) {
+
+        // if this vertex is in the graph
+        if (inGraph.Contains(vVertices[index])) {
+            int const thisVertex = vVertices[indexFollowingLastInGraph];
+            vVertices[indexFollowingLastInGraph++] = vVertices[index];
+            vVertices[index] = thisVertex;
+        } else if (!vRecentlyRemovedVertices[vVertices[index]]) {
+            break;
+        }
+    }
+#endif // 0
 }
 
 // TODO/DS: need to add 2-neighbors to remaining.
@@ -364,6 +391,7 @@ void Isolates3<NeighborSet>::RemoveVertex(int const vertex)
     inGraph.Remove(vertex);
     remaining.Remove(vertex);
     isolates.Remove(vertex);
+    vRecentlyRemovedVertices[vertex] = true;
 
     for (int const neighbor : neighbors[vertex]) {
         neighbors[neighbor].Remove(vertex);
@@ -374,6 +402,7 @@ void Isolates3<NeighborSet>::RemoveVertex(int const vertex)
     }
 
     neighbors[vertex].Clear();
+    vRecentlyRemovedVertices[vertex] = false;
 }
 
 //TODO/DS: need to add 2-neighbors to remaining.
@@ -387,6 +416,7 @@ void Isolates3<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<i
     remaining.Remove(vertex);
     isolates.Insert(vertex);
     vRemoved.push_back(vertex);
+    vRecentlyRemovedVertices[vertex] = true;
 ////    if (vertex == 0) {
 ////        cout << __LINE__ << ": Removing " << vertex << " from graph." << endl << flush;
 ////    }
@@ -397,22 +427,31 @@ void Isolates3<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<i
         inGraph.Remove(neighbor);
         remaining.Remove(neighbor);
         vRemoved.push_back(neighbor);
+        vRecentlyRemovedVertices[neighbor] = true;
+    }
 ////        if (neighbor == 0) {
 ////            cout << __LINE__ << ": Removing " << neighbor << " from graph." << endl << flush;
 ////        }
-
+    for (int const neighbor : neighbors[vertex]) {
         for (int const nNeighbor : neighbors[neighbor]) {
 ////            cout << __LINE__ << ":         Removing from neighbor's neighbor "<< nNeighbor << endl << flush;
             if (nNeighbor == vertex) continue;
             neighbors[nNeighbor].Remove(neighbor);
+            SwapToEnd(m_ReorderedAdjacencyArray[nNeighbor], neighbor);
 ////            cout << __LINE__ << ":         Done removing" << endl << flush;
             if (inGraph.Contains(nNeighbor))
                 remaining.Insert(nNeighbor);
         }
 ////        cout << __LINE__ << ":     Done Removing neighbor" << neighbor << endl << flush;
-        neighbors[neighbor].Clear();
 ////        cout << __LINE__ << ": Cleared neighbors: " << neighbor << endl << flush;
     }
+
+    for (int const neighbor : neighbors[vertex]) {
+        neighbors[neighbor].Clear();
+        vRecentlyRemovedVertices[neighbor] = false;
+    }
+
+    vRecentlyRemovedVertices[vertex] = false;
 
 ////    cout << __LINE__ << ": Done Removing vertex " << vertex << endl << flush;
     neighbors[vertex].Clear();
@@ -508,8 +547,17 @@ void Isolates3<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
     for (int const removedVertex : vRemoved) {
 ////        if (remaining.size() %10000 == 0)
 ////            cout << "Remaining: " << remaining.size() << ", Removed: " << removed.size() << endl << flush;
+
+////        bool bRestOfNeighborsAreExcluded(false);
         for (int const neighbor : m_ReorderedAdjacencyArray[removedVertex]) {
-            if (!inGraph.Contains(neighbor)) continue;
+            if (!inGraph.Contains(neighbor)) {
+////                bRestOfNeighborsAreExcluded = true;
+                break;
+            }
+
+////            if (bRestOfNeighborsAreExcluded) {
+////                cout << "ERROR: All remaining vertices should be excluded from graph!" << endl;
+////            }
             neighbors[removedVertex].Insert(neighbor);
             neighbors[neighbor].Insert(removedVertex);
         }

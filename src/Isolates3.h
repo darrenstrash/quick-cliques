@@ -62,6 +62,7 @@ protected: // members
     ArraySet isolates;
     ArraySet remaining;
     std::vector<bool> vMarkedVertices;
+    std::vector<bool> vRecentlyRemovedVertices;
     std::map<int,int> m_AlternativeVertices;
 #ifdef TIMERS
     clock_t timer;
