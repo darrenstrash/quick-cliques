@@ -116,6 +116,8 @@ void LightWeightReductionDominationMISQ::GetNewOrder(vector<int> &vNewVertexOrde
 ////    }
 
 ////    cout << "Size of clique before reduction: " << R.size() << endl;
+
+////    cout << depth << ": ";
     reducer.Reduce(newX, vCliqueVertices, vRemoved);
 ////    cout << __LINE__ << ": Removed " << vCliqueVertices.size() + vRemoved.size() << " vertices " << endl;
 
@@ -176,6 +178,7 @@ void LightWeightReductionDominationMISQ::ProcessOrderAfterRecursion(std::vector<
         X.push_back(chosenVertex);
         reducer.RemoveVertex(chosenVertex);
 ////        cout << "Size of clique before reduction: " << R.size() << endl;
+////        cout << depth << " (persistent) : ";
         reducer.Reduce(X, vTempCliqueVertices, vTempRemovedVertices);
 ////        cout << __LINE__ << ": Removed " << vTempCliqueVertices.size() + vTempRemovedVertices.size() << " vertices " << endl;
 ////        if (depth == 0) {

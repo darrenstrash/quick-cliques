@@ -271,9 +271,9 @@ int main(int argc, char** argv)
     } else if (name == "reduction-static-order-miss") {
         pAlgorithm = new LightWeightReductionStaticOrderMISS(vAdjacencyMatrix, adjacencyArray);
     } else if (name == "reduction-domination-misq") {
-        pAlgorithm = new LightWeightReductionDominationMISR(vAdjacencyMatrix, adjacencyArray);
-    } else if (name == "reduction-domination-misr") {
         pAlgorithm = new LightWeightReductionDominationMISQ(vAdjacencyMatrix, adjacencyArray);
+    } else if (name == "reduction-domination-misr") {
+        pAlgorithm = new LightWeightReductionDominationMISR(vAdjacencyMatrix, adjacencyArray);
     } else if (name == "reduction-sparse-misq") {
         pAlgorithm = new LightWeightReductionSparseMISQ(adjacencyArray);
     } else if (name == "reduction-sparse-misr") {

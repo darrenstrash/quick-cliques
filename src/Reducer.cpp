@@ -8,6 +8,7 @@ using namespace std;
 
 IsolateReducer::IsolateReducer(std::vector<std::vector<int>> const &adjacencyArray)
 : m_AdjacencyArray(adjacencyArray)
+, vMarkedVertices(adjacencyArray.size(), false)
 , isolates(adjacencyArray)
 {
 }
@@ -23,13 +24,36 @@ void IsolateReducer::InitialReduce(vector<int> &vCliqueVertices)
     isolates.RemoveAllIsolates(0, vCliqueVertices, vRemovedUnused, vAddedEdgesUnused, true /* consider all vertices */);
 }
 
-void IsolateReducer::Reduce(vector<int> const &vAlreadyConsideredVertices, vector<int> &vCliqueVertices, vector<int> &vOtherRemovedVertices)
+void IsolateReducer::Reduce(vector<int> &vAlreadyConsideredVertices, vector<int> &vCliqueVertices, vector<int> &vOtherRemovedVertices)
 {
     vector<pair<int,int>> vAddedEdgesUnused;
 ////    int const graphSize(isolates.GetInGraph().Size());
     isolates.RemoveAllIsolates(0, vCliqueVertices, vOtherRemovedVertices, vAddedEdgesUnused, false /* consider only changed vertices */);
 
 ////    cout << "Reduced " << (graphSize - isolates.GetInGraph().Size()) << "/" << graphSize << " vertices through isolate removal" << endl;
+
+    for (int const cliqueVertex : vCliqueVertices) {
+        vMarkedVertices[cliqueVertex] = true;
+    }
+
+    size_t uNewIndex(0);
+    for (size_t index = 0; index < vAlreadyConsideredVertices.size(); ++index) {
+        int const vertex(vAlreadyConsideredVertices[index]);
+        bool keep(true);
+        for (int const neighbor : m_AdjacencyArray[vertex]) {
+            if (vMarkedVertices[neighbor]) { keep = false; break; }
+        }
+
+        if (keep) {
+            vAlreadyConsideredVertices[uNewIndex++] = vAlreadyConsideredVertices[index];
+        }
+    }
+
+    vAlreadyConsideredVertices.resize(uNewIndex);
+
+    for (int const cliqueVertex : vCliqueVertices) {
+        vMarkedVertices[cliqueVertex] = false;
+    }
 }
 
 void IsolateReducer::RemoveVertex(int const vertex)
@@ -54,7 +78,6 @@ bool IsolateReducer::InRemainingGraph(int const vertex) const
 
 IsolateDominationReducer::IsolateDominationReducer(vector<vector<int>> const &adjacencyArray)
 : IsolateReducer(adjacencyArray)
-, vMarkedVertices(adjacencyArray.size(), false)
 , remaining(adjacencyArray.size())
 {
 }
@@ -63,12 +86,14 @@ IsolateDominationReducer::~IsolateDominationReducer()
 {
 }
 
-void IsolateDominationReducer::Reduce(vector<int> const &vAlreadyConsideredVertices, vector<int> &vCliqueVertices, vector<int> &vOtherRemovedVertices)
+void IsolateDominationReducer::Reduce(vector<int> &vAlreadyConsideredVertices, vector<int> &vCliqueVertices, vector<int> &vOtherRemovedVertices)
 {
     IsolateReducer::Reduce(vAlreadyConsideredVertices, vCliqueVertices, vOtherRemovedVertices);
 
+#if 0
+    return;
+#endif
     remaining = isolates.GetInGraph();
-
     if (vAlreadyConsideredVertices.empty()) return;
 
     // TODO/DS: remove dominated vertices...
@@ -80,6 +105,8 @@ void IsolateDominationReducer::Reduce(vector<int> const &vAlreadyConsideredVerti
     for (int const vertex : isolates.GetInGraph()) {
         remaining.Insert(vertex);
     }
+
+////    cout << "Removing dominated vertices: ";
 
     while (!remaining.Empty()) {
         int const p = *(remaining.begin());
@@ -105,6 +132,7 @@ void IsolateDominationReducer::Reduce(vector<int> const &vAlreadyConsideredVerti
             }
 
             if (dominates) {
+////                cout << p << "(dominated by " << x << ") ";
                 RemoveVertex(p);
 ////                IsolateReducer::Reduce(vAlreadyConsideredVertices, vCliqueVertices, vOtherRemovedVertices);
                 vOtherRemovedVertices.push_back(p);
@@ -112,6 +140,8 @@ void IsolateDominationReducer::Reduce(vector<int> const &vAlreadyConsideredVerti
             } 
         }
     }
+
+////    cout << endl;
 
 
 ////    if (newGraphSize != isolates.GetInGraph().Size()) {

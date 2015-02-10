@@ -19,12 +19,14 @@ public:
 
 #if 1
     virtual void RunRecursive(std::vector<int> &P, std::vector<int> &vVertexOrder, std::list<std::list<int>> &cliques, std::vector<int> &vColors);
+    void RunRecursive(std::vector<int> &P, std::vector<int> &vVertexOrder, std::list<std::list<int>> &cliques, std::vector<int> &vColors, bool const checkForConnectedComponents);
 #endif // 0
 
 ////    virtual void PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex);
 protected:
     size_t m_uSubgraphDepth;
     std::vector<int> m_vSubgraphClique;
+    std::vector<int> m_vStackDelta;
 };
 
 #endif // CONNECTED_COMPONENT_MISS_H

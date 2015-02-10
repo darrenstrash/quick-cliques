@@ -91,20 +91,20 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
     vector<int> &vNewColors(stackColors[R.size()+1]);
     vector<int> &vNewVertexOrder(stackOrder[R.size()+1]);
 
-////    cout << depth << ": P: ";
-////    for (int const p : P) {
-////        cout << p << " ";
-////    }
-////    cout << endl;
-
     if (nodeCount%10000 == 0) {
         if (!m_bQuiet) {
             cout << "Evaluated " << nodeCount << " nodes. " << GetTimeInSeconds(clock() - startTime) << endl;
         }
-////        PrintState();
+        PrintState();
     }
 
     while (!P.empty()) {
+
+////        cout << depth << ": P: ";
+////        for (int const p : P) {
+////            cout << p << " ";
+////        }
+////        cout << endl;
 
         if (depth == 0) {
             if (!m_bQuiet) {
@@ -120,6 +120,8 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
 
         vColors.pop_back();
         int const nextVertex(P.back()); P.pop_back();
+
+////        cout << depth << ": Choosing next vertex: " << nextVertex << endl;
 
         GetNewOrder(vNewVertexOrder, vVertexOrder, P, nextVertex);
 

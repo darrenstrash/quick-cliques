@@ -12,7 +12,7 @@ public:
     IsolateReducer(std::vector<std::vector<int>> const &);
     virtual ~IsolateReducer();
     void InitialReduce(std::vector<int> &vCliqueVertices);
-    virtual void Reduce(std::vector<int> const &vAlreadyConsideredVertices, std::vector<int> &vCliqueVertices, std::vector<int> &vOtherRemovedVertices);
+    virtual void Reduce(std::vector<int> &vAlreadyConsideredVertices, std::vector<int> &vCliqueVertices, std::vector<int> &vOtherRemovedVertices);
     void RemoveVertex(int const vertex);
     void RemoveVertexAndNeighbors(int const vertex, std::vector<int> &vOtherRemovedVertices);
     void ReplaceVertices(std::vector<int> const &vVertices);
@@ -23,6 +23,7 @@ public:
 
 protected:
     std::vector<std::vector<int>> const &m_AdjacencyArray;
+    std::vector<bool> vMarkedVertices;
     Isolates2<ArraySet> isolates;
 };
 
@@ -31,10 +32,9 @@ class IsolateDominationReducer : public IsolateReducer
 public:
     IsolateDominationReducer(std::vector<std::vector<int>> const &);
     virtual ~IsolateDominationReducer();
-    virtual void Reduce(std::vector<int> const &vAlreadyConsideredVertices, std::vector<int> &vCliqueVertices, std::vector<int> &vOtherRemovedVertices);
+    virtual void Reduce(std::vector<int> &vAlreadyConsideredVertices, std::vector<int> &vCliqueVertices, std::vector<int> &vOtherRemovedVertices);
 
 protected:
-    std::vector<bool> vMarkedVertices;
     ArraySet remaining;
 };
 

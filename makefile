@@ -41,6 +41,7 @@ SOURCES_TMP += IndependentSetColoringStrategy.cpp
 SOURCES_TMP += CliqueColoringStrategy.cpp
 SOURCES_TMP += Isolates.cpp
 SOURCES_TMP += Isolates2.cpp
+SOURCES_TMP += Isolates3.cpp
 SOURCES_TMP += ExperimentalReduction.cpp
 SOURCES_TMP += IndependentSetsReduction.cpp
 SOURCES_TMP += Staging.cpp

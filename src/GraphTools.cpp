@@ -2,6 +2,7 @@
 #include "SparseArraySet.h"
 #include "ArraySet.h"
 #include "Isolates2.h"
+#include "Isolates3.h"
 
 #include <set>
 #include <vector>
@@ -265,4 +266,7 @@ void GraphTools::ComputeConnectedComponents(IsolatesType const &isolates, vector
 
 template
 void GraphTools::ComputeConnectedComponents<Isolates2<ArraySet>>(Isolates2<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
+
+template
+void GraphTools::ComputeConnectedComponents<Isolates3<ArraySet>>(Isolates3<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
 

@@ -37,16 +37,16 @@ void LightWeightReductionStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrd
 
     R.insert(R.end(), vCliqueVertices.begin(), vCliqueVertices.end());
 
-    vector<vector<int>> vComponents;
-    GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
-
-    if (vComponents.size() > 1) {
-        cerr << "# connected components       : " << vComponents.size() << endl << flush;
-        cerr << "size of connected components : ";
-        cout << "[ ";
-        for (vector<int> const& vComponent : vComponents) {
-            cout << vComponent.size() << " ";
-        }
-        cout << "]" << endl << flush;
-    }
+////    vector<vector<int>> vComponents;
+////    GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
+////
+////    if (vComponents.size() > 1) {
+////        cerr << "# connected components       : " << vComponents.size() << endl << flush;
+////        cerr << "size of connected components : ";
+////        cout << "[ ";
+////        for (vector<int> const& vComponent : vComponents) {
+////            cout << vComponent.size() << " ";
+////        }
+////        cout << "]" << endl << flush;
+////    }
 }

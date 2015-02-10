@@ -437,6 +437,7 @@ void Staging::Run()
     vector<pair<int,int>> vAddedEdges;
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
 
+#if 0
     vRemoved.insert(vRemoved.end(), vIsolates.begin(), vIsolates.end());
     setRemoved.insert(vRemoved.begin(), vRemoved.end());
 
@@ -493,8 +494,7 @@ void Staging::Run()
     }
 
     cout << "Total clique size: " << realClique.size() << endl << flush;
-
-#if 0
+#else
     size_t numVertices(0);
     size_t numEdges(0);
 
