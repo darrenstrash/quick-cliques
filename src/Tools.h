@@ -139,5 +139,10 @@ bool IsMaximalClique(std::list<int> const &clique, std::vector<std::vector<int>>
 
 std::string GetTimeInSeconds(clock_t delta);
 
+namespace Tools
+{
+    std::vector<int> ReadMetisOrdering(std::string const &filename);
+};
+
 #endif
 

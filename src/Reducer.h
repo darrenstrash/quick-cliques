@@ -3,6 +3,7 @@
 
 #include "Isolates2.h"
 #include "ArraySet.h"
+#include "SparseArraySet.h"
 
 #include <vector>
 
@@ -24,7 +25,7 @@ public:
 protected:
     std::vector<std::vector<int>> const &m_AdjacencyArray;
     std::vector<bool> vMarkedVertices;
-    Isolates2<ArraySet> isolates;
+    Isolates2<SparseArraySet> isolates;
 };
 
 class IsolateDominationReducer : public IsolateReducer

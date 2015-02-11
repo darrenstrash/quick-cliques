@@ -11,6 +11,7 @@ public:
     virtual void Color(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors) {};
 
     virtual void Color(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors) {};
+    virtual int ColorWithoutReorder(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors) { return 0; }
     virtual void Recolor(std::vector<std::vector<char>> const &adjacencyMatrix, std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors) {};
     virtual void Recolor(std::vector<std::vector<int>> const &adjacencyArray, std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors) {};
 ////    virtual void Recolor() = 0;

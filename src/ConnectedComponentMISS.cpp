@@ -24,14 +24,27 @@ ConnectedComponentMISS::~ConnectedComponentMISS()
 ////    cout << "SubgraphClique has size " << m_vSubgraphClique.size() << endl << flush;
 }
 
+void ConnectedComponentMISS::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)
+{
+////    vVerticesToReorder = vVertexOrder;
+////    coloringStrategy.ColorWithoutReorder(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
+    coloringStrategy.Color(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
+}
+
 void ConnectedComponentMISS::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
     OrderingTools::InitialOrderingMISR(m_AdjacencyMatrix, P, vColors, m_uMaximumCliqueSize);
+////    OrderingTools::InitialOrderingConnectedComponent(m_AdjacencyMatrix, vVertexOrder, vColors);
     vVertexOrder = P; ////std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, true /* non-decreasing */)); //// = P; //?
+
+////    vColors.resize(vVertexOrder.size(), 0);
+////    P.resize(vVertexOrder.size(), 0);
+////    Color(vVertexOrder, P, vColors); //, delta) //// like this
 }
 
 void ConnectedComponentMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
+////    cout << depth << ": GetNewOrder goes from size " << vVertexOrder.size();
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
     vector<pair<int,int>> vAddedEdgesUnused;
@@ -59,6 +72,8 @@ void ConnectedComponentMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<in
 ////        }
 ////        cout << "]" << endl << flush;
 ////    }
+
+////    cout << " to size " << vNewVertexOrder.size() << endl;
 }
 
 void ConnectedComponentMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
@@ -87,6 +102,8 @@ void ConnectedComponentMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOr
         size_t uRemainingVertices(P.size());
         size_t addedToR(0);
         if (vComponents.size() > 1) {
+
+            cout << depth << ": Found connected components before recursion" << endl;
 
             sort(vComponents.begin(), vComponents.end(), [](vector<int> const &left, vector<int> const &right) { return right < left;});
 
@@ -224,14 +241,22 @@ void ConnectedComponentMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOr
 
     while (!P.empty()) {
 
+////        cout << depth << ": P has " << P.size() << " elements" << endl;
+
         if (depth == 0 && !m_bQuiet) {
             cout << "Only " << P.size() << " more vertices to go! " << GetTimeInSeconds(clock() - startTime) << endl;
             cout << "Current best clique: " << m_uMaximumCliqueSize << endl;
         }
 
 ////        cout << "P.size=" << P.size() << ", vColors.size=" << vColors.size() << endl << flush;
-        int const largestColor(vColors.back() + m_vStackDelta[depth+1]);
+        int largestColorInSubgraph(0);
+        for (int const color : vColors) {
+            largestColorInSubgraph = max(color, largestColorInSubgraph);
+        }
+////        int const largestColor(vColors.back() + m_vStackDelta[depth+1]);
+        int const largestColor(largestColorInSubgraph + m_vStackDelta[depth+1]);
         if (R.size() + largestColor <= m_uMaximumCliqueSize) {
+////            cout << depth << ": Pruned: "; 
 ////            cout << "Colors (" << vColors.size() << "): ";
 ////            for (int index = max(0,static_cast<int>(vColors.size() - 11)); index < static_cast<int>(vColors.size()); ++index) {
 ////                cout << vColors[index] << " ";
@@ -269,7 +294,9 @@ void ConnectedComponentMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOr
         }
 
         bool bPIsEmpty(P.empty());
+////        cout << depth << ": P has " << P.size() << " elements before postprocessing" << endl;
         ProcessOrderAfterRecursion(vVertexOrder, P, vColors, nextVertex);
+////        cout << depth << ": P has " << P.size() << " elements after  postprocessing" << endl;
 
 ////        if (R.size() > m_uMaximumCliqueSize && bPIsEmpty && P.empty()) {
 ////            cout << "ERROR!" << endl << flush;
@@ -286,6 +313,8 @@ void ConnectedComponentMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOr
         size_t uRemainingVertices(P.size());
         size_t addedToR(0);
         if (vComponents.size() > 1) {
+
+////            cout << depth << ": Found connected components after  recursion" << endl;
 
             sort(vComponents.begin(), vComponents.end(), [](vector<int> const &left, vector<int> const &right) { return right < left;});
 

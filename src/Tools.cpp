@@ -724,3 +724,46 @@ string GetTimeInSeconds(clock_t delta) {
     strm << "[" << (double)(delta)/(double)(CLOCKS_PER_SEC) << "s]";
     return strm.str();
 }
+
+vector<int> Tools::ReadMetisOrdering(string const &fileName)
+{
+    ifstream instream(fileName.c_str());
+
+    vector<int> ordering;
+
+    int u, v; // endvertices, to read edges.
+
+    if (!instream.good()  || instream.eof()) {
+        fprintf(stderr, "ERROR: Problem reading line 1 in file %s\n", fileName.c_str());
+        exit(1);
+    }
+
+    while (instream.good() && !instream.eof()) {
+
+        string line;
+        std::getline(instream, line);
+        stringstream strm(line);
+////        bool debug(true); ////u == 40656 || u == 40653);
+////if (debug)        cout << (u+1) << " : " << endl << flush;
+////if (debug)        cout << "Read     Line: " << line << endl << flush;
+////if (debug)        cout << "Actually Read: ";
+        if (!line.empty() && strm.good() && !strm.eof()) {
+            strm >> v;
+            ////if (!strm.good()) break;
+////if (debug)            cout << v << " ";
+            cout << "read: " << v << endl;
+
+            assert(v > -1);
+
+            ordering.push_back(v);
+        }
+////if (debug)        cout << endl << flush;
+    }
+
+#ifdef DEBUG
+    printArrayOfLinkedLists(adjList, n);
+#endif
+
+    return ordering;
+}
+

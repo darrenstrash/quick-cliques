@@ -5,6 +5,7 @@
 #include "IndependentSetColoringStrategy.h"
 #include "ArraySet.h"
 #include "Isolates2.h"
+#include "Isolates3.h"
 
 #include <ctime>
 #include <vector>
@@ -34,7 +35,7 @@ protected:
     std::vector<std::vector<int>> stackOther;
     std::vector<std::vector<int>> stackPersistentClique;
     std::vector<std::vector<int>> stackPersistentOther;
-    Isolates2<ArraySet> isolates;
+    Isolates3<ArraySet> isolates;
 ////    bool m_bInvert;
 };
 #endif //LIGHTWEIGHT_REDUCTION_MISQ_H

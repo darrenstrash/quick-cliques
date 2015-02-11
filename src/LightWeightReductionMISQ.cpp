@@ -204,7 +204,7 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
 ////            cout << endl;
 ////        }
 
-        if (P.size() != isolates.GetInGraph().Size()) { // if false?
+        if (true) { //P.size() != isolates.GetInGraph().Size()) { // if false?
 ////            cout << __LINE__ << ": This should not be triggered!" << endl;
             size_t uNewIndex(0);
             // pull vertices out of P and vColors

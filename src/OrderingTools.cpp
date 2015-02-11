@@ -622,3 +622,58 @@ void OrderingTools::InitialOrderingMISR(vector<vector<char>> const &adjacencyMat
     OrderingTools::InitialOrderingMCR(coAdjacencyMatrix, vOrderedVertices, vColoring, cliqueSize);
 #endif //0
 }
+
+void OrderingTools::InitialOrderingConnectedComponent(vector<vector<char>> const &adjacencyMatrix, vector<int> &vOrderedVertices, vector<int> &vColoring)
+{
+
+#ifdef FACEBOOK
+    cout << "ERROR: Only works for facebook.kernel subgraph!" << endl;
+    vector<int> const vVertexOrder = Tools::ReadMetisOrdering("/Users/strash/graphs/kernels/facebook.kernel.graph.iperm");
+#else
+    cout << "ERROR: Only works for 1et.1024.kernel subgraph!" << endl;
+    vector<int> const vVertexOrder = Tools::ReadMetisOrdering("/Users/strash/graphs/kernels/1et.1024.component.graph.iperm");
+#endif //FACEBOOK
+
+    vOrderedVertices.resize(vVertexOrder.size(), 0);
+
+    for (size_t index = 0; index < vVertexOrder.size(); ++index) {
+////        vOrderedVertices[vOrderedVertices.size() - vVertexOrder[index] - 1] = index;
+        vOrderedVertices[vVertexOrder[index]] = index;
+    }
+
+////    std::reverse(vOrderedVertices.begin(), vOrderedVertices.end());
+
+    cout << "Snippet of ordering: ";
+    for (size_t index = 0; index < vOrderedVertices.size(); ++index) {
+#ifdef SNIPPET
+        if (index == 10 && vOrderedVertices.size() > 21) {
+            cout << "...";
+            index = vOrderedVertices.size() - 10;
+        }
+#endif // SNIPPET
+
+        cout << vOrderedVertices[index] << " ";
+    }
+    cout << endl;
+
+#if 0
+    size_t maxDegree(0);
+    {
+        vector<int> vDegree(adjacencyMatrix.size(), 0);
+        for (size_t u = 0; u < adjacencyMatrix.size(); ++u) {
+            for (size_t v = 0; v < adjacencyMatrix.size(); ++v) {
+                if (adjacencyMatrix[u][v]) vDegree[u]++;
+            }
+            maxDegree = max(maxDegree, static_cast<size_t>(vDegree[u]));
+        }
+    }
+
+    vColoring.reserve(adjacencyMatrix.size());
+    vColoring.clear();
+    for (int degree = 1; degree <= maxDegree; degree++ ) {
+        vColoring.push_back(degree);
+    }
+
+    vColoring.resize(adjacencyMatrix.size(), maxDegree + 1);
+#endif // 0
+}
