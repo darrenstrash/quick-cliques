@@ -104,8 +104,7 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
     size_t maxDegree(0);
     for(size_t i = 0; i < size; i++) {
         degree[i] = adjacencyArray[i].size();
-        verticesByDegree[degree[i]].push_front(i);
-        vertexLocator[i] = verticesByDegree[degree[i]].begin();
+        vertexLocator[i] = verticesByDegree[degree[i]].insert(verticesByDegree[degree[i]].end(), i);
 
         maxDegree = max(maxDegree, adjacencyArray[i].size());
     }
@@ -143,16 +142,16 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
                     coloringStrategy.Color(adjacencyMatrix, remainingVertices /* evaluation order */, remainingVertices /* color order */, remainingColors);
                     //copy initial ordering to output arrays
 
-////                    int maxColor(0);
-////                    size_t index(0);
-                    for (size_t index = 0; index < remainingVertices.size(); ++index) {
+                    int maxColor(0);
+                    size_t index(0);
+                    for (/*size_t index = 0*/; index < remainingVertices.size(); ++index) {
                         vOrderedVertices[index] = remainingVertices[index];
                         vColoring[index] = remainingColors[index];
-////                        maxColor = max(maxColor, vColoring[index]);
+                        maxColor = max(maxColor, vColoring[index]);
                     }
 
                     // simpler
-#if 1
+#if 0
                     for (size_t index = remainingColors.size(); index < vColoring.size(); ++index) {
                         vColoring[index] = min(vColoring[index-1] + 1, static_cast<int>(maxDegree + 1));
                     }
@@ -197,7 +196,7 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
                             }
                         }
 
-                        if (neighborhoodDegree < minNeighborhoodDegree || (neighborhoodDegree == minNeighborhoodDegree && candidate > chosenVertex)) {
+                        if (neighborhoodDegree < minNeighborhoodDegree) { //// || (neighborhoodDegree == minNeighborhoodDegree && candidate < chosenVertex)) {
                             minNeighborhoodDegree = neighborhoodDegree;
                             chosenVertex = candidate;
                         }
@@ -221,8 +220,7 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
                 {
                     verticesByDegree[degree[neighbor]].erase(vertexLocator[neighbor]);
                     degree[neighbor]--;
-                    verticesByDegree[degree[neighbor]].push_front(neighbor);
-                    vertexLocator[neighbor] = verticesByDegree[degree[neighbor]].begin();
+                    vertexLocator[neighbor] = verticesByDegree[degree[neighbor]].insert(verticesByDegree[degree[neighbor]].end(), neighbor);
                 }
             }
 
@@ -429,6 +427,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
     size_t maxCoDegree(0);
     for(size_t i = 0; i < size; i++) {
         coDegree[i] = size - adjacencyArray[i].size() - 1;
+////        vertexLocator[i] = verticesByDegree[coDegree[i]].insert(verticesByDegree[coDegree[i]].end(), i);
         verticesByDegree[coDegree[i]].push_front(i);
         vertexLocator[i] = verticesByDegree[coDegree[i]].begin();
 
@@ -574,6 +573,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
                 if (coDegree[nonNeighbor] != -1 && !vMarkedVertices[nonNeighbor]) {
                     verticesByDegree[coDegree[nonNeighbor]].erase(vertexLocator[nonNeighbor]);
                     coDegree[nonNeighbor]--;
+////                    vertexLocator[nonNeighbor] = verticesByDegree[coDegree[nonNeighbor]].insert(verticesByDegree[coDegree[nonNeighbor]].end(), nonNeighbor);
                     verticesByDegree[coDegree[nonNeighbor]].push_front(nonNeighbor);
                     vertexLocator[nonNeighbor] = verticesByDegree[coDegree[nonNeighbor]].begin();
                 }
@@ -595,14 +595,14 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 
 void OrderingTools::InitialOrderingMISR(vector<vector<char>> const &adjacencyMatrix, vector<int> &vOrderedVertices, vector<int> &vColoring, size_t &cliqueSize)
 {
-#if 0
+#if 1
     // create an adjacencyArray, much faster for degeneracy ordering.
 
     vector<vector<int>> adjacencyArray(adjacencyMatrix.size());
     for (int vertex = 0; vertex < adjacencyMatrix.size(); ++vertex) {
         for (int otherVertex = 0; otherVertex < adjacencyMatrix.size(); ++otherVertex) {
             if (vertex == otherVertex) continue;
-            if (!adjacencyMatrix[vertex][otherVertex]) {
+            if (adjacencyMatrix[vertex][otherVertex]) {
                 adjacencyArray[vertex].push_back(otherVertex);
             }
         }
