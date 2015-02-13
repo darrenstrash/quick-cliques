@@ -218,7 +218,7 @@ void IndependentSetColoringStrategy::Recolor(vector<vector<char>> const &adjacen
         m_vvVerticesWithColor[color].push_back(vertex);
         maxColor = max(maxColor, color);
         if (color+1 > iBestCliqueDelta && /*m_vvVerticesWithColor[color].size() == 1*/ color == maxColor) {
-            Repair(vertex, color);
+            Repair(vertex, color, iBestCliqueDelta);
             if (m_vvVerticesWithColor[maxColor].empty())
                 maxColor--;
         }
@@ -289,12 +289,12 @@ int IndependentSetColoringStrategy::GetConflictingVertex(int const vertex, vecto
     return conflictingVertex;
 }
 
-bool IndependentSetColoringStrategy::Repair(int const vertex, int const color)
+bool IndependentSetColoringStrategy::Repair(int const vertex, int const color, int const iBestCliqueDelta)
 {
-    for (int newColor = 0; newColor < color-1; newColor++) {
+    for (int newColor = 0; newColor <= iBestCliqueDelta-1; newColor++) {
         int const conflictingVertex(GetConflictingVertex(vertex, m_vvVerticesWithColor[newColor]));
         if (conflictingVertex < 0) continue;
-        for (int nextColor = newColor+1; nextColor < color; nextColor++) {
+        for (int nextColor = newColor+1; nextColor <= iBestCliqueDelta; nextColor++) {
             if (HasConflict(conflictingVertex, m_vvVerticesWithColor[nextColor])) continue;
             m_vvVerticesWithColor[color].erase(find(m_vvVerticesWithColor[color].begin(), m_vvVerticesWithColor[color].end(), vertex));
             m_vvVerticesWithColor[newColor].erase(find(m_vvVerticesWithColor[newColor].begin(), m_vvVerticesWithColor[newColor].end(), conflictingVertex));
