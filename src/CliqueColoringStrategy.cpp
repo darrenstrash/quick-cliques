@@ -59,6 +59,9 @@ void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, 
 
 ////    cout << "maxColor=" << maxColor << ", numVertices=" << vVerticesToReorder.size() << endl;
 
+////    vColors.resize(vVertexOrder.size());
+////    vVerticesToReorder.resize(vVertexOrder.size());
+
     int currentIndex(0);
     int currentColor(0);
     for (int currentColor = 0; currentColor <= maxColor; ++currentColor) {
@@ -69,6 +72,7 @@ void CliqueColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, 
         }
         m_vvVerticesWithColor[currentColor].clear();
     }
+
 
 #if 0
     cout << "Coloring (out): ";
@@ -136,11 +140,17 @@ void CliqueColoringStrategy::Recolor(vector<vector<char>> const &adjacencyMatrix
 
         m_vvVerticesWithColor[color].push_back(vertex);
         maxColor = max(maxColor, color);
+#ifdef PROSSER
+        if (color+1 > iBestCliqueDelta && m_vvVerticesWithColor[color].size() == 1 && Repair(vertex,color, iBestCliqueDelta)) {
+            maxColor--;
+        }
+#else
         if (color+1 > iBestCliqueDelta && /*m_vvVerticesWithColor[color].size() == 1*/ color == maxColor) {
-            Repair(vertex, color);
+            Repair(vertex, color, iBestCliqueDelta);
             if (m_vvVerticesWithColor[maxColor].empty())
                 maxColor--;
         }
+#endif // PROSSER
     }
 
 ////    cout << "maxColor=" << maxColor << ", numVertices=" << vVerticesToReorder.size() << endl;
@@ -208,12 +218,12 @@ int CliqueColoringStrategy::GetConflictingVertex(int const vertex, vector<int> c
     return conflictingVertex;
 }
 
-bool CliqueColoringStrategy::Repair(int const vertex, int const color)
+bool CliqueColoringStrategy::Repair(int const vertex, int const color, int const iBestCliqueDelta)
 {
-    for (int newColor = 0; newColor < color-1; newColor++) {
+    for (int newColor = 0; newColor <= iBestCliqueDelta-1; newColor++) {
         int const conflictingVertex(GetConflictingVertex(vertex, m_vvVerticesWithColor[newColor]));
         if (conflictingVertex < 0) continue;
-        for (int nextColor = newColor+1; nextColor < color; nextColor++) {
+        for (int nextColor = newColor+1; nextColor <= iBestCliqueDelta; nextColor++) {
             if (HasConflict(conflictingVertex, m_vvVerticesWithColor[nextColor])) continue;
             m_vvVerticesWithColor[color].erase(find(m_vvVerticesWithColor[color].begin(), m_vvVerticesWithColor[color].end(), vertex));
             m_vvVerticesWithColor[newColor].erase(find(m_vvVerticesWithColor[newColor].begin(), m_vvVerticesWithColor[newColor].end(), conflictingVertex));
