@@ -75,9 +75,9 @@ void LightWeightReductionSparseMISQ::GetNewOrder(vector<int> &vNewVertexOrder, v
     reducer.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
     vector<int> vUnused;
 
-    bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
-    if (bRemoveIsolates)
-        reducer.Reduce(vUnused, vCliqueVertices, vRemoved);
+////    bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
+////    if (bRemoveIsolates)
+    reducer.Reduce(vUnused, vCliqueVertices, vRemoved);
     vNewVertexOrder.resize(P.size());
     size_t uNewIndex(0);
     for (int const candidate : P) {
@@ -112,10 +112,10 @@ void LightWeightReductionSparseMISQ::ProcessOrderAfterRecursion(std::vector<int>
         vector<pair<int,int>> vAddedEdgesUnused;
         vector<int> vUnused;
 
+        bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
         if (chosenVertex == -1) {
             reducer.InitialReduce(vTempCliqueVertices);
         } else {
-            bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
             if (bRemoveIsolates)
                 reducer.Reduce(vUnused, vTempCliqueVertices, vTempRemovedVertices);
         }
@@ -129,7 +129,7 @@ void LightWeightReductionSparseMISQ::ProcessOrderAfterRecursion(std::vector<int>
         if (chosenVertex != -1) vRemovedVerticesToReplace.push_back(chosenVertex);
         vRemovedVerticesToReplace.insert(vRemovedVerticesToReplace.end(), vTempRemovedVertices.begin(), vTempRemovedVertices.end());
 
-        if (P.size() != reducer.RemainingGraphSize()) { // if false?
+        if (true) { ////P.size() != reducer.RemainingGraphSize()) { // if false?
 ////            cout << __LINE__ << ": This should not be triggered!" << endl;
             size_t uNewIndex(0);
             // pull vertices out of P and vColors
@@ -152,12 +152,13 @@ void LightWeightReductionSparseMISQ::ProcessOrderAfterRecursion(std::vector<int>
             }
             vVertexOrder.resize(uNewIndex);
 ////            P.resize(uNewIndex);
-////            vColors.resize(uNewIndex);
-////            Color(vVertexOrder/* evaluation order */, P /* color order */, vColors);
-
+            vColors.resize(uNewIndex);
+            if (bRemoveIsolates)
+                Color(vVertexOrder/* evaluation order */, P /* color order */, vColors);
         }
 
-        Color(vVertexOrder, P, vColors);
+////        if (bRemoveIsolates)
+////        Color(vVertexOrder, P, vColors);
 }
 
 void LightWeightReductionSparseMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)

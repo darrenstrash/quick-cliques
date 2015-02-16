@@ -93,17 +93,19 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
     vector<int> &vNewVertexOrder(stackOrder[R.size()+1]);
 
 ////    bool &bEvaluatedHalfVertices = stackEvaluatedHalfVertices[R.size() + 1];
+////    stackEvaluatedHalfVertices[depth + 1] = (rand()%(depth+1) == depth);
+////    stackEvaluatedHalfVertices[depth + 1] = true;
 ////    stackEvaluatedHalfVertices[depth + 1] = false;
-    stackEvaluatedHalfVertices[depth + 1] = true;
+    stackEvaluatedHalfVertices[depth + 1] = (depth<=1);
 
     size_t halfVertices(0);
 ////    for (size_t index = P.size()+1; index > 0; --index) {
 ////        if (vColors[index-1] + R.size() <= m_uMaximumCliqueSize) {
-////            halfVertices = (index - 1 + P.size())/2;
+////            halfVertices = (index - 1) + 2*(P.size() - (index - 1))/3.0;
 ////            break;
 ////        }
 ////    }
-////
+
     size_t const uOriginalPSize(P.size());
 
     if (nodeCount%10000 == 0) {
@@ -114,27 +116,41 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
     }
 
     while (!P.empty()) {
+////    if (!stackEvaluatedHalfVertices[depth + 1])
+////        stackEvaluatedHalfVertices[depth + 1] = (rand()%(depth+1) == depth);
+////        stackEvaluatedHalfVertices[depth + 1] = (rand()%2 == 1);
 
-        if (!stackEvaluatedHalfVertices[depth + 1]) {
-            size_t index = P.size()+1;
-            for (; index > 0; --index) {
-                if (vColors[index-1] + R.size() <= m_uMaximumCliqueSize) {
-                    halfVertices = (index - 1 + uOriginalPSize)/2;
-                    break;
-                }
-            }
+////        stackEvaluatedHalfVertices[depth+1] = (rand() % 20 == 1); ////!stackEvaluatedHalfVertices[depth+1];
 
-            if (P.size() <= halfVertices) {
-                stackEvaluatedHalfVertices[depth + 1] = true;
-////            } else if (rand() % 2 == 1) { ////(P.size() - halfVertices) == 1) {
-////                stackEvaluatedHalfVertices[R.size() + 1] = true;
+////        if (!stackEvaluatedHalfVertices[depth + 1]) {
+////            if (uOriginalPSize >= 100 && P.size() > 1 && vColors[P.size()-5] + R.size() <= m_uMaximumCliqueSize) {
+////                stackEvaluatedHalfVertices[depth + 1] = true;
 ////            }
-            } else if (rand() % P.size() <= index) {
-                stackEvaluatedHalfVertices[depth + 1] = true;
-            } else if (rand() % 2 == 1) {
-                stackEvaluatedHalfVertices[depth+1] = stackEvaluatedHalfVertices[depth];
-            }
-        }
+////            size_t index = P.size()+1;
+////            for (; index > 0; --index) {
+////                if (vColors[index-1] + R.size() <= m_uMaximumCliqueSize) {
+////                    halfVertices = (index - 1 + uOriginalPSize)/2;
+////                    break;
+////                }
+////            }
+////
+////            if (P.size() - index == 1) {
+////                stackEvaluatedHalfVertices[depth + 1] = true;
+////            }
+
+////            if (P.size() <= halfVertices) {
+////                stackEvaluatedHalfVertices[depth + 1] = true;
+////            }
+////////            else if (rand() % 2 == 1) { ////(P.size() - halfVertices) == 1) {
+////////                stackEvaluatedHalfVertices[R.size() + 1] = true;
+////////            }
+////            else if (rand() % P.size() <= index) {
+////                stackEvaluatedHalfVertices[depth + 1] = true;
+////            }
+////            else if (rand() % 2 == 1) {
+////                stackEvaluatedHalfVertices[depth+1] = stackEvaluatedHalfVertices[depth];
+////            }
+////        }
 
 ////        cout << depth << ": P: ";
 ////        for (int const p : P) {
@@ -151,6 +167,7 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
         int const largestColor(vColors.back());
         if (R.size() + largestColor <= m_uMaximumCliqueSize) {
             ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
+            P.clear();
             return;
         }
 
@@ -193,6 +210,7 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
     }
 
     ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
+    P.clear();
 
     vNewColors.clear();
     vNewP.clear();

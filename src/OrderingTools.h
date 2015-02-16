@@ -2,6 +2,7 @@
 #define ORDERING_TOOLS_H
 
 #include <vector>
+#include <cstddef>
 
 namespace OrderingTools
 {

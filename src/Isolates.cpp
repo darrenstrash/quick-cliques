@@ -5,6 +5,7 @@
 #include <iostream>
 #include <ctime>
 #include <cassert>
+#include <algorithm>
 
 using namespace std;
 
