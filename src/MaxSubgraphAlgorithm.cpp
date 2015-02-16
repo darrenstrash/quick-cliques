@@ -15,6 +15,7 @@ MaxSubgraphAlgorithm::MaxSubgraphAlgorithm(string const &name)
 , depth(-1)
 , startTime(clock())
 , m_bQuiet(false)
+, stackEvaluatedHalfVertices()
 ////, m_bInvert(0)
 {
 }
@@ -91,6 +92,20 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
     vector<int> &vNewColors(stackColors[R.size()+1]);
     vector<int> &vNewVertexOrder(stackOrder[R.size()+1]);
 
+////    bool &bEvaluatedHalfVertices = stackEvaluatedHalfVertices[R.size() + 1];
+////    stackEvaluatedHalfVertices[depth + 1] = false;
+    stackEvaluatedHalfVertices[depth + 1] = true;
+
+    size_t halfVertices(0);
+////    for (size_t index = P.size()+1; index > 0; --index) {
+////        if (vColors[index-1] + R.size() <= m_uMaximumCliqueSize) {
+////            halfVertices = (index - 1 + P.size())/2;
+////            break;
+////        }
+////    }
+////
+    size_t const uOriginalPSize(P.size());
+
     if (nodeCount%10000 == 0) {
         if (!m_bQuiet) {
             cout << "Evaluated " << nodeCount << " nodes. " << GetTimeInSeconds(clock() - startTime) << endl;
@@ -99,6 +114,27 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
     }
 
     while (!P.empty()) {
+
+        if (!stackEvaluatedHalfVertices[depth + 1]) {
+            size_t index = P.size()+1;
+            for (; index > 0; --index) {
+                if (vColors[index-1] + R.size() <= m_uMaximumCliqueSize) {
+                    halfVertices = (index - 1 + uOriginalPSize)/2;
+                    break;
+                }
+            }
+
+            if (P.size() <= halfVertices) {
+                stackEvaluatedHalfVertices[depth + 1] = true;
+////            } else if (rand() % 2 == 1) { ////(P.size() - halfVertices) == 1) {
+////                stackEvaluatedHalfVertices[R.size() + 1] = true;
+////            }
+            } else if (rand() % P.size() <= index) {
+                stackEvaluatedHalfVertices[depth + 1] = true;
+            } else if (rand() % 2 == 1) {
+                stackEvaluatedHalfVertices[depth+1] = stackEvaluatedHalfVertices[depth];
+            }
+        }
 
 ////        cout << depth << ": P: ";
 ////        for (int const p : P) {

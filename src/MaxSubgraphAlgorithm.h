@@ -44,6 +44,7 @@ protected:
     int depth;
     clock_t startTime;
     bool    m_bQuiet;
+    std::vector<bool> stackEvaluatedHalfVertices;
 ////    bool m_bInvert;
 };
 #endif // MAX_SUBGRAPH_ALGORITHM_H

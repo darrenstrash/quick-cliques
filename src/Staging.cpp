@@ -5,7 +5,12 @@
 #include "LightWeightReductionMISR.h"
 #include "LightWeightMISQ.h"
 #include "LightWeightStaticOrderMISS.h"
+#include "LightWeightFullMISS.h"
 #include "LightWeightReductionStaticOrderMISS.h"
+#include "LightWeightReductionFullMISS.h"
+#include "LightWeightReductionSparseFullMISS.h"
+#include "LightWeightReductionSparseStaticOrderMISS.h"
+#include "ConnectedComponentMISS.h"
 
 // system includes
 #include <vector>
@@ -292,7 +297,8 @@ template <typename C> bool ReplaceRemovedVertices(vector<vector<int>> const &adj
     return true;
 }
 
-size_t ComputeConnectedComponents(Isolates2<SparseArraySet> const &isolates, vector<vector<int>> &vComponents) {
+size_t ComputeConnectedComponents(Isolates2<SparseArraySet> const &isolates, vector<vector<int>> &vComponents)
+{
     ArraySet remaining = isolates.GetInGraph();
 
     Set currentSearch;
@@ -331,6 +337,96 @@ size_t ComputeConnectedComponents(Isolates2<SparseArraySet> const &isolates, vec
     }
 
     return componentCount;
+}
+
+vector<vector<int>> ComputeSubgraphOfSize(Isolates2<SparseArraySet> const &isolates, size_t const graphSize, size_t const subgraphSize)
+{
+    ArraySet remaining = isolates.GetInGraph();
+
+    map<int,int> vertexRemap;
+
+    Set currentSearch;
+    vector<bool> evaluated(graphSize, false);
+
+    size_t componentCount(0);
+
+    if (!remaining.Empty()) {
+        int const startVertex = *remaining.begin();
+        currentSearch.Insert(startVertex);
+        remaining.Remove(startVertex);
+        componentCount++;
+    }
+
+    size_t numEvaluated(0);
+
+    while (!remaining.Empty() && numEvaluated < subgraphSize && !currentSearch.Empty()) {
+        int const nextVertex(*currentSearch.begin());
+        evaluated[nextVertex] = true;
+        vertexRemap[nextVertex] = numEvaluated++;
+        currentSearch.Remove(nextVertex);
+        remaining.Remove(nextVertex);
+        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
+            if (!evaluated[neighbor]) {
+                currentSearch.Insert(neighbor);
+            }
+        }
+
+////        if (currentSearch.Empty() && !remaining.Empty()) {
+////            int const startVertex = *remaining.begin();
+////            currentSearch.Insert(startVertex);
+////            remaining.Remove(startVertex);
+////            componentCount++;
+////            vComponents.resize(componentCount);
+////        }
+    }
+
+    vector<vector<int>> vAdjacencyArray(vertexRemap.size());
+
+    for (pair<int,int> const &mapPair : vertexRemap) {
+        int const oldVertex(mapPair.first);
+        int const newVertex(mapPair.second);
+        for (int const neighbor : isolates.Neighbors()[oldVertex]) {
+            if (vertexRemap.find(neighbor) != vertexRemap.end()) {
+////                cout << "vAdjacencyArray.size=" << vAdjacencyArray.size() << endl;
+////                cout << "newVertex           =" << newVertex << endl; 
+                vAdjacencyArray[newVertex].push_back(vertexRemap[neighbor]);
+            }
+        }
+    }
+
+    Isolates2<SparseArraySet> subgraphIsolates(vAdjacencyArray);
+    vector<int> vRemoved;
+    vector<int> vIsolates;
+    set<int>    setRemoved;
+    vector<pair<int,int>> vAddedEdges;
+    subgraphIsolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
+
+    if (subgraphIsolates.GetInGraph().Size() == vAdjacencyArray.size()) {
+        return vAdjacencyArray;
+    }
+
+    vAdjacencyArray.clear();
+    vAdjacencyArray.resize(subgraphIsolates.GetInGraph().Size());
+    vertexRemap.clear();
+    size_t uNewIndex = 0;
+
+    for (int const vertex : subgraphIsolates.GetInGraph()) {
+        vertexRemap[vertex] = uNewIndex++;
+    }
+
+    for (pair<int,int> const &mapPair : vertexRemap) {
+        int const oldVertex(mapPair.first);
+        int const newVertex(mapPair.second);
+        for (int const neighbor : subgraphIsolates.Neighbors()[oldVertex]) {
+            if (vertexRemap.find(neighbor) != vertexRemap.end()) {
+////                cout << "vAdjacencyArray.size=" << vAdjacencyArray.size() << endl;
+////                cout << "newVertex           =" << newVertex << endl; 
+                vAdjacencyArray[newVertex].push_back(vertexRemap[neighbor]);
+            }
+        }
+    }
+
+    return vAdjacencyArray;
 }
 
 void Staging::Run()
@@ -437,7 +533,7 @@ void Staging::Run()
     vector<pair<int,int>> vAddedEdges;
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
 
-#if 0
+#if 1
     vRemoved.insert(vRemoved.end(), vIsolates.begin(), vIsolates.end());
     setRemoved.insert(vRemoved.begin(), vRemoved.end());
 
@@ -447,13 +543,65 @@ void Staging::Run()
     cerr << "# connected components       : " << ComputeConnectedComponents(isolates, vComponents) << endl << flush;
     cerr << "size of connected components : ";
     cout << "[ ";
-    for (vector<int> const& vComponent : vComponents) {
+
+    size_t maxComponentSize(0);
+    size_t maxComponentIndex(0);
+
+    for (size_t index = 0; index < vComponents.size(); ++index) {
+        vector<int> const& vComponent(vComponents[index]);
         cout << vComponent.size() << " ";
+        if (vComponent.size() > maxComponentSize) {
+            maxComponentSize = vComponent.size();
+            maxComponentIndex = index;
+        }
     }
+
     cout << "]" << endl << flush;
 
-    vector<int> realClique(vIsolates);
+    cout << "Max component size=" << maxComponentSize << endl;
 
+    isolates.SetConnectedComponent(vComponents[maxComponentIndex]);
+
+    vector<vector<int>> const subgraphAdjacencyList = ComputeSubgraphOfSize(isolates, m_AdjacencyList.size(), 2048);
+
+    cout << "Subgraph size=" << subgraphAdjacencyList.size() << endl << flush;
+
+    vector<vector<char>> subgraphAdjacencyMatrix(subgraphAdjacencyList.size());
+    for (size_t index = 0; index < subgraphAdjacencyList.size(); ++index) {
+        subgraphAdjacencyMatrix[index].resize(subgraphAdjacencyList.size(), 0);
+        for (int const neighbor : subgraphAdjacencyList[index]) {
+            subgraphAdjacencyMatrix[index][neighbor] = 1;
+        }
+    }
+
+    list<list<int>> cliques;
+////    LightWeightReductionStaticOrderMISS algorithm(subgraphAdjacencyMatrix, subgraphAdjacencyList);
+    LightWeightReductionFullMISS algorithm(subgraphAdjacencyMatrix, subgraphAdjacencyList);
+////    LightWeightFullMISS algorithm(subgraphAdjacencyMatrix);
+////    LightWeightReductionSparseFullMISS algorithm(subgraphAdjacencyList);
+////    LightWeightReductionSparseStaticOrderMISS algorithm(subgraphAdjacencyList);
+////    LightWeightStaticOrderMISS algorithm(subgraphAdjacencyMatrix); ////, subgraphAdjacencyList);
+
+    cout << subgraphAdjacencyList.size() << endl;
+    size_t edges(0);
+    for (vector<int> const &neighborList : subgraphAdjacencyList) {
+        edges+= neighborList.size();
+    }
+    cout << edges << endl;
+
+    for (size_t index = 0; index < subgraphAdjacencyList.size(); ++index) {
+        for (int const neighbor : subgraphAdjacencyList[index]) {
+            cout << index << "," << neighbor << endl;
+        }
+    }
+
+    auto printCliqueSize = [](list<int> const &clique) {
+        cout << "Found clique of size " << clique.size() << endl << flush;
+    };
+    algorithm.AddCallBack(printCliqueSize);
+    algorithm.Run(cliques);
+
+#if 0
     for (vector<int> const &vComponent : vComponents) {
         map<int,int> vertexRemap;
         map<int,int> reverseMap;
@@ -494,6 +642,7 @@ void Staging::Run()
     }
 
     cout << "Total clique size: " << realClique.size() << endl << flush;
+#endif // 0
 #else
     size_t numVertices(0);
     size_t numEdges(0);

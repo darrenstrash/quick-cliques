@@ -26,6 +26,8 @@ LightWeightReductionSparseMISQ::LightWeightReductionSparseMISQ(vector<vector<int
     stackP.resize(m_AdjacencyArray.size() + 1);
     stackColors.resize(m_AdjacencyArray.size() + 1);
     stackOrder.resize(m_AdjacencyArray.size() + 1);
+
+    stackEvaluatedHalfVertices.resize(vAdjacencyArray.size(), false);
 }
 
 ////void LightWeightReductionSparseMISQ::SetInvert(bool const invert)
@@ -72,7 +74,10 @@ void LightWeightReductionSparseMISQ::GetNewOrder(vector<int> &vNewVertexOrder, v
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
     reducer.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
     vector<int> vUnused;
-    reducer.Reduce(vUnused, vCliqueVertices, vRemoved);
+
+    bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
+    if (bRemoveIsolates)
+        reducer.Reduce(vUnused, vCliqueVertices, vRemoved);
     vNewVertexOrder.resize(P.size());
     size_t uNewIndex(0);
     for (int const candidate : P) {
@@ -110,7 +115,9 @@ void LightWeightReductionSparseMISQ::ProcessOrderAfterRecursion(std::vector<int>
         if (chosenVertex == -1) {
             reducer.InitialReduce(vTempCliqueVertices);
         } else {
-            reducer.Reduce(vUnused, vTempCliqueVertices, vTempRemovedVertices);
+            bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
+            if (bRemoveIsolates)
+                reducer.Reduce(vUnused, vTempCliqueVertices, vTempRemovedVertices);
         }
 
         R.insert(R.end(), vTempCliqueVertices.begin(), vTempCliqueVertices.end());

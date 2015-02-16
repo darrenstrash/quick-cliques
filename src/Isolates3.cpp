@@ -852,6 +852,27 @@ void Isolates3<NeighborSet>::SetConnectedComponent(vector<int> const &vVertices)
     m_bConnectedComponentMode = true;
 }
 
+template <typename NeighborSet>
+double Isolates3<NeighborSet>::GetDensity() const
+{
+    size_t edges(0);
+    for (int const vertex : inGraph) {
+        edges += neighbors[vertex].Size();
+    }
+    edges >>= 1;
+    return (edges / static_cast<double>(inGraph.Size()));
+}
+
+template <typename NeighborSet>
+size_t Isolates3<NeighborSet>::GetMaxDegree() const
+{
+    size_t maxDegree(0);
+    for (int const vertex : inGraph) {
+        maxDegree = max(maxDegree, neighbors[vertex].Size());
+    }
+    return maxDegree;
+}
+
 template class Isolates3<ArraySet>;
 template class Isolates3<SparseArraySet>;
 

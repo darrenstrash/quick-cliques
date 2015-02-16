@@ -26,6 +26,7 @@ LightWeightMISQ::LightWeightMISQ(vector<vector<char>> const &vAdjacencyMatrix)
     stackP.resize(m_AdjacencyMatrix.size() + 1);
     stackColors.resize(m_AdjacencyMatrix.size() + 1);
     stackOrder.resize(m_AdjacencyMatrix.size() + 1);
+    stackEvaluatedHalfVertices.resize(m_AdjacencyMatrix.size() + 1);
 
     // don't reserve for 0-th vectors, they get std::move'd by InitialOrdering
     for (int index = 0; index < stackP.size(); ++index) {

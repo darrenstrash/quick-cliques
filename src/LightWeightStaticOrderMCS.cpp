@@ -17,7 +17,7 @@ LightWeightStaticOrderMCS::LightWeightStaticOrderMCS(vector<vector<char>> const 
 void LightWeightStaticOrderMCS::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
     OrderingTools::InitialOrderingMCR(m_AdjacencyMatrix, P, vColors, m_uMaximumCliqueSize);
-    vVertexOrder = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, false /* non-increasing */)); //// = P; //?
+    vVertexOrder = P; //// = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, false /* non-increasing */)); //// = P; //?
 }
 
 void LightWeightStaticOrderMCS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
@@ -30,11 +30,16 @@ void LightWeightStaticOrderMCS::GetNewOrder(vector<int> &vNewVertexOrder, vector
         }
         vNewVertexOrder.resize(uNewIndex);
     }
+
+    R.push_back(chosenVertex);
 }
 
-void LightWeightStaticOrderMCS::PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex)
+void LightWeightStaticOrderMCS::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 {
-    ////        vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), chosenVertex));
+    if (chosenVertex == -1) return;
+#if 1
+    vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), chosenVertex));
+#else
     // try searching from end, might be faster in general...
     size_t indexAfterVertex(0);
     for (indexAfterVertex = vVertexOrder.size(); indexAfterVertex >= 1; indexAfterVertex--) {
@@ -47,4 +52,6 @@ void LightWeightStaticOrderMCS::PostProcessOrder(std::vector<int> &vVertexOrder,
         vVertexOrder[indexAfterVertex-1] = vVertexOrder[indexAfterVertex];
     }
     vVertexOrder.pop_back();
+#endif // 0
+    R.pop_back();
 }

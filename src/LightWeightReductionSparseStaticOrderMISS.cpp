@@ -26,7 +26,11 @@ void LightWeightReductionSparseStaticOrderMISS::GetNewOrder(vector<int> &vNewVer
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
     vector<int> vUnused;
     reducer.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
-    reducer.Reduce(vUnused, vCliqueVertices, vRemoved);
+
+    bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
+
+    if (bRemoveIsolates)
+        reducer.Reduce(vUnused, vCliqueVertices, vRemoved);
     vNewVertexOrder.resize(vVertexOrder.size());
     size_t uNewIndex(0);
     for (int const candidate : vVertexOrder) {

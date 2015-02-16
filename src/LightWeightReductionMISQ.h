@@ -36,6 +36,7 @@ protected:
     std::vector<std::vector<int>> stackPersistentClique;
     std::vector<std::vector<int>> stackPersistentOther;
     Isolates3<ArraySet> isolates;
+    std::vector<bool> vRemoveIsolates;
 ////    bool m_bInvert;
 };
 #endif //LIGHTWEIGHT_REDUCTION_MISQ_H

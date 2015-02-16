@@ -26,7 +26,15 @@ void LightWeightReductionStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrd
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
     vector<pair<int,int>> vAddedEdgesUnused;
     isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
-    isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+
+////    double const density(isolates.GetDensity());
+////    size_t const maxDegree(isolates.GetMaxDegree());
+    bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth + 1]);
+    if (bRemoveIsolates)
+        isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+
+////    cout << __LINE__ << ": density=" << density << ", max-degree=" << maxDegree << ", clique-vertices=" << vCliqueVertices.size() << ", other-removed=" << vRemoved.size()  << ", percent-total-removed=" << (vCliqueVertices.size() + vRemoved.size())/static_cast<double>(P.size())*100 << "%" << endl;
+
     vNewVertexOrder.resize(vVertexOrder.size());
     size_t uNewIndex(0);
     for (int const candidate : vVertexOrder) {

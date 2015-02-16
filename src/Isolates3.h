@@ -47,6 +47,9 @@ public:
 
     void SetConnectedComponent(std::vector<int> const &vVertices);
 
+    double GetDensity() const;
+    size_t GetMaxDegree() const;
+
 protected: // methods
     bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices);
 ////    bool RemoveIsolatedPath      (int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);

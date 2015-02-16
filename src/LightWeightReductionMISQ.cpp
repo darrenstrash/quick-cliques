@@ -31,6 +31,7 @@ LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &v
 ////, m_bInvert(0)
 {
     SetName("reduction-misq");
+    stackEvaluatedHalfVertices.resize(vAdjacencyArray.size(), false);
 }
 
 ////void LightWeightReductionMISQ::SetInvert(bool const invert)
@@ -118,9 +119,19 @@ void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
     vector<pair<int,int>> vAddedEdgesUnused;
+
+    bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
     isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
 ////    cout << "Size of clique before reduction: " << R.size() << endl;
-    isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+
+////    double const density(isolates.GetDensity());
+////    size_t const maxDegree(isolates.GetMaxDegree());
+
+    if (bRemoveIsolates)
+        isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+
+////    cout << __LINE__ << ": density=" << density << ", max-degree=" << maxDegree << ", clique-vertices=" << vCliqueVertices.size() << ", other-removed=" << vRemoved.size()  << ", percent-total-removed=" << (vCliqueVertices.size() + vRemoved.size())/static_cast<double>(P.size())*100 << "%" << endl;
+
 ////    cout << __LINE__ << ": Removed " << vCliqueVertices.size() + vRemoved.size() << " vertices " << endl;
     vNewVertexOrder.resize(P.size());
     size_t uNewIndex(0);
@@ -179,10 +190,15 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
         vector<int> vTempRemovedVertices;
         vector<pair<int,int>> vAddedEdgesUnused;
 
+////        double const density(isolates.GetDensity());
+////        size_t const maxDegree(isolates.GetMaxDegree());
+////        bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
 ////        cout << "Size of clique before reduction: " << R.size() << endl;
-        isolates.RemoveAllIsolates(0 /*unused*/,vTempCliqueVertices, vTempRemovedVertices, vAddedEdgesUnused, chosenVertex == -1 /* either consider all (true) or consider only changed vertices (false) */);
+////        if (bRemoveIsolates)
+////            isolates.RemoveAllIsolates(0 /*unused*/,vTempCliqueVertices, vTempRemovedVertices, vAddedEdgesUnused, chosenVertex == -1 /* either consider all (true) or consider only changed vertices (false) */);
 ////        cout << __LINE__ << ": Removed " << vTempCliqueVertices.size() + vTempRemovedVertices.size() << " vertices " << endl;
-
+////        cout << __LINE__ << ": density=" << density << ", max-degree=" << maxDegree << ", clique-vertices=" << vCliqueVertices.size() << ", other-removed=" << vRemoved.size()  << ", percent-total-removed=" << (vCliqueVertices.size() + vRemoved.size())/static_cast<double>(P.size())*100 << "%" << endl;
+////
         R.insert(R.end(), vTempCliqueVertices.begin(), vTempCliqueVertices.end());
 
 ////        Contains(vTempCliqueVertices, 5975, __LINE__);
@@ -230,9 +246,10 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
 ////            vColors.resize(uNewIndex);
 ////            Color(vVertexOrder/* evaluation order */, P /* color order */, vColors);
 
+////            if (bRemoveIsolates)
+////                Color(vVertexOrder, P, vColors);
         }
 
-        Color(vVertexOrder, P, vColors);
 }
 
 void LightWeightReductionMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)
