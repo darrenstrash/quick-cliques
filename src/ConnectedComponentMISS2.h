@@ -24,6 +24,11 @@ public:
     void RunRecursive(std::vector<int> &P, std::vector<int> &vVertexOrder, std::list<std::list<int>> &cliques, std::vector<int> &vColors, bool const checkForConnectedComponents);
 #endif // 0
 
+    void SetIsolates(Isolates3<ArraySet> const &newIsolates)
+    {
+        isolates = newIsolates;
+    }
+
 ////    virtual void PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex);
 protected:
     size_t m_uSubgraphDepth;

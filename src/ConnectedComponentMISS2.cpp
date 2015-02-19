@@ -28,7 +28,8 @@ void ConnectedComponentMISS2::Color(std::vector<int> const &vVertexOrder, std::v
 {
 ////    vVerticesToReorder = vVertexOrder;
 ////    coloringStrategy.ColorWithoutReorder(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
-    coloringStrategy.Color(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
+////    coloringStrategy.Color(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors);
+    coloringStrategy.Recolor(m_AdjacencyMatrix, vVertexOrder/* evaluation order */, vVerticesToReorder /* color order */, vColors, static_cast<int>(m_uMaximumCliqueSize), static_cast<int>(R.size()));
 }
 
 void ConnectedComponentMISS2::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
@@ -48,7 +49,18 @@ void ConnectedComponentMISS2::GetNewOrder(vector<int> &vNewVertexOrder, vector<i
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
     vector<pair<int,int>> vAddedEdgesUnused;
+
+////    vector<int> const &vColors(stackColors[depth]);
+////    size_t numLeft = P.size();
+////    for (; numLeft > 0; --numLeft) {
+////        if (R.size() + vColors[numLeft-1] <= m_uMaximumCliqueSize) { break; }
+////    }
+////
+////    numLeft = P.size() - numLeft;
+
     isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
+
+////    if (numLeft >= 10)
     isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
     vNewVertexOrder.resize(vVertexOrder.size());
     size_t uNewIndex(0);
@@ -95,15 +107,22 @@ void ConnectedComponentMISS2::RunRecursive(vector<int> &P, vector<int> &vVertexO
 ////    }
 ////    cout << endl;
 
+    size_t numLeft = P.size();
+    for (; numLeft > 0; --numLeft) {
+        if (R.size() + vColors[numLeft-1] <= m_uMaximumCliqueSize) { break; }
+    }
+
+    numLeft = P.size() - numLeft;
+
 #if 1
-    if (checkForConnectedComponents && P.size() > 100) {
+    if (numLeft > 10) {
+    cout << "depth = " << depth << ", P.size = " << P.size() << ", P.left = " << numLeft << endl;
+    }
+    if (checkForConnectedComponents && numLeft > 5) { //// && P.size() > 100) {
         vector<vector<int>> vComponents;
         GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
         size_t uRemainingVertices(P.size());
         size_t addedToR(0);
-        if (vComponents.size() > 1) {
-
-            cout << depth << ": Found connected components before recursion" << endl;
 #if 1
             int const pickedVertex(P.back());
             size_t connectedComponentSize(0);
@@ -113,8 +132,12 @@ void ConnectedComponentMISS2::RunRecursive(vector<int> &P, vector<int> &vVertexO
                     break;
                 }
             }
-            cout << "Picked vertex is in component of size: " << connectedComponentSize << "/" << P.size() << endl;
 #endif // 1
+
+        if (vComponents.size() > 1 && connectedComponentSize < 2.0*numLeft/3.0) {
+            cout << "Picked vertex is in component of size: " << connectedComponentSize << "/" << P.size() << endl;
+
+////            cout << depth << ": Found connected components before recursion" << endl;
 
             sort(vComponents.begin(), vComponents.end(), [](vector<int> const &left, vector<int> const &right) { return right < left;});
 
@@ -255,7 +278,7 @@ void ConnectedComponentMISS2::RunRecursive(vector<int> &P, vector<int> &vVertexO
     }
 #endif // 0
 
-    if (nodeCount%10000 == 0) {
+    if (nodeCount%10000 == 0 && !m_bQuiet) {
         cout << "Evaluated " << nodeCount << " nodes. " << GetTimeInSeconds(clock() - startTime) << endl;
         PrintState();
     }
@@ -327,7 +350,7 @@ void ConnectedComponentMISS2::RunRecursive(vector<int> &P, vector<int> &vVertexO
 ////        }
 
     // if the graph has become disconnected, we can evaluate the connected components separately
-#if 1
+#if 0
     if (P.size() > 50) {
         vector<vector<int>> vComponents;
         GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());

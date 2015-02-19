@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <list>
+#include "ArraySet.h"
 
 class LightWeightReductionStaticOrderMISS : public LightWeightReductionMISQ
 {
@@ -16,10 +17,8 @@ public:
 
     virtual void GetNewOrder(std::vector<int> &vNewVertexOrder, std::vector<int> &vVertexOrder, std::vector<int> const &P, int const chosenVertex);
 
-////    virtual void PostProcessOrder(std::vector<int> &vVertexOrder, int const chosenVertex);
-
 protected:
-    std::vector<std::vector<int>> stackOrder;
+    ArraySet onlyConsider;
 };
 
 #endif //LIGHTWEIGHT_REDUCTION_STATIC_ORDER_MISS_H

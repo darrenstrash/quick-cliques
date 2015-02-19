@@ -1,4 +1,4 @@
-#include "LightWeightReductionMISQ.h"
+#include "TesterMISQ.h"
 #include "OrderingTools.h"
 #include "GraphTools.h"
 #include "Tools.h"
@@ -8,7 +8,7 @@
 
 using namespace std;
 
-LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
+TesterMISQ::TesterMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
 : LightWeightMISQ(vAdjacencyMatrix)
 ////, m_AdjacencyMatrix(vAdjacencyMatrix)
 , m_AdjacencyArray(vAdjacencyArray)
@@ -32,12 +32,12 @@ LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &v
     stackEvaluatedHalfVertices.resize(vAdjacencyArray.size(), false);
 }
 
-////void LightWeightReductionMISQ::SetInvert(bool const invert)
+////void TesterMISQ::SetInvert(bool const invert)
 ////{
 ////    m_bInvert = invert;
 ////}
 
-void LightWeightReductionMISQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
+void TesterMISQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
 ////    P = std::move(GraphTools::OrderVerticesByDegree(isolates.GetInGraph(), isolates.Neighbors(), true /* non-decreasing*/));
     P = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyArray, true /* non-decreasing*/));
@@ -69,7 +69,7 @@ void LightWeightReductionMISQ::InitializeOrder(std::vector<int> &P, std::vector<
 ////    }
 ////}
 
-size_t LightWeightReductionMISQ::ComputeConnectedComponents(vector<vector<int>> &vComponents)
+size_t TesterMISQ::ComputeConnectedComponents(vector<vector<int>> &vComponents)
 {
     ArraySet remaining = isolates.GetInGraph();
 
@@ -112,7 +112,7 @@ size_t LightWeightReductionMISQ::ComputeConnectedComponents(vector<vector<int>> 
 }
 
 
-void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
+void TesterMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
@@ -162,7 +162,7 @@ void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<
 ////    cout << "]" << endl << flush;
 }
 
-void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
+void TesterMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 {
 ////        stackX[depth+1].push_back(chosenVertex);
         std::vector<int> &vCliqueVertices(stackClique[depth+1]);
@@ -204,7 +204,7 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
 #ifdef ALWAYS_REMOVE_ISOLATES_AFTER
         bool const bRemoveIsolates(true);
 #else
-        bool const bRemoveIsolates(depth <= 9); ////stackEvaluatedHalfVertices[depth+1]);
+        bool const bRemoveIsolates(depth <= 2); ////stackEvaluatedHalfVertices[depth+1]);
 #endif //ALWAYS_REMOVE_ISOLATES_AFTER
 ////////        cout << "Size of clique before reduction: " << R.size() << endl;
         if (bRemoveIsolates)
@@ -268,7 +268,7 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
 
 }
 
-void LightWeightReductionMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)
+void TesterMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)
 {
     vector<int> &vCliqueVerticesToReplace(stackPersistentClique[depth+1]);
     vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
@@ -284,7 +284,7 @@ void LightWeightReductionMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVerte
     vRemovedVerticesToReplace.clear();
 }
 
-////void LightWeightReductionMISQ::PrintState() const
+////void TesterMISQ::PrintState() const
 ////{
 ////    cout << "(";
 ////    for (size_t index = 0; index < stackP.size(); ++index) {

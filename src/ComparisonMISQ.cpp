@@ -1,4 +1,4 @@
-#include "LightWeightReductionMISQ.h"
+#include "ComparisonMISQ.h"
 #include "OrderingTools.h"
 #include "GraphTools.h"
 #include "Tools.h"
@@ -8,7 +8,9 @@
 
 using namespace std;
 
-LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
+#define REMOVE_INITIAL_ISOLATES
+
+ComparisonMISQ::ComparisonMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
 : LightWeightMISQ(vAdjacencyMatrix)
 ////, m_AdjacencyMatrix(vAdjacencyMatrix)
 , m_AdjacencyArray(vAdjacencyArray)
@@ -27,17 +29,22 @@ LightWeightReductionMISQ::LightWeightReductionMISQ(vector<vector<char>> const &v
 , isolates(vAdjacencyArray)
 ////, startTime(clock())
 ////, m_bInvert(0)
+, algorithm1(vAdjacencyMatrix, vAdjacencyArray)
+, algorithm2(vAdjacencyMatrix, vAdjacencyArray)
 {
     SetName("reduction-misq");
     stackEvaluatedHalfVertices.resize(vAdjacencyArray.size(), false);
+
+    algorithm1.SetQuiet(true);
+    algorithm2.SetQuiet(true);
 }
 
-////void LightWeightReductionMISQ::SetInvert(bool const invert)
+////void ComparisonMISQ::SetInvert(bool const invert)
 ////{
 ////    m_bInvert = invert;
 ////}
 
-void LightWeightReductionMISQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
+void ComparisonMISQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
 ////    P = std::move(GraphTools::OrderVerticesByDegree(isolates.GetInGraph(), isolates.Neighbors(), true /* non-decreasing*/));
     P = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyArray, true /* non-decreasing*/));
@@ -62,70 +69,11 @@ void LightWeightReductionMISQ::InitializeOrder(std::vector<int> &P, std::vector<
     vVertexOrder = P;
 }
 
-////void Contains(vector<int> const &vVertices, int const vertex, int const lineNo)
-////{
-////    if (find(vVertices.begin(), vVertices.end(), vertex) != vVertices.end()) {
-////        cout << lineNo << ": vector contains " << vertex << endl << flush;
-////    }
-////}
-
-size_t LightWeightReductionMISQ::ComputeConnectedComponents(vector<vector<int>> &vComponents)
-{
-    ArraySet remaining = isolates.GetInGraph();
-
-    Set currentSearch;
-    Set evaluated;
-
-    size_t componentCount(0);
-    vComponents.clear();
-
-    if (!remaining.Empty()) {
-        int const startVertex = *remaining.begin();
-        currentSearch.Insert(startVertex);
-        remaining.Remove(startVertex);
-        componentCount++;
-        vComponents.resize(componentCount);
-    }
-
-    while (!remaining.Empty() && !currentSearch.Empty()) {
-        int const nextVertex(*currentSearch.begin());
-        evaluated.Insert(nextVertex);
-        vComponents[componentCount - 1].push_back(nextVertex);
-        currentSearch.Remove(nextVertex);
-        remaining.Remove(nextVertex);
-        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
-            if (!evaluated.Contains(neighbor)) {
-                currentSearch.Insert(neighbor);
-            }
-        }
-
-        if (currentSearch.Empty() && !remaining.Empty()) {
-            int const startVertex = *remaining.begin();
-            currentSearch.Insert(startVertex);
-            remaining.Remove(startVertex);
-            componentCount++;
-            vComponents.resize(componentCount);
-        }
-    }
-
-    return componentCount;
-}
-
-
-void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
+void ComparisonMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
     vector<pair<int,int>> vAddedEdgesUnused;
-
-////    vector<int> const &vColors(stackColors[depth]);
-////
-
-////    bool bRemoveIsolates(false);
-////    size_t index = vColors.size();
-////    for (; index > 0; --index) {
-////        if (R.size() + vColors[index] <= m_uMaximumCliqueSize) { bRemoveIsolates = (P.size() - index < 10); break; }
-////    }
 
 ////    bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
     isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
@@ -151,6 +99,36 @@ void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<
 
     R.insert(R.end(), vCliqueVertices.begin(), vCliqueVertices.end());
 
+    // test the two algorithms
+        if (!vNewVertexOrder.empty()) {
+            vector<int> vNewP;
+            vector<int> vNewColors;
+
+            vNewP.resize(vNewVertexOrder.size());
+            vNewColors.resize(vNewVertexOrder.size());
+            vector<int> testColors = vNewColors;
+            vector<int> testOrder  = vNewVertexOrder;
+            vector<int> testP      = vNewP;
+            list<list<int>> testCliques(1);
+            Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
+            algorithm1.SetR(R); algorithm1.SetMaximumCliqueSize(m_uMaximumCliqueSize);
+
+            clock_t start(clock());
+            algorithm1.SetIsolates(isolates);
+            algorithm1.RunRecursive(testP, testOrder, testCliques, testColors);
+            cout << "Algorithm1 finished in " << (double)(clock()-start)/(double)(CLOCKS_PER_SEC) << " seconds" << endl;
+
+            testColors = vNewColors;
+            testOrder  = vNewVertexOrder;
+            testP      = vNewP;
+
+            start = clock();
+            algorithm2.SetIsolates(isolates);
+            algorithm2.SetR(R); algorithm2.SetMaximumCliqueSize(m_uMaximumCliqueSize);
+            algorithm2.RunRecursive(testP, testOrder, testCliques, testColors);
+            cout << "Algorithm2 finished in " << (double)(clock()-start)/(double)(CLOCKS_PER_SEC) << " seconds" << endl;
+        }
+
 ////    vector<vector<int>> vComponents;
 ////    cerr << "size of subgraph             : " << isolates.GetInGraph().Size() << endl << flush;
 ////    cerr << "# connected components       : " << ComputeConnectedComponents(vComponents) << endl << flush;
@@ -162,7 +140,7 @@ void LightWeightReductionMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<
 ////    cout << "]" << endl << flush;
 }
 
-void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
+void ComparisonMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 {
 ////        stackX[depth+1].push_back(chosenVertex);
         std::vector<int> &vCliqueVertices(stackClique[depth+1]);
@@ -200,16 +178,10 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
 
 ////        double const density(isolates.GetDensity());
 ////        size_t const maxDegree(isolates.GetMaxDegree());
-#ifndef REMOVE_ISOLATES_BEFORE_ONLY
-#ifdef ALWAYS_REMOVE_ISOLATES_AFTER
-        bool const bRemoveIsolates(true);
-#else
-        bool const bRemoveIsolates(depth <= 9); ////stackEvaluatedHalfVertices[depth+1]);
-#endif //ALWAYS_REMOVE_ISOLATES_AFTER
+        bool const bRemoveIsolates(depth <= 2); ////stackEvaluatedHalfVertices[depth+1]);
 ////////        cout << "Size of clique before reduction: " << R.size() << endl;
         if (bRemoveIsolates)
             isolates.RemoveAllIsolates(0 /*unused*/,vTempCliqueVertices, vTempRemovedVertices, vAddedEdgesUnused, chosenVertex == -1 /* either consider all (true) or consider only changed vertices (false) */);
-#endif //REMOVE_ISOLATES_BEFORE_ONLY
 ////        cout << __LINE__ << ": Removed " << vTempCliqueVertices.size() + vTempRemovedVertices.size() << " vertices " << endl;
 ////        cout << __LINE__ << ": density=" << density << ", max-degree=" << maxDegree << ", clique-vertices=" << vCliqueVertices.size() << ", other-removed=" << vRemoved.size()  << ", percent-total-removed=" << (vCliqueVertices.size() + vRemoved.size())/static_cast<double>(P.size())*100 << "%" << endl;
 ////
@@ -260,15 +232,13 @@ void LightWeightReductionMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVer
 ////            vColors.resize(uNewIndex);
 ////            Color(vVertexOrder/* evaluation order */, P /* color order */, vColors);
 
-#ifndef REMOVE_ISOLATES_BEFORE_ONLY
             if (bRemoveIsolates)
                 Color(vVertexOrder, P, vColors);
-#endif //REMOVE_ISOLATES_BEFORE_ONLY
         }
 
 }
 
-void LightWeightReductionMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)
+void ComparisonMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)
 {
     vector<int> &vCliqueVerticesToReplace(stackPersistentClique[depth+1]);
     vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
@@ -284,7 +254,7 @@ void LightWeightReductionMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVerte
     vRemovedVerticesToReplace.clear();
 }
 
-////void LightWeightReductionMISQ::PrintState() const
+////void ComparisonMISQ::PrintState() const
 ////{
 ////    cout << "(";
 ////    for (size_t index = 0; index < stackP.size(); ++index) {

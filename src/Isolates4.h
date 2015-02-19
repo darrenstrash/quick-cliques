@@ -1,5 +1,5 @@
-#ifndef ISOLATES_3_H
-#define ISOLATES_3_H
+#ifndef ISOLATES_4_H
+#define ISOLATES_4_H
 
 #include "Set.h"
 #include "ArraySet.h"
@@ -14,23 +14,20 @@
 ////#define TIMERS
 ////#define SPARSE
 
-template <typename NeighborSet> class Isolates3
+template <typename NeighborSet> class Isolates4
 {
 public:
-    Isolates3(std::vector<std::vector<int>> const &adjacencyArray);
-    ~Isolates3();
+    Isolates4(std::vector<std::vector<int>> const &adjacencyArray);
+    ~Isolates4();
 
     void RemoveVertexAndNeighbors(int const vertex, std::vector<int> &vRemoved);
     void RemoveVertex(int const vertex);
 
     void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges, bool const bConsiderAllVertices);
-    void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges, bool const bConsiderAllVertices, ArraySet const &onlyConsider);
     void ReplaceAllRemoved(std::vector<int> const &vRemoved);
 
     int NextVertexToRemove(std::vector<int> &vVertices);
     int NextVertexToRemove();
-
-    void SwapToEnd(std::vector<int> &vVertices, int const vertex);
 
     size_t size() const { return isolates.Size(); }
 
@@ -48,15 +45,12 @@ public:
 
     void SetConnectedComponent(std::vector<int> const &vVertices);
 
-    double GetDensity() const;
-    size_t GetMaxDegree() const;
-
 protected: // methods
     bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices);
 ////    bool RemoveIsolatedPath      (int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
 
 protected: // members
-    std::vector<std::vector<int>> m_ReorderedAdjacencyArray;
+    std::vector<std::vector<int>> const &m_AdjacencyArray;
 #ifdef SPARSE
     std::vector<SparseArraySet>     neighbors;
 #else
@@ -66,7 +60,6 @@ protected: // members
     ArraySet isolates;
     ArraySet remaining;
     std::vector<bool> vMarkedVertices;
-    std::vector<bool> vRecentlyRemovedVertices;
     std::map<int,int> m_AlternativeVertices;
 #ifdef TIMERS
     clock_t timer;
@@ -80,4 +73,4 @@ protected: // members
     bool m_bConnectedComponentMode;
 };
 
-#endif //ISOLATES_3_H
+#endif //ISOLATES_4_H

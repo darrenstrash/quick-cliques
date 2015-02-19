@@ -1,5 +1,5 @@
-#ifndef LIGHTWEIGHT_REDUCTION_MISQ_H
-#define LIGHTWEIGHT_REDUCTION_MISQ_H
+#ifndef TESTER_MISQ_H
+#define TESTER_MISQ_H
 
 #include "LightWeightMISQ.h"
 #include "IndependentSetColoringStrategy.h"
@@ -11,10 +11,10 @@
 #include <vector>
 #include <list>
 
-class LightWeightReductionMISQ : public LightWeightMISQ 
+class TesterMISQ : public LightWeightMISQ 
 {
 public:
-    LightWeightReductionMISQ(std::vector<std::vector<char>> const &vAdjacencyMatrix, std::vector<std::vector<int>> const &vAdjacencyArray);
+    TesterMISQ(std::vector<std::vector<char>> const &vAdjacencyMatrix, std::vector<std::vector<int>> const &vAdjacencyArray);
 
 ////    virtual void Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors);
 
@@ -44,4 +44,4 @@ protected:
     std::vector<bool> vRemoveIsolates;
 ////    bool m_bInvert;
 };
-#endif //LIGHTWEIGHT_REDUCTION_MISQ_H
+#endif //TESTER_MISQ_H

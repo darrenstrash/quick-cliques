@@ -112,7 +112,7 @@ void LightWeightReductionSparseMISQ::ProcessOrderAfterRecursion(std::vector<int>
         vector<pair<int,int>> vAddedEdgesUnused;
         vector<int> vUnused;
 
-        bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
+        bool const bRemoveIsolates(depth<=2); ////stackEvaluatedHalfVertices[depth+1]);
         if (chosenVertex == -1) {
             reducer.InitialReduce(vTempCliqueVertices);
         } else {
@@ -158,7 +158,7 @@ void LightWeightReductionSparseMISQ::ProcessOrderAfterRecursion(std::vector<int>
         }
 
 ////        if (bRemoveIsolates)
-////        Color(vVertexOrder, P, vColors);
+////            Color(vVertexOrder, P, vColors);
 }
 
 void LightWeightReductionSparseMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)

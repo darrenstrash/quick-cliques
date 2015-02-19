@@ -20,6 +20,7 @@ protected:
     std::vector<std::vector<int>> m_vvVerticesWithColor;
     std::vector<int>              m_vVertexToColor;
     std::vector<int>              m_vNeighborColorCount;
+    std::vector<bool>             m_vbNeighbors;
 ////    std::vector<int> m_Colors;
 ////    std::vector<int> m_VertexOrder;
 };

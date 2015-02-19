@@ -14,6 +14,7 @@ SparseIndependentSetColoringStrategy::SparseIndependentSetColoringStrategy(vecto
  , m_vVertexToColor(adjacencyArray.size(), -1)
  , m_vvVerticesWithColor(adjacencyArray.size())
  , m_vNeighborColorCount(adjacencyArray.size(), 0)
+ , m_vbNeighbors(adjacencyArray.size(), false)
 {
 }
 
@@ -175,6 +176,7 @@ void SparseIndependentSetColoringStrategy::Recolor(vector<vector<int>> const &ad
         int uSmallestFreeColor = maxColor + 1;
         // first count the number of neighbors with a given color
         for (int const neighbor : m_AdjacencyArray[vertex]) {
+            m_vbNeighbors[neighbor] = true;
             if (m_vVertexToColor[neighbor] != -1) {
                 m_vNeighborColorCount[m_vVertexToColor[neighbor]]++;
             }
@@ -194,12 +196,12 @@ void SparseIndependentSetColoringStrategy::Recolor(vector<vector<int>> const &ad
             }
         }
 
-        // put color counts back to 0.
-        for (int const neighbor : m_AdjacencyArray[vertex]) {
-            if (m_vVertexToColor[neighbor] != -1) {
-                m_vNeighborColorCount[m_vVertexToColor[neighbor]] = 0;
-            }
-        }
+////        // put color counts back to 0.
+////        for (int const neighbor : m_AdjacencyArray[vertex]) {
+////            if (m_vVertexToColor[neighbor] != -1) {
+////                m_vNeighborColorCount[m_vVertexToColor[neighbor]] = 0;
+////            }
+////        }
 
 #else
         int uSmallestFreeColor = 0;
@@ -229,6 +231,14 @@ void SparseIndependentSetColoringStrategy::Recolor(vector<vector<int>> const &ad
             Repair(vertex, uSmallestFreeColor, iBestCliqueDelta);
             if (m_vvVerticesWithColor[maxColor].empty())
                 maxColor--;
+        }
+
+        // put color counts back to 0. Needs to come after repair, repair uses the counts.
+        for (int const neighbor : m_AdjacencyArray[vertex]) {
+            m_vbNeighbors[neighbor] = false;
+            if (m_vVertexToColor[neighbor] != -1) {
+                m_vNeighborColorCount[m_vVertexToColor[neighbor]] = 0;
+            }
         }
     }
 
@@ -290,7 +300,7 @@ int SparseIndependentSetColoringStrategy::GetConflictingVertex(int const vertex,
     int conflictingVertex(-1);
     int count(0);
     for (int const candidateVertex : vVerticesWithColor) {
-        if (find(m_AdjacencyArray[vertex].begin(), m_AdjacencyArray[vertex].end(), candidateVertex) == m_AdjacencyArray[vertex].end()) {
+        if (!m_vbNeighbors[candidateVertex]) { ////find(m_AdjacencyArray[vertex].begin(), m_AdjacencyArray[vertex].end(), candidateVertex) == m_AdjacencyArray[vertex].end()) {
             conflictingVertex = candidateVertex;
             count++;
             if (count > 1) return -1;
@@ -304,6 +314,8 @@ bool SparseIndependentSetColoringStrategy::Repair(int const vertex, int const co
     for (int newColor = 0; newColor <= iBestCliqueDelta-1; newColor++) {
         int const conflictingVertex(GetConflictingVertex(vertex, m_vvVerticesWithColor[newColor]));
         if (conflictingVertex < 0) continue;
+
+        // TODO/DS: put conflicting neighbors into array for quick testing.
         for (int nextColor = newColor+1; nextColor <= iBestCliqueDelta; nextColor++) {
             if (HasConflict(conflictingVertex, m_vvVerticesWithColor[nextColor])) continue;
             m_vvVerticesWithColor[color].erase(find(m_vvVerticesWithColor[color].begin(), m_vvVerticesWithColor[color].end(), vertex));

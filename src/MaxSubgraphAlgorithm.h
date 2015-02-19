@@ -8,6 +8,11 @@
 #include <list>
 #include <ctime>
 
+////#define PREPRUNE
+////#define REMOVE_ISOLATES_BEFORE_ONLY
+////#define ALWAYS_REMOVE_ISOLATES_AFTER
+////#define NO_ISOLATES_P_LEFT_10
+
 class MaxSubgraphAlgorithm : public Algorithm
 {
 public:
@@ -34,6 +39,8 @@ public:
     virtual void SetNodeCount(size_t const count) { nodeCount = count; }
     virtual size_t GetNodeCount() { return nodeCount; }
 
+    void SetR(std::vector<int> const &newR) { R = newR; }
+    void SetMaximumCliqueSize(size_t const newCliqueSize) { m_uMaximumCliqueSize = newCliqueSize; }
 protected:
     size_t m_uMaximumCliqueSize;
     std::vector<int> R;
@@ -43,6 +50,7 @@ protected:
     size_t nodeCount;
     int depth;
     clock_t startTime;
+    clock_t timeToLargestClique;
     bool    m_bQuiet;
     std::vector<bool> stackEvaluatedHalfVertices;
 ////    bool m_bInvert;

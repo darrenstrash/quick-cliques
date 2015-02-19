@@ -14,6 +14,7 @@ MaxSubgraphAlgorithm::MaxSubgraphAlgorithm(string const &name)
 , nodeCount(0)
 , depth(-1)
 , startTime(clock())
+, timeToLargestClique(0)
 , m_bQuiet(false)
 , stackEvaluatedHalfVertices()
 ////, m_bInvert(0)
@@ -48,42 +49,13 @@ long MaxSubgraphAlgorithm::Run(list<std::list<int>> &cliques)
         cliques.back().insert(cliques.back().end(), R.begin(), R.end());
         ExecuteCallBacks(cliques.back());
         m_uMaximumCliqueSize = R.size();
+        timeToLargestClique = clock() - startTime;
     }
 
     depth++;
     RunRecursive(P, vVertexOrder, cliques, vColors);
     return cliques.size();
 }
-
-////long MaxSubgraphAlgorithm::Run(vector<int> const &startingVertices, list<std::list<int>> &cliques)
-////{
-////    vector<int> &P(stackP[0]);
-////    vector<int> &vColors(stackColors[0]);
-////    vector<int> &vVertexOrder(stackOrder[0]);
-////
-////    InitializeOrder(P, vVertexOrder, vColors);
-////
-////    cliques.push_back(list<int>());
-////
-////    if (R.size() < m_uMaximumCliqueSize) {
-////        cliques.back().clear();
-////        cliques.back().insert(cliques.back().end(), P.begin(), P.begin() + m_uMaximumCliqueSize);
-////        ExecuteCallBacks(cliques.back());
-////    }
-////
-////    ProcessOrderAfterRecursion(vVertexOrder, P, vColors, -1 /* no vertex chosen for removal */);
-////
-////    if (R.size() > m_uMaximumCliqueSize) {
-////        cliques.back().clear();
-////        cliques.back().insert(cliques.back().end(), R.begin(), R.end());
-////        ExecuteCallBacks(cliques.back());
-////        m_uMaximumCliqueSize = R.size();
-////    }
-////
-////    depth++;
-////    RunRecursive(P, vVertexOrder, cliques, vColors);
-////    return cliques.size();
-////}
 
 void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
 {
@@ -96,27 +68,31 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
 ////    stackEvaluatedHalfVertices[depth + 1] = (rand()%(depth+1) == depth);
 ////    stackEvaluatedHalfVertices[depth + 1] = true;
 ////    stackEvaluatedHalfVertices[depth + 1] = false;
-    stackEvaluatedHalfVertices[depth + 1] = (depth<=1);
+////    stackEvaluatedHalfVertices[depth + 1] = (depth<=2);
 
-    size_t halfVertices(0);
-////    for (size_t index = P.size()+1; index > 0; --index) {
+////    size_t halfVertices(0);
+////    size_t index = P.size()+1;
+////    for (; index > 0; --index) {
 ////        if (vColors[index-1] + R.size() <= m_uMaximumCliqueSize) {
-////            halfVertices = (index - 1) + 2*(P.size() - (index - 1))/3.0;
+////            halfVertices = (index - 1) + 0.9*(P.size() - (index - 1));
 ////            break;
 ////        }
 ////    }
+
+////    stackEvaluatedHalfVertices[depth + 1] = ((P.size() - index) > 50); //(depth<=2);
+    stackEvaluatedHalfVertices[depth + 1] = true;
 
     size_t const uOriginalPSize(P.size());
 
     if (nodeCount%10000 == 0) {
         if (!m_bQuiet) {
             cout << "Evaluated " << nodeCount << " nodes. " << GetTimeInSeconds(clock() - startTime) << endl;
+            PrintState();
         }
-        PrintState();
     }
 
     while (!P.empty()) {
-////    if (!stackEvaluatedHalfVertices[depth + 1])
+////    if (!stackEvaluatedHalfVertices[depth + 1]) {
 ////        stackEvaluatedHalfVertices[depth + 1] = (rand()%(depth+1) == depth);
 ////        stackEvaluatedHalfVertices[depth + 1] = (rand()%2 == 1);
 
@@ -126,7 +102,7 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
 ////            if (uOriginalPSize >= 100 && P.size() > 1 && vColors[P.size()-5] + R.size() <= m_uMaximumCliqueSize) {
 ////                stackEvaluatedHalfVertices[depth + 1] = true;
 ////            }
-////            size_t index = P.size()+1;
+////            size_t index = P.size();
 ////            for (; index > 0; --index) {
 ////                if (vColors[index-1] + R.size() <= m_uMaximumCliqueSize) {
 ////                    halfVertices = (index - 1 + uOriginalPSize)/2;
@@ -182,14 +158,23 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
             vNewP.resize(vNewVertexOrder.size());
             vNewColors.resize(vNewVertexOrder.size());
             Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
+#ifdef PREPRUNE
+            if (R.size() + vNewColors.back() > m_uMaximumCliqueSize) {
+                depth++;
+                RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
+                depth--;
+            }
+#else
             depth++;
             RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
             depth--;
+#endif // PREPRUNE
         } else if (R.size() > m_uMaximumCliqueSize) {
             cliques.back().clear();
             cliques.back().insert(cliques.back().end(), R.begin(), R.end());
             ExecuteCallBacks(cliques.back());
             m_uMaximumCliqueSize = R.size();
+            timeToLargestClique = clock() - startTime;
         }
 
         bool bPIsEmpty(P.empty());
@@ -205,6 +190,7 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
                 cliques.back().insert(cliques.back().end(), R.begin(), R.end());
                 ExecuteCallBacks(cliques.back());
                 m_uMaximumCliqueSize = R.size();
+                timeToLargestClique = clock() - startTime;
             }
         }
     }
@@ -221,6 +207,7 @@ MaxSubgraphAlgorithm::~MaxSubgraphAlgorithm()
 {
     if (!m_bQuiet) {
         cerr << "Largest Clique     : " << m_uMaximumCliqueSize << endl;
+        cerr << "Time to Clique     : " << GetTimeInSeconds(timeToLargestClique) << endl;
         cerr << "Node    Count      : " << nodeCount << endl;
     }
 }

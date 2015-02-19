@@ -1,7 +1,7 @@
 // local includes
 #include "Staging.h"
 #include "CliqueTools.h"
-#include "Isolates2.h"
+#include "Isolates4.h"
 #include "LightWeightReductionMISR.h"
 #include "LightWeightMISQ.h"
 #include "LightWeightStaticOrderMISS.h"
@@ -297,7 +297,7 @@ template <typename C> bool ReplaceRemovedVertices(vector<vector<int>> const &adj
     return true;
 }
 
-size_t ComputeConnectedComponents(Isolates2<SparseArraySet> const &isolates, vector<vector<int>> &vComponents)
+size_t ComputeConnectedComponents(Isolates4<SparseArraySet> const &isolates, vector<vector<int>> &vComponents)
 {
     ArraySet remaining = isolates.GetInGraph();
 
@@ -339,7 +339,7 @@ size_t ComputeConnectedComponents(Isolates2<SparseArraySet> const &isolates, vec
     return componentCount;
 }
 
-vector<vector<int>> ComputeSubgraphOfSize(Isolates2<SparseArraySet> const &isolates, size_t const graphSize, size_t const subgraphSize)
+vector<vector<int>> ComputeSubgraphOfSize(Isolates4<SparseArraySet> const &isolates, size_t const graphSize, size_t const subgraphSize)
 {
     ArraySet remaining = isolates.GetInGraph();
 
@@ -394,7 +394,7 @@ vector<vector<int>> ComputeSubgraphOfSize(Isolates2<SparseArraySet> const &isola
         }
     }
 
-    Isolates2<SparseArraySet> subgraphIsolates(vAdjacencyArray);
+    Isolates4<SparseArraySet> subgraphIsolates(vAdjacencyArray);
     vector<int> vRemoved;
     vector<int> vIsolates;
     set<int>    setRemoved;
@@ -524,7 +524,7 @@ void Staging::Run()
 #else
     cerr << "Applying New      Reductions..." << endl << flush;
 
-    Isolates2<SparseArraySet> isolates(m_AdjacencyList);
+    Isolates4<SparseArraySet> isolates(m_AdjacencyList);
 
     cerr << "Removing isolates..." << endl;
     vector<int> vRemoved;
@@ -562,7 +562,7 @@ void Staging::Run()
 
     isolates.SetConnectedComponent(vComponents[maxComponentIndex]);
 
-    vector<vector<int>> const subgraphAdjacencyList = ComputeSubgraphOfSize(isolates, m_AdjacencyList.size(), 2048);
+    vector<vector<int>> const subgraphAdjacencyList = ComputeSubgraphOfSize(isolates, m_AdjacencyList.size(), 1024);
 
     cout << "Subgraph size=" << subgraphAdjacencyList.size() << endl << flush;
 

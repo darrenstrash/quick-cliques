@@ -10,6 +10,7 @@ using namespace std;
 
 LightWeightReductionStaticOrderMISS::LightWeightReductionStaticOrderMISS(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
 : LightWeightReductionMISQ(vAdjacencyMatrix, vAdjacencyArray)
+, onlyConsider(vAdjacencyMatrix.size())
 {
     SetName("reduction-static-order-miss");
 }
@@ -27,11 +28,30 @@ void LightWeightReductionStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrd
     vector<pair<int,int>> vAddedEdgesUnused;
     isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
 
+#ifdef NO_ISOLATES_P_LEFT_10
+    vector<int> const &vColors(stackColors[depth]);
+    bool bRemoveIsolates((vColors.size() < 10) || (vColors[vColors.size()-10] + R.size() <= m_uMaximumCliqueSize));
+#else
+    bool bRemoveIsolates(true);
+#endif //NO_ISOLATES_P_LEFT_10
+////    size_t index = vColors.size();
+////    for (; index > 0; --index) {
+////        if (R.size() + vColors[index] <= m_uMaximumCliqueSize) { bRemoveIsolates = !(P.size() - index < 10); break; }
+////    }
+
 ////    double const density(isolates.GetDensity());
 ////    size_t const maxDegree(isolates.GetMaxDegree());
 ////    bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth + 1]);
-////    if (bRemoveIsolates)
-        isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+    if (bRemoveIsolates)
+////        if (onlyConsider.Size() > 50) {
+////        if (depth <= 5)
+            isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+////        } else {
+////            isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */, onlyConsider);
+////        }
+////    }
+
+////    onlyConsider.Clear();
 
 ////    cout << __LINE__ << ": density=" << density << ", max-degree=" << maxDegree << ", clique-vertices=" << vCliqueVertices.size() << ", other-removed=" << vRemoved.size()  << ", percent-total-removed=" << (vCliqueVertices.size() + vRemoved.size())/static_cast<double>(P.size())*100 << "%" << endl;
 ////

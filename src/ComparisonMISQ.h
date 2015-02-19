@@ -1,5 +1,5 @@
-#ifndef LIGHTWEIGHT_REDUCTION_MISQ_H
-#define LIGHTWEIGHT_REDUCTION_MISQ_H
+#ifndef COMPARISON_MISQ_H
+#define COMPARISON_MISQ_H
 
 #include "LightWeightMISQ.h"
 #include "IndependentSetColoringStrategy.h"
@@ -11,10 +11,15 @@
 #include <vector>
 #include <list>
 
-class LightWeightReductionMISQ : public LightWeightMISQ 
+#include "LightWeightFullMISS.h"
+#include "LightWeightReductionFullMISS.h"
+#include "TesterMISS.h"
+#include "ConnectedComponentMISS2.h"
+
+class ComparisonMISQ : public LightWeightMISQ 
 {
 public:
-    LightWeightReductionMISQ(std::vector<std::vector<char>> const &vAdjacencyMatrix, std::vector<std::vector<int>> const &vAdjacencyArray);
+    ComparisonMISQ(std::vector<std::vector<char>> const &vAdjacencyMatrix, std::vector<std::vector<int>> const &vAdjacencyArray);
 
 ////    virtual void Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors);
 
@@ -24,11 +29,6 @@ public:
     virtual void GetNewOrder(std::vector<int> &vNewVertexOrder, std::vector<int> &vVertexOrder, std::vector<int> const &P, int const chosenVertex);
     virtual void ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex);
     virtual void ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors);
-
-    void SetIsolates(Isolates3<ArraySet> const &newIsolates)
-    {
-        isolates = newIsolates;
-    }
 
 ////    virtual void PrintState() const;
 
@@ -42,6 +42,9 @@ protected:
     std::vector<std::vector<int>> stackPersistentOther;
     Isolates3<ArraySet> isolates;
     std::vector<bool> vRemoveIsolates;
+    ConnectedComponentMISS2 algorithm1;
+    TesterMISS          algorithm2;
 ////    bool m_bInvert;
 };
-#endif //LIGHTWEIGHT_REDUCTION_MISQ_H
+
+#endif //COMPARISON_MISQ_H
