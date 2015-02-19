@@ -168,6 +168,8 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 ////    stackEvaluatedHalfVertices[depth + 1] = ((P.size() - index) > 50); //(depth<=2);
     stackEvaluatedHalfVertices[depth + 1] = true;
 
+    vector<int> X;
+
     size_t const uOriginalPSize(P.size());
 
     if (nodeCount%10000 == 0) {
@@ -185,10 +187,11 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
     numLeft = P.size() - numLeft;
 
     vector<int> evaluateP;
+////    vector<int> evaluateColors;
 
     bool pivot(false);
 
-    if (!P.empty() && depth <= 3) {
+    if (!P.empty() && depth <= 2) {
         int const nextVertexToEvaluate(P.back());
         if (numLeft > isolates.Neighbors()[nextVertexToEvaluate].Size()) {
             pivot = true;
@@ -201,6 +204,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
                 int const vertex(P[index]);
                 if (vMarkedVertices[vertex]) {
                     evaluateP.push_back(vertex);
+////                    evaluateColors.push_back(vertex);
                 }
             }
 
@@ -220,9 +224,46 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 
         int const nextVertex(evaluateP.back()); evaluateP.pop_back();
 
-        if (!isolates.GetInGraph().Contains(nextVertex)) {
+        if (!isolates.GetInGraph().Contains(nextVertex)) { // filter by reducer...
             continue;
         }
+
+        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
+            vMarkedVertices[neighbor] = true;
+        }
+
+        bool dominates(false);
+        for (int const x : X) {
+            dominates = true;
+            for (int const neighborX : m_AdjacencyArray[x]) {
+                if (isolates.GetInGraph().Contains(neighborX) && !vMarkedVertices[neighborX]) {
+                    dominates = false;
+                    break;
+                }
+            }
+
+            if (dominates) {
+                break;
+            }
+        }
+
+        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
+            vMarkedVertices[neighbor] = false;
+        }
+
+        if (dominates) {
+            isolates.RemoveVertex(nextVertex);
+            continue;
+        }
+
+////        int const largestColor(evaluateColors.back());
+////        if (R.size() + largestColor <= m_uMaximumCliqueSize) { //// && !selectMinNeighbors) {
+////            TesterMISQ::ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
+////            P.clear();
+////            return;
+////        }
+
+////        evaluateColors.pop_back();
 
         size_t const numLeft = evaluateP.size();
         if (numLeft > 10) {
@@ -281,6 +322,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         }
     }
 
+    bool const selectMinNeighbors(false); ////depth <= 2);
     while (!P.empty() && !pivot) {
         if (depth == 0) {
             if (!m_bQuiet) {
@@ -289,28 +331,60 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         }
 
         int const largestColor(vColors.back());
-        if (R.size() + largestColor <= m_uMaximumCliqueSize) {
+        if (R.size() + largestColor <= m_uMaximumCliqueSize) { //// && !selectMinNeighbors) {
             TesterMISQ::ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
             P.clear();
             return;
         }
 
-        vColors.pop_back();
-        int const nextVertex(P.back()); P.pop_back();
+        int vertexToChoose(P.back());
+        size_t maxNeighborCount(0);
 
+        size_t numLeft = P.size();
+        for (; numLeft > 0; --numLeft) {
+            if (R.size() + vColors[numLeft-1] <= m_uMaximumCliqueSize) { break; }
+        }
 
-    numLeft = P.size();
-    for (; numLeft > 0; --numLeft) {
-        if (R.size() + vColors[numLeft-1] <= m_uMaximumCliqueSize) { break; }
-    }
+        if (selectMinNeighbors) {
+            for (size_t index = P.size(); index > numLeft; --index) {
+                vMarkedVertices[P[index-1]] = true;
+            }
 
-    numLeft = P.size() - numLeft;
+            for (size_t index = P.size(); index > numLeft; --index) {
+                int const vertex(P[index-1]);
+                size_t neighborCount(0);
+                for (int const neighbor : isolates.Neighbors()[vertex]) {
+                    if (vMarkedVertices[neighbor]) neighborCount++;
+                }
+                if (neighborCount > maxNeighborCount) {
+                    maxNeighborCount = neighborCount;
+                    vertexToChoose = vertex;
+                }
+            }
 
-////    if (numLeft > 10) {
-////        cout << "depth = " << depth << ", P.size = " << P.size() << ", P.left = " << numLeft << ", neighbors=" << isolates.Neighbors()[nextVertex].Size() << endl;
-////    }
+            for (size_t index = P.size(); index > numLeft; --index) {
+                vMarkedVertices[P[index-1]] = false;
+            }
+        }
 
-////        cout << depth << ": Choosing next vertex: " << nextVertex << endl;
+////        cout << "Before subtraction numleft=" << numLeft << endl;
+        numLeft = P.size() - numLeft;
+////        cout << "After  subtraction numleft=" << numLeft << endl;
+
+        int const nextVertex(vertexToChoose); 
+        if (nextVertex != P.back()) {
+            P.erase(find(P.begin(), P.end(), nextVertex));
+            Color(vVertexOrder, P, vColors);
+        } else {
+            P.pop_back();
+            vColors.pop_back();
+        }
+
+////        if (numLeft > 10) {
+////            cout << "depth = " << depth << ", P.size = " << P.size() << ", P.left = " << numLeft << ", neighbors=" << isolates.Neighbors()[nextVertex].Size() << endl;
+////        }
+
+        ////        cout << depth << ": Choosing next vertex: " << nextVertex << endl;
 
         GetNewOrder(vNewVertexOrder, vVertexOrder, P, nextVertex);
 
@@ -346,6 +420,8 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 
         bool bPIsEmpty(P.empty());
         ProcessOrderAfterRecursion(vVertexOrder, P, vColors, nextVertex);
+
+        X.push_back(nextVertex);
 
 ////        if (R.size() > m_uMaximumCliqueSize && bPIsEmpty && P.empty()) {
 ////            cout << "ERROR!" << endl << flush;
