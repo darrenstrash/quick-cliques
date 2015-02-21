@@ -10,7 +10,9 @@
 #include "LightWeightReductionFullMISS.h"
 #include "LightWeightReductionSparseFullMISS.h"
 #include "LightWeightReductionSparseStaticOrderMISS.h"
+#include "TesterMISS.h"
 #include "ConnectedComponentMISS.h"
+#include "OrderingTools.h"
 
 // system includes
 #include <vector>
@@ -19,6 +21,7 @@
 #include <iostream>
 #include <algorithm>
 #include <climits>
+#include <random>
 
 using namespace std;
 
@@ -30,271 +33,6 @@ Staging::Staging(std::vector<std::vector<int>> &adjacencyList)
 
 Staging::~Staging()
 {
-}
-
-bool RemoveIsolatedClique(int const vertex, vector<set<int>> &neighbors, set<int> &remaining, set<int> &isolates, set<int> &removed, vector<bool> &vMarkedVertices)
-{
-    size_t neighborCount(0);
-    bool superSet(true);
-    // TODO/DS: Put back!
-    for (int const neighbor : neighbors[vertex]) {
-        if (neighbors[neighbor].size() < neighbors[vertex].size()) {
-            superSet = false; break;
-        }
-    }
-
-    ////    if (vertex == 21952) {
-    ////        cout << "vertex" << vertex << " has " << neighbors[vertex].size() << " neighbors." << endl << flush;
-    ////    }
-
-    if (!superSet) return false;
-
-////    bool const debug(true);//vertex==194);
-////    if (debug) {
-////        cout << "vertex " << vertex << " has neighbors: ";
-////    }
-////    if (debug) {
-////        for (int const neighbor : neighbors[vertex]) {
-////            cout << neighbor << " " << flush;
-////        }
-////        cout << endl << flush;
-////    }
-
-    for (int const neighbor : neighbors[vertex]) {
-////        if (debug) {
-////            cout << "Considering neighbor " <<  neighbor  << flush;
-////        }
-        neighborCount++;
-
-        for (int const nNeighbor : neighbors[neighbor]) {
-            vMarkedVertices[nNeighbor] = true;
-        }
-        vMarkedVertices[neighbor] = true;
-
-        for (int const neighbor2 : neighbors[vertex]) {
-////            if (debug && superSet && !vMarkedVertices[neighbor2]) {
-////                cout << "(missing neighbor " << neighbor2 << ") ";
-////            }
-            superSet = superSet && vMarkedVertices[neighbor2];
-        }
-
-        for (int const nNeighbor : neighbors[neighbor]) {
-            vMarkedVertices[nNeighbor] = false;
-        }
-        vMarkedVertices[neighbor] = false;
-
-        if (!superSet) {
-////            if (debug) {
-////                cout << "[x] " << endl;
-////            }
-            return false;
-        }
-
-////        if (debug)
-////            cout << endl << flush;
-
-        ////            cout << "Iteration(" << neighborCount << ": Intersection=";
-        ////            for (int const vertex : intersection) {
-        ////                cout << vertex << " ";
-        ////            }
-        ////            cout << endl << flush;
-    }
-
-    ////        cout << "Iteration(" << neighborCount << ": Intersection=";
-    ////        for (int const vertex : intersection) {
-    ////            cout << vertex << " ";
-    ////        }
-    ////        cout << endl << flush;
-
-    if (superSet) {
-////        cout << "Removing Clique: [" << vertex;
-////        for (int const neighbor : neighbors[vertex]) {
-////            cout << " " << neighbor;
-////        }
-////        cout << "]" << endl;
-        removed.insert(neighbors[vertex].begin(), neighbors[vertex].end());
-        removed.insert(vertex);
-        isolates.insert(vertex);
-        for (int const neighbor : neighbors[vertex]) {
-            remaining.erase(neighbor);
-            ////                cout << "   Expunging neighbor " << neighbor << " with " << neighbors[neighbor].size() << " neighbors" << endl << flush;
-            for (int const nNeighbor : neighbors[neighbor]) {
-                if (removed.find(nNeighbor) == removed.end()) {
-                    remaining.insert(nNeighbor);
-                }
-
-                if (nNeighbor != vertex) {
-                    neighbors[nNeighbor].erase(neighbor);
-                }
-            }
-            neighbors[neighbor].clear();
-        }
-        neighbors[vertex].clear();
-
-        ////    if (vertex == 21952) {
-        ////        cout << "vertex" << vertex << " is being removed." << endl << flush;
-        ////    }
-
-        return true;
-    }
-    return false;
-}
-
-bool RemoveIsolatedPath(int const vertex, vector<set<int>> &neighbors, set<int> &remaining, set<int> &isolates, set<int> &removed, vector<bool> &vMarkedVertices)
-{
-    if (neighbors[vertex].size() != 2) return false;
-
-    for (int const neighbor : neighbors[vertex]) {
-        if (neighbors[neighbor].size() == 2) {
-            removed.insert(vertex);
-            removed.insert(neighbor);
-            isolates.insert(vertex);
-
-            int endVertex(-1);
-
-            // remove from other neighbor's list...
-            for (int const nNeighbor : neighbors[neighbor]) {
-                if (nNeighbor != vertex) {
-                    endVertex = nNeighbor;
-                    neighbors[nNeighbor].erase(neighbor);
-                    remaining.insert(nNeighbor);
-                    break;
-                }
-            }
-
-            for (int const otherNeighbor : neighbors[vertex]) {
-                if (otherNeighbor != neighbor) {
-                    neighbors[otherNeighbor].erase(vertex);
-                    remaining.insert(otherNeighbor);
-
-                    neighbors[otherNeighbor].insert(endVertex);
-                    neighbors[endVertex].insert(otherNeighbor);
-                    break;
-                }
-            }
-
-            neighbors[vertex].clear();
-            neighbors[neighbor].clear();
-
-            remaining.erase(vertex);
-            remaining.erase(neighbor);
-////            cout << "Removing Path: [" << vertex << " " << neighbor << "]" << endl << flush;
-
-            return true;
-        }
-    }
-    return false;
-}
-
-bool RemoveVertexAndNeighbors(int const vertex, vector<set<int>> &neighbors, set<int> &remaining, set<int> &isolates, set<int> &removedVertices)
-{
-    //    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
-    removedVertices.insert(vertex);
-    remaining.erase(vertex);
-    isolates.insert(vertex);
-
-    for (int const neighbor : neighbors[vertex]) {
-        //        cout << __LINE__ << ":     Removing neighbor " << neighbor << endl << flush;
-        removedVertices.insert(neighbor);
-        remaining.erase(neighbor);
-        for (int const nNeighbor : neighbors[neighbor]) {
-            //            cout << __LINE__ << ":         Removing from neighbor's neighbor "<< nNeighbor << endl << flush;
-            if (nNeighbor == vertex) continue;
-            neighbors[nNeighbor].erase(neighbor);
-            //            cout << __LINE__ << ":         Done removing" << endl << flush;
-            if (removedVertices.find(nNeighbor) == removedVertices.end())
-                remaining.insert(nNeighbor);
-        }
-        //        cout << __LINE__ << ":     Done Removing neighbor" << neighbor << endl << flush;
-        neighbors[neighbor].clear();
-        //        cout << __LINE__ << ": Cleared neighbors: " << neighbor << endl << flush;
-    }
-
-    //    cout << __LINE__ << ": Done Removing vertex " << vertex << endl << flush;
-    neighbors[vertex].clear();
-    //    cout << __LINE__ << ": Cleared neighbors: " << vertex << endl << flush;
-    return true;
-}
-
-
-bool RemoveMinDegreeVertex(vector<set<int>> &neighbors, set<int> &remaining, set<int> &isolates, set<int> &removed, vector<bool> &vMarkedVertices)
-{
-    if (removed.size() == neighbors.size()) return false;
-
-    int vertex(-1);
-    int minDegree(INT_MAX);
-    for (int i = 0; i < neighbors.size(); ++i) {
-        if (neighbors[i].size() < minDegree && removed.find(i) == removed.end()) {
-            minDegree = neighbors[i].size();
-            vertex = i;
-        }
-    }
-
-    //cout << "Removing vertex " << vertex << " with degree " << minDegree << endl << flush;
-
-    RemoveVertexAndNeighbors(vertex, neighbors, remaining, isolates, removed);
-
-    return true;
-}
-
-bool RemoveMaxDegreeVertex(vector<set<int>> &neighbors, set<int> &remaining, set<int> &isolates, set<int> &removed, vector<bool> &vMarkedVertices)
-{
-    if (removed.size() == neighbors.size()) return false;
-
-    int vertex(-1);
-    int maxDegree(INT_MIN);
-    for (int i = 0; i < neighbors.size(); ++i) {
-        if (static_cast<int>(neighbors[i].size()) > maxDegree && removed.find(i) == removed.end()) {
-            maxDegree = static_cast<int>(neighbors[i].size());
-            vertex = i;
-        }
-    }
-
-    ////    cout << "Removing vertex " << vertex << " with degree " << maxDegree << endl << flush;
-
-    RemoveVertexAndNeighbors(vertex, neighbors, remaining, isolates, removed);
-
-    return true;
-}
-
-bool RemoveAllIsolates(vector<set<int>> &neighbors, set<int> &remaining, set<int> &isolates, set<int> &removed, vector<bool> &vMarkedVertices)
-{
-    //cout << "Removing all isolates." << endl << flush;
-    int isolateSize(isolates.size());
-    while (!remaining.empty()) {
-        ////            if (remaining.size() %10000 == 0)
-        //cout << "Remaining: " << remaining.size() << ", Removed: " << removed.size() << endl << flush;
-        set<int>::iterator sit = remaining.begin();
-        int const vertex = *sit;
-        remaining.erase(sit);
-
-////        cout << "Attempting to remove vertex " << vertex << endl << flush;
-
-        bool reduction = RemoveIsolatedClique(vertex, neighbors, remaining, isolates, removed, vMarkedVertices);
-        if (!reduction) {
-            reduction = RemoveIsolatedPath(vertex, neighbors, remaining, isolates, removed, vMarkedVertices);
-        }
-    }
-
-////    cout << "Removed " << isolates.size() - isolateSize << " isolates." << endl << flush;
-    return true;
-}
-
-
-template <typename C> bool ReplaceRemovedVertices(vector<vector<int>> const &adjacencyArray, vector<set<int>> &neighbors, set<int> const &inGraph, C const &removedVertices)
-{
-    //cout << "Replacing all removed vertices." << endl << flush;
-    for (typename C::value_type const removedVertex : removedVertices) {
-        ////            if (remaining.size() %10000 == 0)
-        ////        cout << "Remaining: " << remaining.size() << ", Removed: " << removed.size() << endl << flush;
-        for (int const neighbor : adjacencyArray[removedVertex]) {
-            if (inGraph.find(neighbor) == inGraph.end()) continue;
-            neighbors[removedVertex].insert(neighbor);
-            neighbors[neighbor].insert(removedVertex);
-        }
-    }
-    //cout << "Replaced vertices..." << endl << flush;
-    return true;
 }
 
 size_t ComputeConnectedComponents(Isolates4<SparseArraySet> const &isolates, vector<vector<int>> &vComponents)
@@ -533,7 +271,7 @@ void Staging::Run()
     vector<pair<int,int>> vAddedEdges;
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
 
-#if 1
+#if 0
     vRemoved.insert(vRemoved.end(), vIsolates.begin(), vIsolates.end());
     setRemoved.insert(vRemoved.begin(), vRemoved.end());
 
@@ -562,7 +300,7 @@ void Staging::Run()
 
     isolates.SetConnectedComponent(vComponents[maxComponentIndex]);
 
-    vector<vector<int>> const subgraphAdjacencyList = ComputeSubgraphOfSize(isolates, m_AdjacencyList.size(), 1024);
+    vector<vector<int>> const subgraphAdjacencyList = ComputeSubgraphOfSize(isolates, m_AdjacencyList.size(), 3000);
 
     cout << "Subgraph size=" << subgraphAdjacencyList.size() << endl << flush;
 
@@ -576,7 +314,7 @@ void Staging::Run()
 
     list<list<int>> cliques;
 ////    LightWeightReductionStaticOrderMISS algorithm(subgraphAdjacencyMatrix, subgraphAdjacencyList);
-    LightWeightReductionFullMISS algorithm(subgraphAdjacencyMatrix, subgraphAdjacencyList);
+////    LightWeightReductionFullMISS algorithm(subgraphAdjacencyMatrix, subgraphAdjacencyList);
 ////    LightWeightFullMISS algorithm(subgraphAdjacencyMatrix);
 ////    LightWeightReductionSparseFullMISS algorithm(subgraphAdjacencyList);
 ////    LightWeightReductionSparseStaticOrderMISS algorithm(subgraphAdjacencyList);
@@ -598,8 +336,8 @@ void Staging::Run()
     auto printCliqueSize = [](list<int> const &clique) {
         cout << "Found clique of size " << clique.size() << endl << flush;
     };
-    algorithm.AddCallBack(printCliqueSize);
-    algorithm.Run(cliques);
+////    algorithm.AddCallBack(printCliqueSize);
+////    algorithm.Run(cliques);
 
 #if 0
     for (vector<int> const &vComponent : vComponents) {
@@ -666,9 +404,399 @@ void Staging::Run()
     }
 #endif // 0
 
+    vector<vector<char>> adjacencyMatrix(m_AdjacencyList.size());
+    for (size_t index = 0; index < m_AdjacencyList.size(); ++index) {
+        adjacencyMatrix[index].resize(m_AdjacencyList.size(), 0);
+        for (int const neighbor : m_AdjacencyList[index]) {
+            adjacencyMatrix[index][neighbor] = 1;
+        }
+    }
+
+    // is there some small set of vertices, such that if I remove them and their neighbors, the connected components all have
+    // small size (don't really care about balanced, could be 500 200 1 1 1 1 1 1 or 500 400 1 1 1 1.
+
+    size_t best(string::npos);
+    size_t const size(adjacencyMatrix.size());
+    size_t loops(0);
+
+    vector<int> vVertices;
+    for (int i = 0; i < m_AdjacencyList.size(); ++i) {
+        vVertices.push_back(i);
+    }
+
+    sort (vVertices.begin(), vVertices.end(), [this](int const left, int const right) { return m_AdjacencyList[left].size() > m_AdjacencyList[right].size(); });
+
+    std::random_device generator;
+    std::uniform_int_distribution<int> distribution(0,(int)(size *0.30));
+////    int dice_roll = distribution(generator);  // generates number in the range 1..6
+
+    vector<pair<int,int>> vAddedEdgesUnused;
+
+#if 0
+    while (loops < 10000) {
+        vector<int> vRemoved;
+        for (int i=0; i < 3; ++i) {
+            int vertexToRemove = vVertices[distribution(generator)];
+            if (!isolates.GetInGraph().Contains(vertexToRemove)) {
+                i--;
+                continue;
+            }
+            vRemoved.push_back(vertexToRemove);
+            isolates.RemoveVertexAndNeighbors(vertexToRemove, vRemoved);
+////            isolates.RemoveVertex(vertexToRemove);
+        }
+
+        isolates.RemoveAllIsolates(0, vRemoved, vRemoved, vAddedEdgesUnused, false);
+        vector<vector<int>> vComponents;
+        ComputeConnectedComponents(isolates, vComponents);
+        size_t biggest(0);
+        for (vector<int> const &vComponent : vComponents) {
+            biggest = max(vComponent.size(), biggest);
+        }
+        if (biggest < best) {
+            best = biggest;
+            cout << "best so far: max component of size " << best << endl;
+        }
+        loops++;
+        isolates.ReplaceAllRemoved(vRemoved);
+    }
+#endif //0
+#if 0
+    int savedi(0), savedj(0), savedk(0);
+    for (size_t i = 0; i < size; i++) {
+        vector<int> v_iNeighbors;
+        isolates.RemoveVertexAndNeighbors(vVertices[i], v_iNeighbors);
+        isolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, vAddedEdgesUnused, false);
+
+        vector<vector<int>> vComponents;
+        ComputeConnectedComponents(isolates, vComponents);
+        size_t biggest(0);
+        for (vector<int> const &vComponent : vComponents) {
+            biggest = max(vComponent.size(), biggest);
+        }
+
+        if (biggest < best) {
+            best = biggest;
+            cout << "best so far: remove " << i << " for max component of size " << best << endl;
+            savedi = i;
+        }
+
+        v_iNeighbors.push_back(i);
+        isolates.ReplaceAllRemoved(v_iNeighbors);
+////        if (loops % 5000 == 0) { break; }
+////            cout << "Removing " << savedi << " " << savedj << " " << savedk << endl;
+////            vector<int> vRemovedNeighbors;
+////            isolates.RemoveVertexAndNeighbors(savedi, vRemovedNeighbors);
+////            isolates.RemoveVertexAndNeighbors(savedj, vRemovedNeighbors);
+////            isolates.RemoveVertexAndNeighbors(savedk, vRemovedNeighbors);
+////        }
+    }
+
+    for (size_t i = 0; i < size*0.10; i++) {
+        vector<int> v_iNeighbors;
+        isolates.RemoveVertexAndNeighbors(vVertices[i], v_iNeighbors);
+        for (size_t j = i+1; j < size*0.10; j++) {
+            vector<int> v_jNeighbors;
+            isolates.RemoveVertexAndNeighbors(vVertices[j], v_jNeighbors);
+            isolates.RemoveAllIsolates(0, v_jNeighbors, v_jNeighbors, vAddedEdgesUnused, false);
+
+                vector<vector<int>> vComponents;
+                ComputeConnectedComponents(isolates, vComponents);
+                size_t biggest(0);
+                for (vector<int> const &vComponent : vComponents) {
+                    biggest = max(vComponent.size(), biggest);
+                }
+
+                if (biggest < best) {
+                    best = biggest;
+                    cout << "best so far: remove " << i << " " << j << " for max component of size " << best << endl;
+                    savedi = i;
+                    savedj = j;
+                }
+                v_jNeighbors.push_back(j);
+                isolates.ReplaceAllRemoved(v_jNeighbors);
+                ////            if (loops % 100 == 0) break;
+        }
+        v_iNeighbors.push_back(i);
+        isolates.ReplaceAllRemoved(v_iNeighbors);
+    }
+////        if (loops % 5000 == 0) { break; }
+////            cout << "Removing " << savedi << " " << savedj << " " << savedk << endl;
+////            vector<int> vRemovedNeighbors;
+////            isolates.RemoveVertexAndNeighbors(savedi, vRemovedNeighbors);
+////            isolates.RemoveVertexAndNeighbors(savedj, vRemovedNeighbors);
+////            isolates.RemoveVertexAndNeighbors(savedk, vRemovedNeighbors);
+////        }
+////    }
+
+    for (size_t i = 0; i < size*0.05; i++) {
+        vector<int> v_iNeighbors;
+        isolates.RemoveVertexAndNeighbors(vVertices[i], v_iNeighbors);
+        for (size_t j = i+1; j < size*0.05; j++) {
+            vector<int> v_jNeighbors;
+            isolates.RemoveVertexAndNeighbors(vVertices[j], v_jNeighbors);
+            for (size_t k = j+1; k < size*0.05; k++) {
+                loops++;
+////                if (loops %10 == 0) { break; }
+                vector<int> v_kNeighbors;
+                isolates.RemoveVertexAndNeighbors(vVertices[k], v_kNeighbors);
+                isolates.RemoveAllIsolates(0, v_kNeighbors, v_kNeighbors, vAddedEdgesUnused, false);
+
+                vector<vector<int>> vComponents;
+                ComputeConnectedComponents(isolates, vComponents);
+                size_t biggest(0);
+                for (vector<int> const &vComponent : vComponents) {
+                    biggest = max(vComponent.size(), biggest);
+                }
+
+                if (biggest < best) {
+                    best = biggest;
+                    cout << "best so far: remove " << i << " " << j << " " << k << " for max component of size " << best << endl;
+                    savedi = i;
+                    savedj = j;
+                    savedk = k;
+                }
+                isolates.ReplaceAllRemoved(v_kNeighbors);
+            }
+            v_jNeighbors.push_back(j);
+            isolates.ReplaceAllRemoved(v_jNeighbors);
+////            if (loops % 100 == 0) break;
+        }
+        v_iNeighbors.push_back(i);
+        isolates.ReplaceAllRemoved(v_iNeighbors);
+////        if (loops % 5000 == 0) { break; }
+////            cout << "Removing " << savedi << " " << savedj << " " << savedk << endl;
+////            vector<int> vRemovedNeighbors;
+////            isolates.RemoveVertexAndNeighbors(savedi, vRemovedNeighbors);
+////            isolates.RemoveVertexAndNeighbors(savedj, vRemovedNeighbors);
+////            isolates.RemoveVertexAndNeighbors(savedk, vRemovedNeighbors);
+////        }
+    }
+#endif // 0
+
+
+    // try removing high-impact reduction vertices at first, then run regular algorithm on resulcting connected
+    // components.
+////    vector<pair<int,int>> vAddedEdgesUnused;
+////    vector<int> vRemoved1;
+    vector<int> vRemoved2;
+    vector<int> vCliqueVerticesPersistent1;
+    vector<int> vRemovedPersistent1;
+    vector<int> vRemovedPersistent2;
+    list<list<int>> cliques;
+    cliques.push_back(list<int>());
+
+
+    auto ChooseNextVertex = [&vAddedEdgesUnused](Isolates4<SparseArraySet> &theIsolates)
+    {
+        size_t bestComponentSize(string::npos);
+        int    bestVertex(-1);
+        vector<int> vToConsider(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
+        for (int const i : vToConsider) {
+            vector<int> v_iNeighbors;
+            theIsolates.RemoveVertexAndNeighbors(i, v_iNeighbors);
+            theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, vAddedEdgesUnused, false);
+
+            vector<vector<int>> vComponents;
+            ComputeConnectedComponents(theIsolates, vComponents);
+            size_t uSizeOfLargestComponent(0);
+            for (vector<int> const &vComponent : vComponents) {
+                uSizeOfLargestComponent = max(vComponent.size(), uSizeOfLargestComponent);
+            }
+
+            if (uSizeOfLargestComponent < bestComponentSize) {
+                bestComponentSize = uSizeOfLargestComponent;
+////                cout << "best so far: remove " << i << " for max component of size " << bestComponentSize << endl;
+                bestVertex = i;
+            }
+
+            v_iNeighbors.push_back(i);
+            theIsolates.ReplaceAllRemoved(v_iNeighbors);
+        }
+
+        cout << "best vertex: " << bestVertex  << " for max component of size " << bestComponentSize << endl;
+        return bestVertex;
+    };
+
+    while (!isolates.GetInGraph().Empty()) {
+        int const nextVertex1 = ChooseNextVertex(isolates);
+        if (nextVertex1 == -1) break;
+
+        cout << "Vertices remaining: " << isolates.GetInGraph().Size() << endl << flush;
+
+        vector<int> vRemoved1;
+        vector<int> vCliqueVertices1; vCliqueVertices1.push_back(nextVertex1);
+        isolates.RemoveVertexAndNeighbors(nextVertex1, vRemoved1);
+////        vRemoved1.push_back(nextVertex1);
+        isolates.RemoveAllIsolates(0, vCliqueVertices1, vRemoved1, vAddedEdgesUnused, false);
+
+        vector<int> vClique;
+        vector<vector<int>> vNewComponents;
+        ComputeConnectedComponents(isolates, vNewComponents);
+
+        list<int> realClique;
+        realClique.insert(realClique.end(), vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
+        realClique.insert(realClique.end(), vCliqueVertices1.begin(), vCliqueVertices1.end());
+
+        cout << "Components:" << endl;
+        for (vector<int> const &vNewComponent : vNewComponents) {
+            map<int,int> vertexRemap;
+            map<int,int> reverseMap;
+            int newVertex(0);
+            vector<vector<char>> componentMatrix(vNewComponent.size(), vector<char>());
+            vector<vector<int>> componentArray(vNewComponent.size(), vector<int>());
+            for (int const vertex : vNewComponent) {
+                vertexRemap[vertex] = newVertex++;
+                reverseMap[newVertex-1] = vertex;
+                componentMatrix[newVertex-1].resize(vNewComponent.size());
+            }
+
+            ////        cout << "Matrix resized to " << vNewComponent.size() << "x" << vNewComponent.size() << endl << flush;
+
+            for (int const vertex : vNewComponent) {
+                int const newVertex(vertexRemap[vertex]);
+                componentMatrix[newVertex][newVertex] = 1;
+                for (int const neighbor : m_AdjacencyList[vertex]) {
+                    if (vertexRemap.find(neighbor) != vertexRemap.end()) {
+                        int const newNeighbor(vertexRemap[neighbor]);
+                        ////                    cout << "Adding edge " << newVertex << "," << newNeighbor << endl << flush;
+                        componentMatrix[newVertex][newNeighbor] = 1;
+                        componentArray[newVertex].push_back(newNeighbor);
+                    }
+                }
+            }
+
+            list<list<int>> componentResult;
+
+            TesterMISS algorithm(componentMatrix, componentArray);
+            algorithm.SetQuiet(true);
+            algorithm.Run(componentResult);
+
+            if (!componentResult.empty() && !componentResult.back().empty()) {
+                for (int const vertex : componentResult.back()) {
+                    realClique.push_back(reverseMap[vertex]);
+                }
+            }
+            cout << "    Component has independent set of size " << componentResult.back().size() << endl;
+        }
+
+        cout << "Found independent set of size: " << realClique.size() << endl;
+
+        if (realClique.size() > cliques.back().size()) {
+            cliques.back().clear();
+            cliques.back() = realClique;
+        }
+
+        isolates.ReplaceAllRemoved(vCliqueVertices1);
+        isolates.ReplaceAllRemoved(vRemoved1);
+        isolates.RemoveVertex(nextVertex1);
+        isolates.RemoveAllIsolates(0, vCliqueVerticesPersistent1, vRemovedPersistent1, vAddedEdgesUnused, false);
+    }
+
+    cout << "Found independent set of size: " << cliques.back().size() << endl << flush;
+
+#if 0
+int savedi(0), savedj(0), savedk(0);
+for (size_t i = distribution(generator); i < size-1; i = distribution(generator)) {
+    vector<int> v_iNeighbors;
+    isolates.RemoveVertexAndNeighbors(i, v_iNeighbors);
+    for (size_t j = distribution(generator); ; j = distribution(generator)) {
+        vector<int> v_jNeighbors;
+            isolates.RemoveVertexAndNeighbors(j, v_jNeighbors);
+            for (size_t k = distribution(generator); ; k = distribution(generator)) {
+                loops++;
+                if (loops %10 == 0) {
+                    break;
+                }
+                vector<int> v_kNeighbors;
+                isolates.RemoveVertexAndNeighbors(k, v_kNeighbors);
+                vector<vector<int>> vComponents;
+                ComputeConnectedComponents(isolates, vComponents);
+                size_t biggest(0);
+                for (vector<int> const &vComponent : vComponents) {
+                    biggest = max(vComponent.size(), biggest);
+                }
+
+                if (biggest < best) {
+                    best = biggest;
+                    cout << "best so far: remove " << i << " " << j << " " << k << " for max component of size " << best << endl;
+                    savedi = i;
+                    savedj = j;
+                    savedk = k;
+                }
+                isolates.ReplaceAllRemoved(v_kNeighbors);
+            }
+            v_jNeighbors.push_back(j);
+            isolates.ReplaceAllRemoved(v_jNeighbors);
+            if (loops % 100 == 0) break;
+        }
+        v_iNeighbors.push_back(i);
+        isolates.ReplaceAllRemoved(v_iNeighbors);
+        if (loops % 5000 == 0) {
+            cout << "Removing " << savedi << " " << savedj << " " << savedk << endl;
+            vector<int> vRemovedNeighbors;
+            isolates.RemoveVertexAndNeighbors(savedi, vRemovedNeighbors);
+            isolates.RemoveVertexAndNeighbors(savedj, vRemovedNeighbors);
+            isolates.RemoveVertexAndNeighbors(savedk, vRemovedNeighbors);
+        }
+    }
+#endif // 0
+
+#if 0
+    // read iperm file
+    vector<int> vOrdering;
+    vector<int> vColoring;
+
+////    OrderingTools::InitialOrderingConnectedComponent("/Users/strash/graphs/kernels/biogrid-yeast.955.kernel.graph.iperm", adjacencyMatrix, vOrdering, vColoring);
+////    OrderingTools::InitialOrderingConnectedComponent("/Users/strash/graphs/kernels/facebook.kernel.graph.iperm", adjacencyMatrix, vOrdering, vColoring);
+    OrderingTools::InitialOrderingConnectedComponent("/Users/strash/graphs/kernels/facebook.2754.kernel.graph.iperm", adjacencyMatrix, vOrdering, vColoring);
+
+    // analyze the size of the connected components and the degrees of the removed vertices.
+    // need the degrees to be high, and the connected components to be roughly the same size.
+
+    vector<int> vNeighborsRemoved;
+    vector<pair<int,int>> vAddedEdgesUnused;
+    for (size_t index = vOrdering.size(); index > 0; --index) {
+        if (isolates.GetInGraph().Contains(vOrdering[index-1]))
+            isolates.RemoveVertexAndNeighbors(vOrdering[index-1], vNeighborsRemoved);
+////            isolates.RemoveVertex(vOrdering[index-1]);
+////            isolates.RemoveVertex(vOrdering[index-1]);
+////    for (size_t index = 0; index < vOrdering.size();  ++index) {
+////        if (isolates.GetInGraph().Contains(vOrdering[index]))
+////            isolates.RemoveVertexAndNeighbors(vOrdering[index], vNeighborsRemoved);
+////        cout << "After removing " << vOrdering.size() - (index - 1) << " vertices: " << endl;
+        else continue;
+        vector<vector<int>> vComponents;
+        ComputeConnectedComponents(isolates, vComponents);
+        cerr << "# vertices remaining in graph: " << isolates.GetInGraph().Size() << "/" << m_AdjacencyList.size() << endl << flush;
+        cerr << "# connected components       : " << vComponents.size() << endl << flush;
+        cerr << "size of connected components : ";
+        cout << "[ ";
+
+        for (size_t index = 0; index < vComponents.size(); ++index) {
+            vector<int> const& vComponent(vComponents[index]);
+            cout << vComponent.size() << " ";
+        }
+        cout << "]" << endl;
+
+        isolates.RemoveAllIsolates(0, vNeighborsRemoved, vNeighborsRemoved, vAddedEdgesUnused, false);
+    }
+
+    // can we use the separation to find an approximate solution fast? basically we would
+    // be within - (total size of separators). And really, how many levels could there be until we get something
+    // that is reasonably solvable? Certainly no more than 5 or 6 for 4000-vertex graphs, right?
+
+    // what could throw a wrench in this is if the connected components have many vertices of large degree. Hopefully
+    // that's not the case, because they should be in the separator.
+
     // as of now, this loop helps find a really small Independent set, this is to help limit the recursion depth.
     // need to expand this into a branch-and-bound, pick the vertices that constrain the search the most, to keep
     // the search at a reasonable depth. And try to "peel off" as many vertices as possible through reductions.
+
+////    list<list<int>> result;
+////    TesterMISS algorithm(adjacencyMatrix, m_AdjacencyList);
+////    algorithm.Run(result);
+#endif // 0
 
 #if 0
     while (vRemoved.size() != m_AdjacencyList.size()) {
