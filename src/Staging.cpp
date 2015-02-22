@@ -23,6 +23,8 @@
 #include <climits>
 #include <random>
 
+////#define TWO_LEVEL
+
 using namespace std;
 
 Staging::Staging(std::vector<std::vector<int>> &adjacencyList)
@@ -579,10 +581,8 @@ void Staging::Run()
     // components.
 ////    vector<pair<int,int>> vAddedEdgesUnused;
 ////    vector<int> vRemoved1;
-    vector<int> vRemoved2;
     vector<int> vCliqueVerticesPersistent1;
     vector<int> vRemovedPersistent1;
-    vector<int> vRemovedPersistent2;
     list<list<int>> cliques;
     cliques.push_back(list<int>());
 
@@ -614,7 +614,7 @@ void Staging::Run()
             theIsolates.ReplaceAllRemoved(v_iNeighbors);
         }
 
-        cout << "best vertex: " << bestVertex  << " for max component of size " << bestComponentSize << endl;
+////        cout << "best vertex: " << bestVertex  << " for max component of size " << bestComponentSize << endl;
         return bestVertex;
     };
 
@@ -630,62 +630,103 @@ void Staging::Run()
 ////        vRemoved1.push_back(nextVertex1);
         isolates.RemoveAllIsolates(0, vCliqueVertices1, vRemoved1, vAddedEdgesUnused, false);
 
-        vector<int> vClique;
-        vector<vector<int>> vNewComponents;
-        ComputeConnectedComponents(isolates, vNewComponents);
+#ifdef TWO_LEVEL
+        vector<int> vCliqueVerticesPersistent2;
+        vector<int> vRemovedPersistent2;
 
-        list<int> realClique;
-        realClique.insert(realClique.end(), vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
-        realClique.insert(realClique.end(), vCliqueVertices1.begin(), vCliqueVertices1.end());
+        vector<int> const vToReplace(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
 
-        cout << "Components:" << endl;
-        for (vector<int> const &vNewComponent : vNewComponents) {
-            map<int,int> vertexRemap;
-            map<int,int> reverseMap;
-            int newVertex(0);
-            vector<vector<char>> componentMatrix(vNewComponent.size(), vector<char>());
-            vector<vector<int>> componentArray(vNewComponent.size(), vector<int>());
-            for (int const vertex : vNewComponent) {
-                vertexRemap[vertex] = newVertex++;
-                reverseMap[newVertex-1] = vertex;
-                componentMatrix[newVertex-1].resize(vNewComponent.size());
+        while (!isolates.GetInGraph().Empty()) {
+            int const nextVertex2 = ChooseNextVertex(isolates);
+            if (nextVertex2 == -1) {
+                break;
             }
+////            cout << "Vertices remaining (inner loop): " << isolates.GetInGraph().Size() << endl << flush;
 
-            ////        cout << "Matrix resized to " << vNewComponent.size() << "x" << vNewComponent.size() << endl << flush;
+            vector<int> vRemoved2;
+            vector<int> vCliqueVertices2; vCliqueVertices2.push_back(nextVertex2);
+            isolates.RemoveVertexAndNeighbors(nextVertex2, vRemoved2);
+            isolates.RemoveAllIsolates(0, vCliqueVertices2, vRemoved2, vAddedEdgesUnused, false);
+#endif // TWO_LEVEL
 
-            for (int const vertex : vNewComponent) {
-                int const newVertex(vertexRemap[vertex]);
-                componentMatrix[newVertex][newVertex] = 1;
-                for (int const neighbor : m_AdjacencyList[vertex]) {
-                    if (vertexRemap.find(neighbor) != vertexRemap.end()) {
-                        int const newNeighbor(vertexRemap[neighbor]);
-                        ////                    cout << "Adding edge " << newVertex << "," << newNeighbor << endl << flush;
-                        componentMatrix[newVertex][newNeighbor] = 1;
-                        componentArray[newVertex].push_back(newNeighbor);
+            list<int> realClique;
+            realClique.insert(realClique.end(), vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
+            realClique.insert(realClique.end(), vCliqueVertices1.begin(), vCliqueVertices1.end());
+#ifdef TWO_LEVEL
+            realClique.insert(realClique.end(), vCliqueVerticesPersistent2.begin(), vCliqueVerticesPersistent2.end());
+            realClique.insert(realClique.end(), vCliqueVertices2.begin(), vCliqueVertices2.end());
+#endif // TWO_LEVEL
+
+            vector<vector<int>> vNewComponents;
+            ComputeConnectedComponents(isolates, vNewComponents);
+
+////            cout << "Components:" << endl;
+            for (vector<int> const &vNewComponent : vNewComponents) {
+////                if (vNewComponent.size() != 5) continue;
+                map<int,int> vertexRemap;
+                map<int,int> reverseMap;
+                int newVertex(0);
+                vector<vector<char>> componentMatrix(vNewComponent.size(), vector<char>());
+                vector<vector<int>> componentArray(vNewComponent.size(), vector<int>());
+                for (int const vertex : vNewComponent) {
+                    vertexRemap[vertex] = newVertex++;
+                    reverseMap[newVertex-1] = vertex;
+                    componentMatrix[newVertex-1].resize(vNewComponent.size());
+                }
+
+                ////        cout << "Matrix resized to " << vNewComponent.size() << "x" << vNewComponent.size() << endl << flush;
+
+////                cout << "Graph, size=" << vNewComponent.size() << ":" << endl << flush;
+                for (int const vertex : vNewComponent) {
+                    int const newVertex(vertexRemap[vertex]);
+                    componentMatrix[newVertex][newVertex] = 1;
+////                    cout << newVertex << ":";
+                    for (int const neighbor : m_AdjacencyList[vertex]) {
+                        if (vertexRemap.find(neighbor) != vertexRemap.end()) {
+                            int const newNeighbor(vertexRemap[neighbor]);
+                            ////                    cout << "Adding edge " << newVertex << "," << newNeighbor << endl << flush;
+                            componentMatrix[newVertex][newNeighbor] = 1;
+                            componentArray[newVertex].push_back(newNeighbor);
+////                            cout << " " << newNeighbor;
+                        }
+                    }
+////                    cout << endl << flush;
+                }
+////                cout << endl << flush;
+
+                list<list<int>> componentResult;
+
+////                cout << "Start algorithm: " << endl << flush;
+                TesterMISS algorithm(componentMatrix, componentArray);
+                algorithm.SetQuiet(true);
+                algorithm.Run(componentResult);
+
+                if (!componentResult.empty() && !componentResult.back().empty()) {
+                    for (int const vertex : componentResult.back()) {
+                        realClique.push_back(reverseMap[vertex]);
                     }
                 }
+////                cout << "    Component has independent set of size " << componentResult.back().size() << endl;
             }
 
-            list<list<int>> componentResult;
 
-            TesterMISS algorithm(componentMatrix, componentArray);
-            algorithm.SetQuiet(true);
-            algorithm.Run(componentResult);
-
-            if (!componentResult.empty() && !componentResult.back().empty()) {
-                for (int const vertex : componentResult.back()) {
-                    realClique.push_back(reverseMap[vertex]);
-                }
+            if (realClique.size() > cliques.back().size()) {
+                cliques.back().clear();
+                cliques.back() = realClique;
+                cout << "Found independent set of size: " << realClique.size() << endl;
             }
-            cout << "    Component has independent set of size " << componentResult.back().size() << endl;
+
+#ifdef TWO_LEVEL
+            isolates.ReplaceAllRemoved(vCliqueVertices2);
+            isolates.ReplaceAllRemoved(vRemoved2);
+            isolates.RemoveVertex(nextVertex2);
+            isolates.RemoveAllIsolates(0, vCliqueVerticesPersistent2, vRemovedPersistent2, vAddedEdgesUnused, false);
         }
 
-        cout << "Found independent set of size: " << realClique.size() << endl;
-
-        if (realClique.size() > cliques.back().size()) {
-            cliques.back().clear();
-            cliques.back() = realClique;
-        }
+////        isolates.ReplaceAllRemoved(vCliqueVerticesPersistent2);
+////        isolates.ReplaceAllRemoved(vRemovedPersistent2);
+        isolates.ReplaceAllRemoved(vToReplace);
+#endif // TWO_LEVEL
 
         isolates.ReplaceAllRemoved(vCliqueVertices1);
         isolates.ReplaceAllRemoved(vRemoved1);
@@ -693,7 +734,7 @@ void Staging::Run()
         isolates.RemoveAllIsolates(0, vCliqueVerticesPersistent1, vRemovedPersistent1, vAddedEdgesUnused, false);
     }
 
-    cout << "Found independent set of size: " << cliques.back().size() << endl << flush;
+cout << "Found independent set of size: " << cliques.back().size() << endl << flush;
 
 #if 0
 int savedi(0), savedj(0), savedk(0);
@@ -702,28 +743,28 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
     isolates.RemoveVertexAndNeighbors(i, v_iNeighbors);
     for (size_t j = distribution(generator); ; j = distribution(generator)) {
         vector<int> v_jNeighbors;
-            isolates.RemoveVertexAndNeighbors(j, v_jNeighbors);
-            for (size_t k = distribution(generator); ; k = distribution(generator)) {
-                loops++;
-                if (loops %10 == 0) {
-                    break;
-                }
-                vector<int> v_kNeighbors;
-                isolates.RemoveVertexAndNeighbors(k, v_kNeighbors);
-                vector<vector<int>> vComponents;
-                ComputeConnectedComponents(isolates, vComponents);
-                size_t biggest(0);
-                for (vector<int> const &vComponent : vComponents) {
-                    biggest = max(vComponent.size(), biggest);
-                }
+        isolates.RemoveVertexAndNeighbors(j, v_jNeighbors);
+        for (size_t k = distribution(generator); ; k = distribution(generator)) {
+            loops++;
+            if (loops %10 == 0) {
+                break;
+            }
+            vector<int> v_kNeighbors;
+            isolates.RemoveVertexAndNeighbors(k, v_kNeighbors);
+            vector<vector<int>> vComponents;
+            ComputeConnectedComponents(isolates, vComponents);
+            size_t biggest(0);
+            for (vector<int> const &vComponent : vComponents) {
+                biggest = max(vComponent.size(), biggest);
+            }
 
-                if (biggest < best) {
-                    best = biggest;
-                    cout << "best so far: remove " << i << " " << j << " " << k << " for max component of size " << best << endl;
-                    savedi = i;
-                    savedj = j;
-                    savedk = k;
-                }
+            if (biggest < best) {
+                best = biggest;
+                cout << "best so far: remove " << i << " " << j << " " << k << " for max component of size " << best << endl;
+                savedi = i;
+                savedj = j;
+                savedk = k;
+            }
                 isolates.ReplaceAllRemoved(v_kNeighbors);
             }
             v_jNeighbors.push_back(j);
