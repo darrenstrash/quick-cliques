@@ -618,9 +618,26 @@ void Staging::Run()
         return bestVertex;
     };
 
+    IndependentSetColoringStrategy coloringStrategy(adjacencyMatrix);
+
+    vector<int> vOrdering;
+    vector<int> vColoring;
+
+    size_t cliqueSize(0);
+    OrderingTools::InitialOrderingMISR(m_AdjacencyList, isolates, vOrdering, vColoring, cliqueSize);
+
+    vector<int> vAdjunctOrdering = vOrdering;
+
+    if (cliqueSize > 0) {
+        cliques.back() = list<int>(vOrdering.begin(), vOrdering.begin() + cliqueSize);
+    }
+
+////    coloringStrategy.Recolor(adjacencyMatrix, vAdjunctOrdering, vOrdering, vColoring, cliqueSize, cliqueSize);
+
     while (!isolates.GetInGraph().Empty()) {
         int const nextVertex1 = ChooseNextVertex(isolates);
         if (nextVertex1 == -1) break;
+        if (vColoring.back() <= cliques.back().size()) break;
 
         cout << "Vertices remaining: " << isolates.GetInGraph().Size() << endl << flush;
 
@@ -629,6 +646,16 @@ void Staging::Run()
         isolates.RemoveVertexAndNeighbors(nextVertex1, vRemoved1);
 ////        vRemoved1.push_back(nextVertex1);
         isolates.RemoveAllIsolates(0, vCliqueVertices1, vRemoved1, vAddedEdgesUnused, false);
+
+        vector<int> currentClique(vCliqueVertices1.begin(), vCliqueVertices1.end());
+        currentClique.insert(currentClique.end(), vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
+
+        size_t numLeft = vColoring.size();
+        for (; numLeft > 0; --numLeft) {
+            if (currentClique.size() + vColoring[numLeft-1] <= cliques.back().size()) { break; }
+        }
+        numLeft = vColoring.size() - numLeft;
+        cout << ", P.left = " << numLeft << endl;
 
 #ifdef TWO_LEVEL
         vector<int> vCliqueVerticesPersistent2;
@@ -660,8 +687,11 @@ void Staging::Run()
             vector<vector<int>> vNewComponents;
             ComputeConnectedComponents(isolates, vNewComponents);
 
+            sort (vNewComponents.begin(), vNewComponents.end(), [this](vector<int> const &left, vector<int> const &right) { return left.size() < right.size(); });
+
 ////            cout << "Components:" << endl;
-            for (vector<int> const &vNewComponent : vNewComponents) {
+            for (size_t index = 0; index < vNewComponents.size(); ++index) {
+                vector<int> const &vNewComponent(vNewComponents[index]);
 ////                if (vNewComponent.size() != 5) continue;
                 map<int,int> vertexRemap;
                 map<int,int> reverseMap;
@@ -676,7 +706,7 @@ void Staging::Run()
 
                 ////        cout << "Matrix resized to " << vNewComponent.size() << "x" << vNewComponent.size() << endl << flush;
 
-////                cout << "Graph, size=" << vNewComponent.size() << ":" << endl << flush;
+                cout << "Graph, size=" << vNewComponent.size() << ":" << endl << flush;
                 for (int const vertex : vNewComponent) {
                     int const newVertex(vertexRemap[vertex]);
                     componentMatrix[newVertex][newVertex] = 1;
@@ -699,6 +729,11 @@ void Staging::Run()
 ////                cout << "Start algorithm: " << endl << flush;
                 TesterMISS algorithm(componentMatrix, componentArray);
                 algorithm.SetQuiet(true);
+
+                if (index == vNewComponents.size()-1) {
+                    algorithm.SetMaximumCliqueSize(cliques.back().size() - realClique.size());
+                }
+
                 algorithm.Run(componentResult);
 
                 if (!componentResult.empty() && !componentResult.back().empty()) {
@@ -732,6 +767,12 @@ void Staging::Run()
         isolates.ReplaceAllRemoved(vRemoved1);
         isolates.RemoveVertex(nextVertex1);
         isolates.RemoveAllIsolates(0, vCliqueVerticesPersistent1, vRemovedPersistent1, vAddedEdgesUnused, false);
+
+        vAdjunctOrdering.erase(find(vAdjunctOrdering.begin(), vAdjunctOrdering.end(), nextVertex1));
+        vOrdering.resize(vAdjunctOrdering.size());
+        vColoring.resize(vAdjunctOrdering.size());
+
+        coloringStrategy.Recolor(adjacencyMatrix, vAdjunctOrdering, vOrdering, vColoring, currentClique.size(), cliques.back().size());
     }
 
 cout << "Found independent set of size: " << cliques.back().size() << endl << flush;
