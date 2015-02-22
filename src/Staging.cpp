@@ -169,6 +169,59 @@ vector<vector<int>> ComputeSubgraphOfSize(Isolates4<SparseArraySet> const &isola
     return vAdjacencyArray;
 }
 
+void ComputeOnConnectedComponent(vector<int> const &vVertices, Isolates4<SparseArraySet> const &isolates, vector<vector<int>> const &adjacencyArray, list<int> &realClique, list<list<int>> cliques, bool const bSetCliqueSize)
+{
+    map<int,int> vertexRemap;
+    map<int,int> reverseMap;
+    int newVertex(0);
+    vector<vector<char>> componentMatrix(vVertices.size(), vector<char>());
+    vector<vector<int>> componentArray(vVertices.size(), vector<int>());
+    for (int const vertex : vVertices) {
+        vertexRemap[vertex] = newVertex++;
+        reverseMap[newVertex-1] = vertex;
+        componentMatrix[newVertex-1].resize(vVertices.size());
+    }
+
+    ////        cout << "Matrix resized to " << vVertices.size() << "x" << vVertices.size() << endl << flush;
+
+    cout << "Graph, size=" << vVertices.size() << ":" << endl << flush;
+    for (int const vertex : vVertices) {
+        int const newVertex(vertexRemap[vertex]);
+        componentMatrix[newVertex][newVertex] = 1;
+        ////                    cout << newVertex << ":";
+        for (int const neighbor : adjacencyArray[vertex]) {
+            if (vertexRemap.find(neighbor) != vertexRemap.end()) {
+                int const newNeighbor(vertexRemap[neighbor]);
+                ////                    cout << "Adding edge " << newVertex << "," << newNeighbor << endl << flush;
+                componentMatrix[newVertex][newNeighbor] = 1;
+                componentArray[newVertex].push_back(newNeighbor);
+                ////                            cout << " " << newNeighbor;
+            }
+        }
+        ////                    cout << endl << flush;
+    }
+    ////                cout << endl << flush;
+
+    list<list<int>> componentResult;
+
+    ////                cout << "Start algorithm: " << endl << flush;
+    TesterMISS algorithm(componentMatrix, componentArray);
+    algorithm.SetQuiet(true);
+
+////    if (bSetCliqueSize) {
+////        algorithm.SetMaximumCliqueSize(cliques.back().size() - realClique.size());
+////    }
+
+    algorithm.Run(componentResult);
+
+    if (!componentResult.empty() && !componentResult.back().empty()) {
+        for (int const vertex : componentResult.back()) {
+            realClique.push_back(reverseMap[vertex]);
+        }
+    }
+    ////                cout << "    Component has independent set of size " << componentResult.back().size() << endl;
+}
+
 void Staging::Run()
 {
     cout << "Running Staging..." << endl << flush;
@@ -634,10 +687,11 @@ void Staging::Run()
 
 ////    coloringStrategy.Recolor(adjacencyMatrix, vAdjunctOrdering, vOrdering, vColoring, cliqueSize, cliqueSize);
 
+////    while (isolates.GetInGraph().Size() > 900) {
     while (!isolates.GetInGraph().Empty()) {
         int const nextVertex1 = ChooseNextVertex(isolates);
         if (nextVertex1 == -1) break;
-        if (vColoring.back() <= cliques.back().size()) break;
+////        if (vColoring.back() <= cliques.back().size()) break;
 
         cout << "Vertices remaining: " << isolates.GetInGraph().Size() << endl << flush;
 
@@ -691,59 +745,8 @@ void Staging::Run()
 
 ////            cout << "Components:" << endl;
             for (size_t index = 0; index < vNewComponents.size(); ++index) {
-                vector<int> const &vNewComponent(vNewComponents[index]);
-////                if (vNewComponent.size() != 5) continue;
-                map<int,int> vertexRemap;
-                map<int,int> reverseMap;
-                int newVertex(0);
-                vector<vector<char>> componentMatrix(vNewComponent.size(), vector<char>());
-                vector<vector<int>> componentArray(vNewComponent.size(), vector<int>());
-                for (int const vertex : vNewComponent) {
-                    vertexRemap[vertex] = newVertex++;
-                    reverseMap[newVertex-1] = vertex;
-                    componentMatrix[newVertex-1].resize(vNewComponent.size());
-                }
-
-                ////        cout << "Matrix resized to " << vNewComponent.size() << "x" << vNewComponent.size() << endl << flush;
-
-                cout << "Graph, size=" << vNewComponent.size() << ":" << endl << flush;
-                for (int const vertex : vNewComponent) {
-                    int const newVertex(vertexRemap[vertex]);
-                    componentMatrix[newVertex][newVertex] = 1;
-////                    cout << newVertex << ":";
-                    for (int const neighbor : m_AdjacencyList[vertex]) {
-                        if (vertexRemap.find(neighbor) != vertexRemap.end()) {
-                            int const newNeighbor(vertexRemap[neighbor]);
-                            ////                    cout << "Adding edge " << newVertex << "," << newNeighbor << endl << flush;
-                            componentMatrix[newVertex][newNeighbor] = 1;
-                            componentArray[newVertex].push_back(newNeighbor);
-////                            cout << " " << newNeighbor;
-                        }
-                    }
-////                    cout << endl << flush;
-                }
-////                cout << endl << flush;
-
-                list<list<int>> componentResult;
-
-////                cout << "Start algorithm: " << endl << flush;
-                TesterMISS algorithm(componentMatrix, componentArray);
-                algorithm.SetQuiet(true);
-
-                if (index == vNewComponents.size()-1) {
-                    algorithm.SetMaximumCliqueSize(cliques.back().size() - realClique.size());
-                }
-
-                algorithm.Run(componentResult);
-
-                if (!componentResult.empty() && !componentResult.back().empty()) {
-                    for (int const vertex : componentResult.back()) {
-                        realClique.push_back(reverseMap[vertex]);
-                    }
-                }
-////                cout << "    Component has independent set of size " << componentResult.back().size() << endl;
+                ComputeOnConnectedComponent(vNewComponents[index], isolates, m_AdjacencyList, realClique, cliques, index == vNewComponents.size()-1);
             }
-
 
             if (realClique.size() > cliques.back().size()) {
                 cliques.back().clear();
