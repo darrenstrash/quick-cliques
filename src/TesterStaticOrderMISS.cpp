@@ -6,6 +6,7 @@
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -186,12 +187,58 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 
     numLeft = P.size() - numLeft;
 
+////    for (size_t index = 0; /*P.size() - numLeft;*/ index < P.size(); ++index) {
+////        vector<vector<int>> vComponents;
+////////        int const vertexToRemove(P[index]);
+////////        isolates.RemoveVertex(vertexToRemove);
+////        GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
+////////        vector<int> const vToReplace(1, vertexToRemove);
+////////        isolates.ReplaceAllRemoved(vToReplace);
+////        if (vComponents.size() > 1) {
+////        bool printMessage(false);
+////        ostringstream strm;
+////        strm << depth << ": components : ";
+////        for (size_t index = 0; /*P.size() - numLeft;*/ index < P.size(); ++index) {
+////            size_t firstComponent(string::npos);
+////            for (size_t componentIndex = 0; componentIndex < vComponents.size(); ++componentIndex) {
+////                if (find(vComponents[componentIndex].begin(), vComponents[componentIndex].end(), P[index]) != vComponents[componentIndex].end()) {
+////                    if (firstComponent == string::npos) {
+////                        firstComponent = componentIndex;
+////                    } else if (firstComponent != componentIndex) {
+////                        printMessage = true;
+////                    }
+////                    strm << componentIndex << " ";
+////                }
+////            }
+////        }
+////////        if (printMessage) {
+////        if (true) {
+////            cout << strm.str();
+////            cout << endl;
+////            cerr << "# connected components       : " << vComponents.size() << endl << flush;
+////            cerr << "size of connected components : ";
+////            cout << "[ ";
+////            for (vector<int> const& vComponent : vComponents) {
+////                cout << vComponent.size() << "(mindegree=";
+////                size_t minDegree(string::npos);
+////                for (int const vertex : vComponent) {
+////                    if (isolates.Neighbors()[vertex].Size() < minDegree) {
+////                        minDegree = isolates.Neighbors()[vertex].Size();
+////                    }
+////                }
+////                cout << minDegree << ") ";
+////            }
+////            cout << "]" << endl << flush;
+////        }
+////        }
+////    }
+
     vector<int> evaluateP;
 ////    vector<int> evaluateColors;
 
     bool pivot(false);
 
-    if (!P.empty() && depth <= 2) {
+    if (false ) {////!P.empty() /*&& depth <= 2*/) {
         int const nextVertexToEvaluate(P.back());
         if (numLeft > isolates.Neighbors()[nextVertexToEvaluate].Size()) {
             pivot = true;
@@ -215,6 +262,10 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         }
     }
 
+    if (!evaluateP.empty()) {
+        if (!m_bQuiet) cout << depth << ": Switching to pivot mode." << endl;
+    }
+
     while (!evaluateP.empty()) {
         if (depth == 0) {
             if (!m_bQuiet) {
@@ -224,7 +275,23 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 
         int const nextVertex(evaluateP.back()); evaluateP.pop_back();
 
-        if (!isolates.GetInGraph().Contains(nextVertex)) { // filter by reducer...
+////        // check if we should return to non-pivot version of the algorithm
+////        P.erase(find(P.begin(), P.end(), nextVertex));
+////        vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), nextVertex));
+        Color(vVertexOrder, P, vColors);
+        numLeft = P.size();
+        for (; numLeft > 0; --numLeft) {
+            if (R.size() + vColors[numLeft-1] <= m_uMaximumCliqueSize) { break; }
+        }
+        numLeft = P.size() - numLeft;
+        if (numLeft < 3.0*evaluateP.size()/4.0) {
+            if (!m_bQuiet) cout << depth << ": Switching out of pivot mode" << endl;
+            pivot = false;
+            break;
+        }
+
+        if (!isolates.GetInGraph().Contains(nextVertex)) { // was filtered by reducer...
+            X.push_back(nextVertex);
             continue;
         }
 
@@ -252,7 +319,11 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         }
 
         if (dominates) {
+            if (!m_bQuiet)
+                cout << depth << ": domination check removed " << nextVertex << endl;
             isolates.RemoveVertex(nextVertex);
+            vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
+            vRemovedVerticesToReplace.push_back(nextVertex);
             continue;
         }
 
@@ -266,7 +337,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 ////        evaluateColors.pop_back();
 
         size_t const numLeft = evaluateP.size();
-        if (numLeft > 10) {
+        if (numLeft > 10 && !m_bQuiet) {
             cout << "depth = " << depth << ", P.size = " << P.size() << ", P.left = " << numLeft << ", neighbors=" << isolates.Neighbors()[nextVertex].Size() << endl;
         }
 
@@ -304,6 +375,8 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
             timeToLargestClique = clock() - startTime;
         }
 
+        X.push_back(nextVertex);
+
         bool bPIsEmpty(evaluateP.empty());
         ProcessOrderAfterRecursion(vVertexOrder, P, vColors, nextVertex);
 
@@ -322,7 +395,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         }
     }
 
-    bool const selectMinNeighbors(false); ////depth <= 2);
+    bool const selectMinNeighbors(false); ////depth <= 1);
     while (!P.empty() && !pivot) {
         if (depth == 0) {
             if (!m_bQuiet) {
@@ -331,7 +404,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         }
 
         int const largestColor(vColors.back());
-        if (R.size() + largestColor <= m_uMaximumCliqueSize) { //// && !selectMinNeighbors) {
+        if (R.size() + largestColor <= m_uMaximumCliqueSize && !selectMinNeighbors) {
             TesterMISQ::ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
             P.clear();
             return;
@@ -378,6 +451,38 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         } else {
             P.pop_back();
             vColors.pop_back();
+        }
+
+        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
+            vMarkedVertices[neighbor] = true;
+        }
+
+        bool dominates(false);
+        for (int const x : X) {
+            dominates = true;
+            for (int const neighborX : m_AdjacencyArray[x]) {
+                if (isolates.GetInGraph().Contains(neighborX) && !vMarkedVertices[neighborX]) {
+                    dominates = false;
+                    break;
+                }
+            }
+
+            if (dominates) {
+                break;
+            }
+        }
+
+        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
+            vMarkedVertices[neighbor] = false;
+        }
+
+        if (dominates) {
+            if (!m_bQuiet)
+                cout << depth << ": domination check removed " << nextVertex << endl;
+            isolates.RemoveVertex(nextVertex);
+            vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
+            vRemovedVerticesToReplace.push_back(nextVertex);
+            continue;
         }
 
 ////        if (numLeft > 10) {

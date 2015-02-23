@@ -687,8 +687,8 @@ void Staging::Run()
 
 ////    coloringStrategy.Recolor(adjacencyMatrix, vAdjunctOrdering, vOrdering, vColoring, cliqueSize, cliqueSize);
 
-////    while (isolates.GetInGraph().Size() > 900) {
-    while (!isolates.GetInGraph().Empty()) {
+    while (isolates.GetInGraph().Size() > 913) {
+////    while (!isolates.GetInGraph().Empty()) {
         int const nextVertex1 = ChooseNextVertex(isolates);
         if (nextVertex1 == -1) break;
 ////        if (vColoring.back() <= cliques.back().size()) break;
@@ -778,7 +778,19 @@ void Staging::Run()
         coloringStrategy.Recolor(adjacencyMatrix, vAdjunctOrdering, vOrdering, vColoring, currentClique.size(), cliques.back().size());
     }
 
-cout << "Found independent set of size: " << cliques.back().size() << endl << flush;
+    list<int> realClique;
+    realClique.insert(realClique.end(), vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
+
+    vector<int> const vRemainingVertices(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
+    ComputeOnConnectedComponent(vRemainingVertices, isolates, m_AdjacencyList, realClique, cliques, true);
+
+    if (realClique.size() > cliques.back().size()) {
+        cliques.back().clear();
+        cliques.back() = realClique;
+        cout << "Found independent set of size: " << realClique.size() << endl;
+    }
+
+    cout << "Found independent set of size: " << cliques.back().size() << endl << flush;
 
 #if 0
 int savedi(0), savedj(0), savedk(0);
