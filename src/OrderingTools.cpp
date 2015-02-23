@@ -587,7 +587,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 #endif // 0
             numVerticesRemoved++;
             currentDegree--; // degrees can't grow...
-            if (currentDegree == -1) currentDegree = 0;
+            if (currentDegree < 0) currentDegree = 0;
        } else {
             currentDegree++;
         }
@@ -763,7 +763,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
             }
 
             // iterate over all non-neighbors, subtract from their co-Degree
-            for (int nonNeighbor = 0; nonNeighbor < numVertices; ++nonNeighbor) {
+            for (int const nonNeighbor : isolates.GetInGraph()) { //// = 0; nonNeighbor < numVertices; ++nonNeighbor) {
                 if (coDegree[nonNeighbor] != -1 && !vMarkedVertices[nonNeighbor]) {
                     verticesByDegree[coDegree[nonNeighbor]].erase(vertexLocator[nonNeighbor]);
                     coDegree[nonNeighbor]--;
@@ -780,7 +780,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 #endif // 0
             numVerticesRemoved++;
             currentDegree--; // degrees can't grow...
-            if (currentDegree == -1) currentDegree = 0;
+            if (currentDegree < 0) currentDegree = 0;
        } else {
             currentDegree++;
         }
