@@ -208,9 +208,11 @@ void ComputeOnConnectedComponent(vector<int> const &vVertices, Isolates4<SparseA
     TesterMISS algorithm(componentMatrix, componentArray);
     algorithm.SetQuiet(true);
 
-////    if (bSetCliqueSize) {
-////        algorithm.SetMaximumCliqueSize(cliques.back().size() - realClique.size());
-////    }
+    if (bSetCliqueSize) {
+        if (cliques.back().size() >= realClique.size())
+            algorithm.SetMaximumCliqueSize(cliques.back().size() - realClique.size());
+////        algorithm.SetMaximumCliqueSize(0);
+    }
 
     algorithm.Run(componentResult);
 
@@ -691,7 +693,7 @@ void Staging::Run()
     while (!isolates.GetInGraph().Empty()) {
         int const nextVertex1 = ChooseNextVertex(isolates);
         if (nextVertex1 == -1) break;
-////        if (vColoring.back() <= cliques.back().size()) break;
+        if (vColoring.back() <= cliques.back().size()) break;
 
         cout << "Vertices remaining: " << isolates.GetInGraph().Size() << endl << flush;
 
@@ -745,6 +747,7 @@ void Staging::Run()
 
 ////            cout << "Components:" << endl;
             for (size_t index = 0; index < vNewComponents.size(); ++index) {
+                if (vNewComponents[index].size() == 0) continue;
                 ComputeOnConnectedComponent(vNewComponents[index], isolates, m_AdjacencyList, realClique, cliques, index == vNewComponents.size()-1);
             }
 
@@ -786,16 +789,18 @@ void Staging::Run()
         coloringStrategy.Recolor(adjacencyMatrix, vAdjunctOrdering, vOrdering, vColoring, currentClique.size(), cliques.back().size());
     }
 
-    list<int> realClique;
-    realClique.insert(realClique.end(), vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
+    if (!isolates.GetInGraph().Empty() && vColoring.back() > cliques.back().size()) {
+        list<int> realClique;
+        realClique.insert(realClique.end(), vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
 
-    vector<int> const vRemainingVertices(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
-    ComputeOnConnectedComponent(vRemainingVertices, isolates, m_AdjacencyList, realClique, cliques, true);
+        vector<int> const vRemainingVertices(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
+        ComputeOnConnectedComponent(vRemainingVertices, isolates, m_AdjacencyList, realClique, cliques, true);
 
-    if (realClique.size() > cliques.back().size()) {
-        cliques.back().clear();
-        cliques.back() = realClique;
-        cout << "Found independent set of size: " << realClique.size() << endl;
+        if (realClique.size() > cliques.back().size()) {
+            cliques.back().clear();
+            cliques.back() = realClique;
+            cout << "Found independent set of size: " << realClique.size() << endl;
+        }
     }
 
     cout << "Found independent set of size: " << cliques.back().size() << endl << flush;
