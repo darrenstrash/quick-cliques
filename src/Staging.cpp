@@ -687,8 +687,8 @@ void Staging::Run()
 
 ////    coloringStrategy.Recolor(adjacencyMatrix, vAdjunctOrdering, vOrdering, vColoring, cliqueSize, cliqueSize);
 
-    while (isolates.GetInGraph().Size() > 913) {
-////    while (!isolates.GetInGraph().Empty()) {
+////    while (isolates.GetInGraph().Size() > 913) {
+    while (!isolates.GetInGraph().Empty()) {
         int const nextVertex1 = ChooseNextVertex(isolates);
         if (nextVertex1 == -1) break;
 ////        if (vColoring.back() <= cliques.back().size()) break;
@@ -771,10 +771,18 @@ void Staging::Run()
         isolates.RemoveVertex(nextVertex1);
         isolates.RemoveAllIsolates(0, vCliqueVerticesPersistent1, vRemovedPersistent1, vAddedEdgesUnused, false);
 
-        vAdjunctOrdering.erase(find(vAdjunctOrdering.begin(), vAdjunctOrdering.end(), nextVertex1));
+        size_t uNewSize(0);
+        for (size_t index = 0; index < vAdjunctOrdering.size(); ++index) {
+            int const vertex(vAdjunctOrdering[index]);
+            if (isolates.GetInGraph().Contains(vertex)) {
+                vAdjunctOrdering[uNewSize++] = vertex;
+            }
+        }
+        vAdjunctOrdering.resize(uNewSize);
         vOrdering.resize(vAdjunctOrdering.size());
         vColoring.resize(vAdjunctOrdering.size());
 
+////        OrderingTools::InitialOrderingMISR(m_AdjacencyList, isolates, vOrdering, vColoring, cliqueSize);
         coloringStrategy.Recolor(adjacencyMatrix, vAdjunctOrdering, vOrdering, vColoring, currentClique.size(), cliques.back().size());
     }
 
