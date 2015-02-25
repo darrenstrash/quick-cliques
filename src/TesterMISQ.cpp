@@ -260,9 +260,40 @@ void TesterMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std:
 ////            vColors.resize(uNewIndex);
 ////            Color(vVertexOrder/* evaluation order */, P /* color order */, vColors);
 
+            // TODO/DS verify that we don't need to recolor,
+            // removing unneeded colors should suffice
 #ifndef REMOVE_ISOLATES_BEFORE_ONLY
-            if (bRemoveIsolates)
+            if (bRemoveIsolates) {
+#ifdef RECOLOR
+////                cout << __LINE__ << ": Recoloring..." << endl;
+                vector<int> proposedP(vVertexOrder.size());
+                vector<int> proposedColors(vVertexOrder.size());
+                ////            cout << __LINE__ << ": Recoloring..." << endl;
+                Color(vVertexOrder, proposedP, proposedColors);
+
+                size_t currentNumLeft = P.size();
+                for (; currentNumLeft > 0; --currentNumLeft) {
+                    if (R.size() + vColors[currentNumLeft-1] <= m_uMaximumCliqueSize) { break; }
+                }
+
+                currentNumLeft = P.size() - currentNumLeft;
+
+                size_t proposedNumLeft = proposedP.size();
+                for (; proposedNumLeft > 0; --proposedNumLeft) {
+                    if (R.size() + proposedColors[proposedNumLeft-1] <= m_uMaximumCliqueSize) { break; }
+                }
+
+                proposedNumLeft = P.size() - proposedNumLeft;
+
+                if (proposedNumLeft < currentNumLeft) {
+////                    cout << __LINE__ << ": Recoloring..." << endl;
+                    P = proposedP;
+                    vColors = proposedColors;
+                }
+#else
                 Color(vVertexOrder, P, vColors);
+#endif //RECOLOR
+            }
 #endif //REMOVE_ISOLATES_BEFORE_ONLY
         }
 
