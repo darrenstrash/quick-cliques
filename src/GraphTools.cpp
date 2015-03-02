@@ -264,6 +264,185 @@ void GraphTools::ComputeConnectedComponents(IsolatesType const &isolates, vector
     }
 }
 
+vector<vector<int>> GraphTools::ComputeBiDoubleGraph(vector<vector<int>> const &adjacencyArray)
+{
+    vector<vector<int>> biDoubleGraph(adjacencyArray.size()*2);
+
+    int const size(adjacencyArray.size());
+    for (int vertex = 0; vertex < adjacencyArray.size(); ++vertex) {
+        vector<int> const &neighbors(adjacencyArray[vertex]);
+        for (int const neighbor : neighbors) {
+            biDoubleGraph[vertex].push_back(neighbor + size);
+        }
+    }
+
+    return biDoubleGraph;
+}
+
+
+// compute size of unweighted maximum matchings in biDouble graphs (which are bipartite).
+// first half of biDOuble graph is the first set of the bipartite graph.
+// simplified implementation of Ford-Fulkerson algorithm.
+int GraphTools::ComputeMaximumMatchingSize(vector<vector<int>> const &biDoubleGraph)
+{
+    // each edge in matching is indexed by first vertex, and contains the second vertex
+    // initially there are no edges in matching (thus invalid second vertex -1).
+    vector<int> matching(biDoubleGraph.size(), -1);
+
+    // residual graph is represented the same as edge in matching.
+    // we can iterate over neighbors (excluding neighbor in matching
+    // to find residual paths.
+////    vector<int> residualGraph(matching);
+
+    auto inRightSide = [&biDoubleGraph] (int const vertex) {
+        return vertex < biDoubleGraph.size()/2;
+    };
+
+    // finds a path from start to finish with excess capacity.
+    auto findPath = [&inRightSide, &biDoubleGraph] (vector<int> const &matching) {
+        vector<bool> inStack(matching.size());
+        vector<bool> evaluated(matching.size());
+        list<int> stack;
+
+        // depth first search, starting from imaginary start vertex
+        for (size_t index = 0; index < matching.size()/2; ++index) {
+            // only insert vertices without edges in matching, otherwise
+            // imaginary first vertex has residual capacity 0 to that vertex.
+            if (matching[index] != -1) continue;
+            stack.push_back(index);
+            inStack[index] = true;
+        }
+
+        vector<int> vPreviousVertexOnPath(biDoubleGraph.size(), -1);
+        int endVertex(-1);
+
+        bool foundPath(false);
+        while (!stack.empty() && !foundPath) {
+            int const vertex = stack.back(); stack.pop_back();
+            evaluated[vertex] = true;
+            inStack[vertex] = false;
+            for (int const neighbor : biDoubleGraph[vertex]) {
+                // evaluate neighbor if the edge to that neighbor has residual capacity.
+                if (evaluated[neighbor] || inStack[neighbor]) continue;
+
+                stack.push_back(neighbor);
+                inStack[neighbor] = true;
+
+                // forward edge with residual capacity
+                if (inRightSide(vertex) && matching[vertex] != neighbor) {
+                    vPreviousVertexOnPath[neighbor] = vertex;
+                    if (!inRightSide(neighbor) && matching[neighbor] == -1) { //found path
+                        foundPath = true;
+                        endVertex = neighbor;
+                        break;
+                    }
+                }
+                // backward edge that we can "undo" by pushing flow back...
+                else if (!inRightSide(vertex) && matching[neighbor] == vertex) {
+                    vPreviousVertexOnPath[neighbor] = vertex;
+                    stack.push_back(neighbor);
+                }
+            }
+        }
+
+        vector<int> vPath;
+        if (endVertex == -1) return vPath;
+        vPath.push_back(endVertex);
+        while (vPreviousVertexOnPath[endVertex] != -1) {
+            vPath.push_back(vPreviousVertexOnPath[endVertex]);
+            endVertex = vPreviousVertexOnPath[endVertex];
+        }
+
+        std::reverse(vPath.begin(), vPath.end());
+
+        return vPath;
+    };
+
+    vector<int> path;
+    path = findPath(matching);
+    while (!path.empty()) {
+        for (size_t index = 1; index < path.size(); ++index) {
+            int const vertex1(path[index-1]);
+            int const vertex2(path[index]);
+            bool const forwardEdge(vertex1 < vertex2);
+            if (forwardEdge) {
+                matching[vertex1] = vertex2;
+                matching[vertex2] = vertex1;
+            }
+        }
+
+        path = findPath(matching);
+    }
+
+    int count(0);
+    for (int const vertex : matching) {
+        if (vertex == -1) continue;
+        count++;
+    }
+
+    return count/2;
+}
+
+bool GraphTools::TestMatchingCount()
+{
+    cout << "Maximum Matching: ";
+    vector<vector<int>> vAdjacencyList(6);
+    vAdjacencyList[0].push_back(5);
+    vAdjacencyList[5].push_back(0);
+    if (ComputeMaximumMatchingSize(vAdjacencyList) != 1) {
+        cout << "FAILED: MaximumMatching one-edge test" << endl << flush;
+        return false;
+    }
+
+    vAdjacencyList[0].push_back(4);
+    vAdjacencyList[4].push_back(0);
+    if (ComputeMaximumMatchingSize(vAdjacencyList) != 1) {
+        cout << "FAILED: MaximumMatching two-edge-one-path test" << endl << flush;
+        return false;
+    }
+
+    vAdjacencyList[1].push_back(4);
+    vAdjacencyList[4].push_back(1);
+    if (ComputeMaximumMatchingSize(vAdjacencyList) != 2) {
+        cout << "FAILED: MaximumMatching three-edge-two-path test" << endl << flush;
+        return false;
+    }
+
+    vAdjacencyList[2].push_back(4);
+    vAdjacencyList[4].push_back(2);
+    if (ComputeMaximumMatchingSize(vAdjacencyList) != 2) {
+        cout << "FAILED: MaximumMatching four-edge-two-path test" << endl << flush;
+        return false;
+    }
+
+    vAdjacencyList[0] = {3,4};
+    vAdjacencyList[1] = {};
+    vAdjacencyList[2] = {4,5};
+    vAdjacencyList[3] = {0};
+    vAdjacencyList[4] = {0,2};
+    vAdjacencyList[5] = {2};
+
+    if (ComputeMaximumMatchingSize(vAdjacencyList) != 2) {
+        cout << "FAILED: MaximumMatching \"sigma\" case" << endl << flush;
+        return false;
+    }
+
+    vAdjacencyList[0] = {3,4,5};
+    vAdjacencyList[1] = {3,4,5};
+    vAdjacencyList[2] = {3,4,5};
+    vAdjacencyList[3] = {0,1,2};
+    vAdjacencyList[4] = {0,1,2};
+    vAdjacencyList[5] = {0,1,2};
+
+    if (ComputeMaximumMatchingSize(vAdjacencyList) != 3) {
+        cout << "FAILED: MaximumMatching full bipartite case" << endl << flush;
+        return false;
+    }
+
+    cout << "PASSED!" << endl;
+    return true;
+}
+
 template
 void GraphTools::ComputeConnectedComponents<Isolates2<ArraySet>>(Isolates2<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
 

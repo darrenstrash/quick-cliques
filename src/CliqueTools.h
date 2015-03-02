@@ -17,6 +17,10 @@ namespace CliqueTools
     bool IsIndependentSet(std::vector<std::vector<char>> &adjacencyMatrix, std::list<int> const &clique, bool const verbose);
     bool IsMaximalIndependentSet(std::vector<std::vector<int>> &adjacencyArray, std::list<int> const &vertexSet, bool const verbose);
     bool IsIndependentSet(std::vector<std::vector<int>> &adjacencyArray, std::list<int> const &vertexSet, bool const verbose);
+
+    std::vector<int> ComputeMaximumCriticalIndependentSet(std::vector<std::vector<int>> adjacencyList);
+
+    std::vector<int> ComputeBipartiteMaximumIndependentSet(std::vector<std::vector<int>> const &biDoubleGraph);
 };
 
 #endif //CLIQUE_TOOLS_H

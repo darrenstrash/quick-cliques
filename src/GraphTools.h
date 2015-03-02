@@ -18,6 +18,12 @@ namespace GraphTools
     std::vector<int> OrderVerticesByDegree(std::vector<std::vector<char>> const &adjacencyMatrix, bool const ascending);
 ////    void RemoveVertices(vector<vector<int>> &adjacencyList, vector<int> const &vVertices);
 
+    std::vector<std::vector<int>> ComputeBiDoubleGraph(std::vector<std::vector<int>> const &adjacencyArray);
+
+    int ComputeMaximumMatchingSize(std::vector<std::vector<int>> const &biDoubleGraph);
+
+    bool TestMatchingCount();
+
     template<typename IsolatesType>
     void ComputeConnectedComponents(IsolatesType const &isolates, std::vector<std::vector<int>> &vComponents, size_t const uNumVertices);
 };
