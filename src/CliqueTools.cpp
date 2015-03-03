@@ -8,6 +8,8 @@
 #include "MaximumCliqueAlgorithm.h"
 #include "MaximalCliqueAlgorithm.h"
 
+#include "LightWeightReductionSparseStaticOrderMISS.h"
+
 // system includes
 #include <vector>
 #include <list>
@@ -310,73 +312,203 @@ vector<int> CliqueTools::ComputeMaximumCriticalIndependentSet(vector<vector<int>
     vector<int> criticalSet;
     vector<vector<int>> biDoubleGraph(std::move(GraphTools::ComputeBiDoubleGraph(adjacencyList)));
 
-    size_t graphSize(biDoubleGraph.size());
+    int graphSize(biDoubleGraph.size());
+    cout << "bi-double graph size=" << biDoubleGraph.size() << endl;
     set<int> setRemovedVertices;
-    for (int vertex = 0; vertex < adjacencyList.size(); ++vertex) {
-        if (setRemovedVertices.find(vertex)!= setRemovedVertices.end()) continue;
+    set<int> setRemainingVertices;
+    for (int vertex = 0; vertex < biDoubleGraph.size(); ++vertex) {
+        setRemainingVertices.insert(vertex);
+    }
+
+    while (!setRemainingVertices.empty()) {
+        int const vertex = *setRemainingVertices.begin();
+        if (setRemainingVertices.size()%100 == 0) {
+            cout << "remaining vertices: " << setRemainingVertices.size() << endl;
+        }
+
+        // don't evaluate the same vertex twice
+        if (setRemovedVertices.find(vertex) != setRemovedVertices.end()) continue;
+        clock_t start(clock());
         int const independenceNumber(graphSize - GraphTools::ComputeMaximumMatchingSize(biDoubleGraph));
-        cout << "a(   graph)=" << independenceNumber << endl;
+        cout << "Time to compute independence number with matching: " << Tools::GetTimeInSeconds(clock() - start) << endl << flush;
+////        cout << "a(   graph)=" << independenceNumber << endl << flush;
+
+#if 0
+        start = clock();
+        map<int,int> remapSubgraphUnused;
+        vector<vector<int>> newSubgraph;
+        GraphTools::ComputeInducedSubgraph(biDoubleGraph, setRemainingVertices, newSubgraph, remapSubgraphUnused);
+        int const newSubgraphSize(newSubgraph.size());
+////
+////        int const newIndependentSize(newSubgraphSize - GraphTools::ComputeMaximumMatchingSize(newSubgraph));
+
+        list<list<int>> cliques;
+        LightWeightReductionSparseStaticOrderMISS algo(newSubgraph);
+        algo.Run(cliques);
+        int const newIndependentSize(cliques.back().size());
+        cout << "(2)  graph)=" << newIndependentSize << endl << flush;
+        cout << "Time to compute independence number with miss: " << Tools::GetTimeInSeconds(clock() - start) << endl << flush;
+        if (independenceNumber != newIndependentSize) {
+            cout << __LINE__ << ": ERROR!" << endl;
+        }
+#endif // 1
 
         vector<vector<int>> subgraph(biDoubleGraph);
         int const dualVertex(vertex + adjacencyList.size());
 
-        size_t subgraphSize(graphSize);
+
+        int subgraphSize(graphSize);
+
+        set<int> subgraphRemainingVertices(setRemainingVertices);
+
+        subgraphRemainingVertices.erase(vertex);
+        subgraphRemainingVertices.erase(dualVertex);
+        for (int const vertexToRemove : subgraph[vertex]) {
+            subgraphRemainingVertices.erase(vertexToRemove);
+        }
+
+        for (int const vertexToRemove : subgraph[dualVertex]) {
+            subgraphRemainingVertices.erase(vertexToRemove);
+        }
+
 
         // remove vertex and all its neighbors
+////        cout << "Removing neighbors ..." << endl << flush;
+////        for (int const neighbor : subgraph[vertex]) {
+////            cout << neighbor << " ";
+////        }
+////        cout << endl;
         for (int const neighbor : subgraph[vertex]) {
-            subgraphSize--;
             for (int const nNeighbor : subgraph[neighbor]) {
+                if (nNeighbor == vertex) continue;
+////                vector<int>::iterator it = find(subgraph[nNeighbor].begin(), subgraph[nNeighbor].end(), neighbor);
+////                if (it == subgraph[nNeighbor].end()) {
+////                    cout << "neighbor " << neighbor << " is not found in nNeighbor " << nNeighbor<< "'s list" << endl << flush;
+////                }
                 subgraph[nNeighbor].erase(find(subgraph[nNeighbor].begin(), subgraph[nNeighbor].end(), neighbor));
+////                if (nNeighbor == 1 && neighbor == 77) {
+////                    cout << __LINE__ << ": Removed 77 from 1's list" << endl;
+////                }
             }
             subgraph[neighbor].clear();
+            subgraphSize--;
+////            cout << __LINE__ << ": Cleared " << neighbor << "'s list" << endl;
+////            if (neighbor == 1) {
+////                cout << __LINE__ << ": Cleared 1's list" << endl;
+////            }
         }
         subgraph[vertex].clear();
+////        cout << __LINE__ << ": Cleared " << vertex << "'s list" << endl;
         subgraphSize--;
 
+        if (subgraphSize != graphSize - (biDoubleGraph[vertex].size() + 1)) {
+            cout << __LINE__ << ": out of sync" << endl;
+        }
+
         // remove dual vertex and all its neighbors
+////        cout << "Removing dual neighbors ..." << endl << flush;
         for (int const dualNeighbor : subgraph[dualVertex]) {
             for (int const dualnNeighbor : subgraph[dualNeighbor]) {
+                if (dualnNeighbor == dualVertex) continue;
                 subgraph[dualnNeighbor].erase(find(subgraph[dualnNeighbor].begin(), subgraph[dualnNeighbor].end(), dualNeighbor));
+////                if (dualnNeighbor == 1 && dualNeighbor == 77) {
+////                    cout << __LINE__ << ": Removed 77 from 1's list" << endl;
+////                }
             }
             subgraph[dualNeighbor].clear();
             subgraphSize--;
+////            cout << __LINE__ << ": Cleared " << dualNeighbor << "'s list" << endl;
         }
         subgraph[dualVertex].clear();
         subgraphSize--;
+////        cout << __LINE__ << ": Cleared " << dualVertex << "'s list" << endl;
+
+        if (subgraphSize != graphSize - (biDoubleGraph[vertex].size() + 1 + biDoubleGraph[dualVertex].size() + 1)) {
+            cout << __LINE__ << ": out of sync" << endl;
+        }
 
         int const subgraphIndependenceNumber(subgraphSize - GraphTools::ComputeMaximumMatchingSize(subgraph));
-        cout << "a(subgraph)=" << subgraphIndependenceNumber << endl;
+////        cout << "a(subgraph)=" << subgraphIndependenceNumber << endl << flush;
 
-        if (independenceNumber == subgraphIndependenceNumber) {
+#if 0
+        map<int,int> remapUnused;
+        vector<vector<int>> newGraph;
+        GraphTools::ComputeInducedSubgraph(biDoubleGraph, subgraphRemainingVertices, newGraph, remapUnused);
+        int const newsize(newGraph.size());
+////
+        int const newSubgraphIndependentSize(newsize - GraphTools::ComputeMaximumMatchingSize(newGraph));
+        cout << "(2)subgraph)=" << newSubgraphIndependentSize << endl << flush;
+        if (subgraphIndependenceNumber != newSubgraphIndependentSize) {
+            cout << __LINE__ << ": ERROR!" << endl;
+        }
+#endif // 1
+
+        if (subgraphIndependenceNumber < 0) {
+            cout << "Removed: " << vertex << " ";
+            for (int neighbor : biDoubleGraph[dualVertex]) {
+                cout << neighbor << " ";
+            }
+            cout << dualVertex << " ";
+            for (int neighbor : biDoubleGraph[vertex]) {
+                cout << neighbor << " ";
+            }
+            cout << endl << flush;
+
+            cout << "   graph-size=" << graphSize << " min-vertex-cover-size=" << GraphTools::ComputeMaximumMatchingSize(biDoubleGraph) << endl;
+            GraphTools::PrintGraphInEdgesFormat(biDoubleGraph);
+
+            cout << "subgraph-size=" << subgraphSize << " min-vertex-cover-size=" << GraphTools::ComputeMaximumMatchingSize(subgraph) << endl;
+            GraphTools::PrintGraphInEdgesFormat(subgraph);
+        }
+
+        if (independenceNumber == (subgraphIndependenceNumber + 2)) {
+////        if (newIndependentSize == (newSubgraphIndependentSize + 2)) {
+////        if (newIndependentSize == (newSubgraphIndependentSize)) {
             criticalSet.push_back(vertex);
-            biDoubleGraph = subgraph;
-            graphSize = subgraphSize;
 
             setRemovedVertices.insert(vertex);
             setRemovedVertices.insert(biDoubleGraph[dualVertex].begin(), biDoubleGraph[dualVertex].end());
+            setRemainingVertices.erase(vertex);
+            setRemainingVertices.erase(dualVertex);
+            for (int const vertexToRemove : biDoubleGraph[dualVertex]) {
+                setRemainingVertices.erase(vertexToRemove);
+            }
+            for (int const vertexToRemove : biDoubleGraph[vertex]) {
+                setRemainingVertices.erase(vertexToRemove);
+            }
+
+            biDoubleGraph = subgraph;
+            graphSize = subgraphSize;
+
             cout << vertex << " is in" << endl;
+////            if (criticalSet.size() == 1) break;
         } else {
             // remove vertex from graph
-            for (int const neighbor : subgraph[vertex]) {
-                subgraph[neighbor].erase(find(subgraph[neighbor].begin(), subgraph[neighbor].end(), vertex));
-            }
-            biDoubleGraph[vertex].clear();
-            graphSize--;
-
-            // remove dual vertex from graph
-            for (int const dualNeighbor : subgraph[dualVertex]) {
-                subgraph[dualNeighbor].erase(find(subgraph[dualNeighbor].begin(), subgraph[dualNeighbor].end(), dualVertex));
-            }
-            biDoubleGraph[vertex].clear();
-            graphSize--;
-
+////            for (int const neighbor : biDoubleGraph[vertex]) {
+////                biDoubleGraph[neighbor].erase(find(biDoubleGraph[neighbor].begin(), biDoubleGraph[neighbor].end(), vertex));
+////            }
+////            biDoubleGraph[vertex].clear();
+////            graphSize--;
+////
+////            // remove dual vertex from graph
+////            for (int const dualNeighbor : biDoubleGraph[dualVertex]) {
+////                biDoubleGraph[dualNeighbor].erase(find(biDoubleGraph[dualNeighbor].begin(), biDoubleGraph[dualNeighbor].end(), dualVertex));
+////            }
+////            biDoubleGraph[dualVertex].clear();
+////            graphSize--;
+////
             setRemovedVertices.insert(vertex);
-            cout << vertex << " is out" << endl;
+////            cout << vertex << " is out" << endl;
+////
+            setRemainingVertices.erase(dualVertex);
+            setRemainingVertices.erase(vertex);
         }
     }
 
     return criticalSet;
 }
+
+#if 0
 vector<int> CliqueTools::ComputeBipartiteMaximumIndependentSet(vector<vector<int>> const &biDoubleGraph)
 {
     // each edge in matching is indexed by first vertex, and contains the second vertex
@@ -476,4 +608,4 @@ vector<int> CliqueTools::ComputeBipartiteMaximumIndependentSet(vector<vector<int
 
     return independentSet;
 }
-
+#endif

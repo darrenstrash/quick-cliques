@@ -17,7 +17,7 @@ void GraphTools::ComputeInducedSubgraph(vector<vector<int>> &graph, set<int> con
     subgraph.clear();
     remapping.clear();
 
-    cout << "Forming induced subgraph on " << vertices.size() << " vertices." << endl;
+////    cout << "Forming induced subgraph on " << vertices.size() << " vertices." << endl;
 
     map<int,int> forwardMapping;
 
@@ -43,15 +43,15 @@ void GraphTools::ComputeInducedSubgraph(vector<vector<int>> &graph, set<int> con
 
         vector<int> const &neighbors(graph[vertex]);
         int const newVertex = mappedVertex(vertex);
-        cout << newVertex << " : ";
+////        cout << newVertex << " : ";
         for (int const neighbor : neighbors) {
             if (vertices.find(neighbor) == vertices.end()) continue;
             int const newNeighbor = mappedVertex(neighbor);
             subgraph[newVertex].push_back(newNeighbor);
 ////            subgraph[newNeighbor].push_back(newVertex);
-            cout << newNeighbor << " ";
+////            cout << newNeighbor << " ";
         }
-        cout << endl;
+////        cout << endl;
     }
 }
 
@@ -273,6 +273,7 @@ vector<vector<int>> GraphTools::ComputeBiDoubleGraph(vector<vector<int>> const &
         vector<int> const &neighbors(adjacencyArray[vertex]);
         for (int const neighbor : neighbors) {
             biDoubleGraph[vertex].push_back(neighbor + size);
+            biDoubleGraph[vertex + size].push_back(neighbor);
         }
     }
 
@@ -294,18 +295,19 @@ int GraphTools::ComputeMaximumMatchingSize(vector<vector<int>> const &biDoubleGr
     // to find residual paths.
 ////    vector<int> residualGraph(matching);
 
-    auto inRightSide = [&biDoubleGraph] (int const vertex) {
+    auto inLeftSide = [&biDoubleGraph] (int const vertex) {
         return vertex < biDoubleGraph.size()/2;
     };
 
     // finds a path from start to finish with excess capacity.
-    auto findPath = [&inRightSide, &biDoubleGraph] (vector<int> const &matching) {
-        vector<bool> inStack(matching.size());
-        vector<bool> evaluated(matching.size());
+    auto findPath = [&inLeftSide, &biDoubleGraph] (vector<int> const &matching) {
+        vector<bool> inStack(matching.size(), false);
+        vector<bool> evaluated(matching.size(), false);
         list<int> stack;
 
         // depth first search, starting from imaginary start vertex
         for (size_t index = 0; index < matching.size()/2; ++index) {
+////        for (size_t index = matching.size()/2; index > 0; --index) {
             // only insert vertices without edges in matching, otherwise
             // imaginary first vertex has residual capacity 0 to that vertex.
             if (matching[index] != -1) continue;
@@ -322,25 +324,29 @@ int GraphTools::ComputeMaximumMatchingSize(vector<vector<int>> const &biDoubleGr
             evaluated[vertex] = true;
             inStack[vertex] = false;
             for (int const neighbor : biDoubleGraph[vertex]) {
+////            for (int index = biDoubleGraph[vertex].size(); index > 0; --index) {
+////                int const neighbor(biDoubleGraph[vertex][index-1]);
                 // evaluate neighbor if the edge to that neighbor has residual capacity.
                 if (evaluated[neighbor] || inStack[neighbor]) continue;
 
-                stack.push_back(neighbor);
-                inStack[neighbor] = true;
-
                 // forward edge with residual capacity
-                if (inRightSide(vertex) && matching[vertex] != neighbor) {
+                if (inLeftSide(vertex) && matching[vertex] != neighbor) {
                     vPreviousVertexOnPath[neighbor] = vertex;
-                    if (!inRightSide(neighbor) && matching[neighbor] == -1) { //found path
+                    stack.push_back(neighbor);
+                    inStack[neighbor] = true;
+
+                    if (!inLeftSide(neighbor) && matching[neighbor] == -1) { //found path
                         foundPath = true;
                         endVertex = neighbor;
                         break;
                     }
                 }
                 // backward edge that we can "undo" by pushing flow back...
-                else if (!inRightSide(vertex) && matching[neighbor] == vertex) {
+                else if (inLeftSide(neighbor) && matching[neighbor] == vertex) {
+////                else if (!inLeftSide(vertex) && matching[neighbor] == vertex) {
                     vPreviousVertexOnPath[neighbor] = vertex;
                     stack.push_back(neighbor);
+                    inStack[neighbor] = true;
                 }
             }
         }
@@ -355,12 +361,30 @@ int GraphTools::ComputeMaximumMatchingSize(vector<vector<int>> const &biDoubleGr
 
         std::reverse(vPath.begin(), vPath.end());
 
+////        cout << "Path through residual graph: ";
+////        for (int const vertex : vPath) {
+////            cout << vertex << " ";
+////        }
+////        cout << endl;
         return vPath;
     };
 
     vector<int> path;
     path = findPath(matching);
     while (!path.empty()) {
+        for (size_t index = 1; index < path.size(); ++index) {
+            int const vertex1(path[index-1]);
+            int const vertex2(path[index]);
+            if (matching[vertex1] != -1) {
+                matching[matching[vertex1]] = -1;
+            }
+            if (matching[vertex2] != -1) {
+                matching[matching[vertex2]] = -1;
+            }
+            matching[vertex1] = -1;
+            matching[vertex2] = -1;
+        }
+
         for (size_t index = 1; index < path.size(); ++index) {
             int const vertex1(path[index-1]);
             int const vertex2(path[index]);
@@ -441,6 +465,22 @@ bool GraphTools::TestMatchingCount()
 
     cout << "PASSED!" << endl;
     return true;
+}
+
+void GraphTools::PrintGraphInEdgesFormat(vector<vector<int>> const &adjacencyArray)
+{
+    cout << adjacencyArray.size() << endl;
+    size_t edges(0);
+    for (vector<int> const &neighborList : adjacencyArray) {
+        edges+= neighborList.size();
+    }
+    cout << edges << endl;
+
+    for (size_t index = 0; index < adjacencyArray.size(); ++index) {
+        for (int const neighbor : adjacencyArray[index]) {
+            cout << index << "," << neighbor << endl;
+        }
+    }
 }
 
 template

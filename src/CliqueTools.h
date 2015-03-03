@@ -20,7 +20,7 @@ namespace CliqueTools
 
     std::vector<int> ComputeMaximumCriticalIndependentSet(std::vector<std::vector<int>> adjacencyList);
 
-    std::vector<int> ComputeBipartiteMaximumIndependentSet(std::vector<std::vector<int>> const &biDoubleGraph);
+////    std::vector<int> ComputeBipartiteMaximumIndependentSet(std::vector<std::vector<int>> const &biDoubleGraph);
 };
 
 #endif //CLIQUE_TOOLS_H
