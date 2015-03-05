@@ -133,7 +133,8 @@ void OrderingTools::InitialOrderingMCR(vector<vector<char>> const &adjacencyMatr
 
                     // if regular, and degree is # vertices - 1, then it's a clique.
                     if (static_cast<int>(verticesByDegree[currentDegree].size()) == currentDegree + 1) {
-                        cliqueSize = currentDegree + 1;
+                        if (cliqueSize < currentDegree + 1)
+                            cliqueSize = currentDegree + 1;
                     }
 
                     vector<int> remainingVertices(verticesByDegree[currentDegree].begin(), verticesByDegree[currentDegree].end());
@@ -461,7 +462,8 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 
                     // if regular, and degree is # vertices - 1, then it's a clique.
                     if (static_cast<int>(verticesByDegree[currentDegree].size()) == (currentDegree + 1)) { // TODO/DS put in the proper check for independent set...
-                        cliqueSize = verticesByDegree[currentDegree].size();
+                        if (cliqueSize < verticesByDegree[currentDegree].size())
+                            cliqueSize = verticesByDegree[currentDegree].size();
                     }
 
                     vector<int> remainingVertices(verticesByDegree[currentDegree].begin(), verticesByDegree[currentDegree].end());
@@ -595,7 +597,8 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 }
 #endif //0
 
-void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArray, Isolates4<SparseArraySet> const &isolates, vector<int> &vOrderedVertices, vector<int> &vColoring, size_t &cliqueSize)
+template <typename IsolatesType>
+void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArray, IsolatesType const &isolates, vector<int> &vOrderedVertices, vector<int> &vColoring, size_t &cliqueSize)
 {
     size_t const numVertices(isolates.GetInGraph().Size());
     vOrderedVertices.resize(numVertices, -1);
@@ -654,7 +657,8 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 
                     // if regular, and degree is # vertices - 1, then it's a clique.
                     if (static_cast<int>(verticesByDegree[currentDegree].size()) == (currentDegree + 1)) { // TODO/DS put in the proper check for independent set...
-                        cliqueSize = verticesByDegree[currentDegree].size();
+                        if (cliqueSize < verticesByDegree[currentDegree].size())
+                            cliqueSize = verticesByDegree[currentDegree].size();
                     }
 
                     vector<int> remainingVertices(verticesByDegree[currentDegree].begin(), verticesByDegree[currentDegree].end());
@@ -704,11 +708,26 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
                     }
 #endif //0
 
+#if 0
+                    cout << "Snippet of ordering: ";
+                    for (size_t index = 0; index < vOrderedVertices.size(); ++index) {
+#ifdef SNIPPET
+                        if (index == 10 && vOrderedVertices.size() > 21) {
+                            cout << "...";
+                            index = vOrderedVertices.size() - 10;
+                        }
+#endif // SNIPPET
+
+                        cout << vOrderedVertices[index] << " ";
+                    }
+                    cout << endl;
+#endif
+
                     return;
                 } else {
                     // break ties by neighborhood-degree
                     size_t minNeighborhoodDegree(ULONG_MAX);
-////                    cout << "currentDegree= " << currentDegree << endl << flush;
+                    ////                    cout << "currentDegree= " << currentDegree << endl << flush;
                     int    chosenVertex=verticesByDegree[currentDegree].front();
                     for (int const candidate : verticesByDegree[currentDegree]) {
                         size_t coNeighborhoodDegree(0);
@@ -874,3 +893,66 @@ void OrderingTools::InitialOrderingConnectedComponent(string const &filename, ve
     vColoring.resize(adjacencyMatrix.size(), maxDegree + 1);
 #endif // 0
 }
+
+template <typename IsolatesType>
+void OrderingTools::InitialOrderingReduction(IsolatesType &isolates, vector<int> &vOrderedVertices)
+{
+    size_t const numVertices(isolates.GetInGraph().Size());
+    vOrderedVertices.resize(numVertices, -1);
+
+    size_t lastPosition = numVertices - 1;
+
+    vector<pair<int,int>> vAddedEdgesUnused;
+
+    size_t countVertexForRecursion(0);
+
+    vector<int> const vVerticesToReturn(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
+
+    while (!isolates.GetInGraph().Empty()) {
+        vector<int> vVerticesToConsider(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
+        int nextVertexToPick(0);
+        size_t minRemainingVertices(string::npos);
+        for (int const vertex : vVerticesToConsider) {
+            vector<int> vRemoved;
+            isolates.RemoveVertexAndNeighbors(vertex, vRemoved);
+            isolates.RemoveAllIsolates(0, vRemoved, vRemoved, vAddedEdgesUnused, false);
+
+            size_t const remainingVertices(isolates.GetInGraph().Size());
+            if (remainingVertices < minRemainingVertices) {
+                minRemainingVertices = remainingVertices;
+                nextVertexToPick = vertex;
+            }
+
+            isolates.ReplaceAllRemoved(vRemoved);
+        }
+
+        cout << "In position " << lastPosition << ": " << nextVertexToPick << ", which removed " << (isolates.GetInGraph().Size() - minRemainingVertices) << " vertices" << endl;
+        countVertexForRecursion++;
+        vOrderedVertices[lastPosition--] = nextVertexToPick;
+        isolates.RemoveVertex(nextVertexToPick);
+        vector<int> vCliqueVertices;
+        vector<int> vRemoved;
+        isolates.RemoveAllIsolates(0, vCliqueVertices, vRemoved, vAddedEdgesUnused, false);
+        for (int const cliqueVertex : vCliqueVertices) {
+            cout << "In position " << lastPosition << ": " << cliqueVertex << ", clique vertex" << endl;
+            vOrderedVertices[lastPosition--] = cliqueVertex;
+        }
+        for (int const otherVertex : vRemoved) {
+            cout << "In position " << lastPosition << ": " << otherVertex << ", other vertex" << endl;
+            vOrderedVertices[lastPosition--] = otherVertex;
+        }
+    }
+
+    isolates.ReplaceAllRemoved(vVerticesToReturn);
+
+    cout << "Number of vertices to recurse on: " << countVertexForRecursion << endl;
+}
+
+template
+void OrderingTools::InitialOrderingReduction<Isolates3<ArraySet>>(Isolates3<ArraySet> &isolates, vector<int> &vOrderedVertices);
+
+template
+void OrderingTools::InitialOrderingMISR<Isolates4<SparseArraySet>>(std::vector<std::vector<int>> const &adjacencyArray, Isolates4<SparseArraySet> const &isolates, std::vector<int> &vOrderedVertices, std::vector<int> &vColoring, size_t &cliqueSize);
+
+template
+void OrderingTools::InitialOrderingMISR<Isolates3<ArraySet>>(std::vector<std::vector<int>> const &adjacencyArray, Isolates3<ArraySet> const &isolates, std::vector<int> &vOrderedVertices, std::vector<int> &vColoring, size_t &cliqueSize);

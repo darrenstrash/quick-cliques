@@ -316,21 +316,24 @@ vector<int> CliqueTools::ComputeMaximumCriticalIndependentSet(vector<vector<int>
     cout << "bi-double graph size=" << biDoubleGraph.size() << endl;
     set<int> setRemovedVertices;
     set<int> setRemainingVertices;
+    set<int> setVerticesToEvaluate;
     for (int vertex = 0; vertex < biDoubleGraph.size(); ++vertex) {
         setRemainingVertices.insert(vertex);
+        setVerticesToEvaluate.insert(vertex);
     }
 
-    while (!setRemainingVertices.empty()) {
-        int const vertex = *setRemainingVertices.begin();
-        if (setRemainingVertices.size()%100 == 0) {
-            cout << "remaining vertices: " << setRemainingVertices.size() << endl;
+   clock_t start(clock());
+   int independenceNumber(graphSize - GraphTools::ComputeMaximumMatchingSize(biDoubleGraph));
+   cout << "Time to compute independence number with matching: " << Tools::GetTimeInSeconds(clock() - start) << endl << flush;
+
+    while (!setVerticesToEvaluate.empty()) {
+        int const vertex = *setVerticesToEvaluate.begin();
+        if (setVerticesToEvaluate.size()%100 == 0) {
+            cout << "remaining vertices: " << setVerticesToEvaluate.size() << endl;
         }
 
         // don't evaluate the same vertex twice
         if (setRemovedVertices.find(vertex) != setRemovedVertices.end()) continue;
-        clock_t start(clock());
-        int const independenceNumber(graphSize - GraphTools::ComputeMaximumMatchingSize(biDoubleGraph));
-        cout << "Time to compute independence number with matching: " << Tools::GetTimeInSeconds(clock() - start) << endl << flush;
 ////        cout << "a(   graph)=" << independenceNumber << endl << flush;
 
 #if 0
@@ -356,9 +359,9 @@ vector<int> CliqueTools::ComputeMaximumCriticalIndependentSet(vector<vector<int>
         vector<vector<int>> subgraph(biDoubleGraph);
         int const dualVertex(vertex + adjacencyList.size());
 
-
         int subgraphSize(graphSize);
 
+#if 0
         set<int> subgraphRemainingVertices(setRemainingVertices);
 
         subgraphRemainingVertices.erase(vertex);
@@ -370,6 +373,7 @@ vector<int> CliqueTools::ComputeMaximumCriticalIndependentSet(vector<vector<int>
         for (int const vertexToRemove : subgraph[dualVertex]) {
             subgraphRemainingVertices.erase(vertexToRemove);
         }
+#endif // 0
 
 
         // remove vertex and all its neighbors
@@ -427,7 +431,9 @@ vector<int> CliqueTools::ComputeMaximumCriticalIndependentSet(vector<vector<int>
             cout << __LINE__ << ": out of sync" << endl;
         }
 
+        clock_t start(clock());
         int const subgraphIndependenceNumber(subgraphSize - GraphTools::ComputeMaximumMatchingSize(subgraph));
+        cout << "Time to compute independence number with matching: " << Tools::GetTimeInSeconds(clock() - start) << endl << flush;
 ////        cout << "a(subgraph)=" << subgraphIndependenceNumber << endl << flush;
 
 #if 0
@@ -470,15 +476,20 @@ vector<int> CliqueTools::ComputeMaximumCriticalIndependentSet(vector<vector<int>
             setRemovedVertices.insert(biDoubleGraph[dualVertex].begin(), biDoubleGraph[dualVertex].end());
             setRemainingVertices.erase(vertex);
             setRemainingVertices.erase(dualVertex);
+            setVerticesToEvaluate.erase(vertex);
+            setVerticesToEvaluate.erase(dualVertex);
             for (int const vertexToRemove : biDoubleGraph[dualVertex]) {
                 setRemainingVertices.erase(vertexToRemove);
+                setVerticesToEvaluate.erase(vertexToRemove);
             }
             for (int const vertexToRemove : biDoubleGraph[vertex]) {
                 setRemainingVertices.erase(vertexToRemove);
+                setVerticesToEvaluate.erase(vertexToRemove);
             }
 
             biDoubleGraph = subgraph;
             graphSize = subgraphSize;
+            independenceNumber = subgraphIndependenceNumber;
 
             cout << vertex << " is in" << endl;
 ////            if (criticalSet.size() == 1) break;
@@ -500,8 +511,8 @@ vector<int> CliqueTools::ComputeMaximumCriticalIndependentSet(vector<vector<int>
             setRemovedVertices.insert(vertex);
 ////            cout << vertex << " is out" << endl;
 ////
-            setRemainingVertices.erase(dualVertex);
-            setRemainingVertices.erase(vertex);
+            setVerticesToEvaluate.erase(dualVertex);
+            setVerticesToEvaluate.erase(vertex);
         }
     }
 

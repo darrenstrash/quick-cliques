@@ -1,4 +1,4 @@
-#include "SparseIndependentSetColoringStrategy.h"
+#include "IsolatesIndependentSetColoringStrategy.h"
 #include "DegeneracyTools.h"
 
 #include <cmath>
@@ -8,18 +8,18 @@
 
 using namespace std;
 
-SparseIndependentSetColoringStrategy::SparseIndependentSetColoringStrategy(vector<vector<int>> const &adjacencyArray)
+IsolatesIndependentSetColoringStrategy::IsolatesIndependentSetColoringStrategy(Isolates3<ArraySet> const &isolates, size_t const numVerticesInOriginalGraph)
  : ColoringStrategy()
- , m_AdjacencyArray(adjacencyArray)
- , m_vVertexToColor(adjacencyArray.size(), -1)
- , m_vvVerticesWithColor(adjacencyArray.size())
- , m_vNeighborColorCount(adjacencyArray.size(), 0)
- , m_vbNeighbors(adjacencyArray.size(), false)
- , m_vbConflictNeighbors(adjacencyArray.size(), false)
+ , m_vVertexToColor(numVerticesInOriginalGraph, -1)
+ , m_vvVerticesWithColor(numVerticesInOriginalGraph)
+ , m_vNeighborColorCount(numVerticesInOriginalGraph, 0)
+ , m_vbNeighbors(numVerticesInOriginalGraph, false)
+ , m_vbConflictNeighbors(numVerticesInOriginalGraph, false)
+ , m_Isolates(isolates)
 {
 }
 
-void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adjacencyArray, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
+void IsolatesIndependentSetColoringStrategy::Color(Isolates3<ArraySet> const &isolates, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
 {
     if (vVerticesToReorder.empty()) return;
 
@@ -43,7 +43,7 @@ void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adja
 #if 1
         int uSmallestFreeColor = maxColor + 1;
         // first count the number of neighbors with a given color
-        for (int const neighbor : m_AdjacencyArray[vertex]) {
+        for (int const neighbor : m_Isolates.Neighbors()[vertex]) {
             if (m_vVertexToColor[neighbor] != -1) {
                 m_vNeighborColorCount[m_vVertexToColor[neighbor]]++;
             }
@@ -53,7 +53,7 @@ void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adja
         // if there is a difference, then there exists a non-neighbor with
         // that color; otherwise the color is free. Pick the smallest such
         // free color
-        for (int const neighbor : m_AdjacencyArray[vertex]) {
+        for (int const neighbor : m_Isolates.Neighbors()[vertex]) {
             int const currentColor(m_vVertexToColor[neighbor]);
             if (currentColor != -1 && static_cast<int>(m_vvVerticesWithColor[currentColor].size()) == m_vNeighborColorCount[currentColor]) {
                 uSmallestFreeColor = min(currentColor, uSmallestFreeColor);
@@ -61,7 +61,7 @@ void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adja
         }
 
         // put color counts back to 0.
-        for (int const neighbor : m_AdjacencyArray[vertex]) {
+        for (int const neighbor : m_Isolates.Neighbors()[vertex]) {
             if (m_vVertexToColor[neighbor] != -1) {
                 m_vNeighborColorCount[m_vVertexToColor[neighbor]] = 0;
             }
@@ -132,7 +132,7 @@ void SparseIndependentSetColoringStrategy::Color(vector<vector<int>> const &adja
 
 
 // TODO/DS: Speedup recolor in sparse framework
-void SparseIndependentSetColoringStrategy::Recolor(vector<vector<int>> const &adjacencyArray, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors, int const currentBestCliqueSize, int const currentCliqueSize)
+void IsolatesIndependentSetColoringStrategy::Recolor(Isolates3<ArraySet> const &isolates,  vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors, int const currentBestCliqueSize, int const currentCliqueSize)
 {
     if (vVerticesToReorder.empty()) return;
 
@@ -176,7 +176,7 @@ void SparseIndependentSetColoringStrategy::Recolor(vector<vector<int>> const &ad
 #if 1
         int uSmallestFreeColor = maxColor + 1;
         // first count the number of neighbors with a given color
-        for (int const neighbor : m_AdjacencyArray[vertex]) {
+        for (int const neighbor : m_Isolates.Neighbors()[vertex]) {
             m_vbNeighbors[neighbor] = true;
             if (m_vVertexToColor[neighbor] != -1) {
                 m_vNeighborColorCount[m_vVertexToColor[neighbor]]++;
@@ -187,7 +187,7 @@ void SparseIndependentSetColoringStrategy::Recolor(vector<vector<int>> const &ad
         // if there is a difference, then there exists a non-neighbor with
         // that color; otherwise the color is free. Pick the smallest such
         // free color
-        for (int const neighbor : m_AdjacencyArray[vertex]) {
+        for (int const neighbor : m_Isolates.Neighbors()[vertex]) {
             int const currentColor(m_vVertexToColor[neighbor]);
 ////            if (debug && neighbor==28) {
 ////                cout << " neighbor 28 has color " << currentColor << ", there are " << m_vvVerticesWithColor[currentColor].size() << " vertices with that color, and " << m_vNeighborColorCount[currentColor] << " neighbors with that color" << endl;
@@ -235,7 +235,7 @@ void SparseIndependentSetColoringStrategy::Recolor(vector<vector<int>> const &ad
         }
 
         // put color counts back to 0. Needs to come after repair, repair uses the counts.
-        for (int const neighbor : m_AdjacencyArray[vertex]) {
+        for (int const neighbor : m_Isolates.Neighbors()[vertex]) {
             m_vbNeighbors[neighbor] = false;
             if (m_vVertexToColor[neighbor] != -1) {
                 m_vNeighborColorCount[m_vVertexToColor[neighbor]] = 0;
@@ -283,7 +283,7 @@ void SparseIndependentSetColoringStrategy::Recolor(vector<vector<int>> const &ad
 #endif // DEBUG
 }
 
-bool SparseIndependentSetColoringStrategy::HasConflict(int const vertex, vector<int> const &vVerticesWithColor)
+bool IsolatesIndependentSetColoringStrategy::HasConflict(int const vertex, vector<int> const &vVerticesWithColor)
 {
     if (vVerticesWithColor.empty()) return false;
     for (int const coloredVertex : vVerticesWithColor) {
@@ -296,7 +296,7 @@ bool SparseIndependentSetColoringStrategy::HasConflict(int const vertex, vector<
     return false;
 }
 
-int SparseIndependentSetColoringStrategy::GetConflictingVertex(int const vertex, vector<int> const &vVerticesWithColor)
+int IsolatesIndependentSetColoringStrategy::GetConflictingVertex(int const vertex, vector<int> const &vVerticesWithColor)
 {
     int conflictingVertex(-1);
     int count(0);
@@ -310,13 +310,13 @@ int SparseIndependentSetColoringStrategy::GetConflictingVertex(int const vertex,
     return conflictingVertex;
 }
 
-bool SparseIndependentSetColoringStrategy::Repair(int const vertex, int const color, int const iBestCliqueDelta)
+bool IsolatesIndependentSetColoringStrategy::Repair(int const vertex, int const color, int const iBestCliqueDelta)
 {
     for (int newColor = 0; newColor <= iBestCliqueDelta-1; newColor++) {
         int const conflictingVertex(GetConflictingVertex(vertex, m_vvVerticesWithColor[newColor]));
         if (conflictingVertex < 0) continue;
 
-        for (int const neighbor : m_AdjacencyArray[conflictingVertex]) {
+        for (int const neighbor : m_Isolates.Neighbors()[conflictingVertex]) {
             m_vbConflictNeighbors[neighbor] = true;
         }
 
@@ -332,13 +332,13 @@ bool SparseIndependentSetColoringStrategy::Repair(int const vertex, int const co
             m_vVertexToColor[conflictingVertex] = nextColor;
 ////            cout << "Repairing vertices " << vertex << " and " << conflictingVertex << endl;
 
-            for (int const neighbor : m_AdjacencyArray[conflictingVertex]) {
+            for (int const neighbor : m_Isolates.Neighbors()[conflictingVertex]) {
                 m_vbConflictNeighbors[neighbor] = false;
             }
             return true;
         }
 
-        for (int const neighbor : m_AdjacencyArray[conflictingVertex]) {
+        for (int const neighbor : m_Isolates.Neighbors()[conflictingVertex]) {
             m_vbConflictNeighbors[neighbor] = false;
         }
     }

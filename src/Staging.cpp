@@ -13,6 +13,7 @@
 #include "TesterMISS.h"
 #include "ConnectedComponentMISS.h"
 #include "OrderingTools.h"
+#include "GraphTools.h"
 
 // system includes
 #include <vector>
@@ -169,6 +170,54 @@ vector<vector<int>> ComputeSubgraphOfSize(Isolates4<SparseArraySet> const &isola
     return vAdjacencyArray;
 }
 
+void PrintGraphInEdgesFormat(vector<vector<int>> const &adjacencyArray)
+{
+    cout << adjacencyArray.size() << endl;
+    size_t edges(0);
+    for (vector<int> const &neighborList : adjacencyArray) {
+        edges+= neighborList.size();
+    }
+    cout << edges << endl;
+
+    for (size_t index = 0; index < adjacencyArray.size(); ++index) {
+        for (int const neighbor : adjacencyArray[index]) {
+            cout << index << "," << neighbor << endl;
+        }
+    }
+}
+
+void PrintSubgraphInEdgesFormat(vector<vector<int>> const &adjacencyArray, map<int,int> const &vertexMap)
+{
+    cout << adjacencyArray.size() << endl;
+    size_t edges(0);
+    for (vector<int> const &neighborList : adjacencyArray) {
+        edges+= neighborList.size();
+    }
+    cout << edges << endl;
+
+    for (size_t index = 0; index < adjacencyArray.size(); ++index) {
+        if (vertexMap.find(index) == vertexMap.end()) continue;
+        for (int const neighbor : adjacencyArray[index]) {
+            if (vertexMap.find(neighbor) == vertexMap.end()) continue;
+            cout << index << "," << neighbor << endl;
+        }
+    }
+}
+
+void GetVertexRemap(vector<int> const &vVertices, Isolates4<SparseArraySet> const &isolates, map<int,int> &vertexRemap)
+{
+////    map<int,int> vertexRemap;
+////    map<int,int> reverseMap;
+    int newVertex(0);
+////    vector<vector<char>> componentMatrix(vVertices.size(), vector<char>());
+////    vector<vector<int>> componentArray(vVertices.size(), vector<int>());
+    for (int const vertex : vVertices) {
+        vertexRemap[vertex] = newVertex++;
+////        reverseMap[newVertex-1] = vertex;
+////        componentMatrix[newVertex-1].resize(vVertices.size());
+    }
+}
+
 void ComputeOnConnectedComponent(vector<int> const &vVertices, Isolates4<SparseArraySet> const &isolates, vector<vector<int>> const &adjacencyArray, list<int> &realClique, list<list<int>> cliques, bool const bSetCliqueSize)
 {
     map<int,int> vertexRemap;
@@ -202,10 +251,14 @@ void ComputeOnConnectedComponent(vector<int> const &vVertices, Isolates4<SparseA
     }
     ////                cout << endl << flush;
 
+////    PrintGraphInEdgesFormat(componentArray);
+////    PrintSubgraphInEdgesFormat(adjacencyArray, vertexRemap);
+
     list<list<int>> componentResult;
 
     ////                cout << "Start algorithm: " << endl << flush;
     TesterMISS algorithm(componentMatrix, componentArray);
+////    algorithm.SetQuiet(true);
     algorithm.SetQuiet(false);
 
     if (bSetCliqueSize) {
@@ -223,6 +276,68 @@ void ComputeOnConnectedComponent(vector<int> const &vVertices, Isolates4<SparseA
     }
     ////                cout << "    Component has independent set of size " << componentResult.back().size() << endl;
 }
+
+void ComputeOnConnectedComponent(vector<int> const &vVertices, Isolates4<SparseArraySet> const &isolates, vector<vector<int>> const &adjacencyArray, list<int> &realClique, list<list<int>> cliques, map<int,int> const &vertexRemap, bool const bSetCliqueSize)
+{
+////    map<int,int> vertexRemap;
+    map<int,int> reverseMap;
+    int newVertex(0);
+    vector<vector<char>> componentMatrix(vertexRemap.size(), vector<char>());
+    vector<vector<int>> componentArray(vertexRemap.size(), vector<int>());
+    for (pair<int,int> const &mapPair : vertexRemap) {
+        int const vertex(mapPair.first);
+        int const newVertex(mapPair.second);
+////        vertexRemap[vertex] = newVertex++;
+        reverseMap[newVertex] = vertex;
+        componentMatrix[newVertex].resize(vertexRemap.size());
+    }
+
+    ////        cout << "Matrix resized to " << vVertices.size() << "x" << vVertices.size() << endl << flush;
+
+    cout << "Graph, size=" << vVertices.size() << ":" << endl << flush;
+    for (int const vertex : vVertices) {
+        int const newVertex(vertexRemap.find(vertex)->second);
+        componentMatrix[newVertex][newVertex] = 1;
+        ////                    cout << newVertex << ":";
+        for (int const neighbor : isolates.Neighbors()[vertex]) {
+            if (vertexRemap.find(neighbor) != vertexRemap.end()) {
+                int const newNeighbor(vertexRemap.find(neighbor)->second);
+                ////                    cout << "Adding edge " << newVertex << "," << newNeighbor << endl << flush;
+                componentMatrix[newVertex][newNeighbor] = 1;
+                componentArray[newVertex].push_back(newNeighbor);
+                ////                            cout << " " << newNeighbor;
+            }
+        }
+        ////                    cout << endl << flush;
+    }
+    ////                cout << endl << flush;
+
+////    PrintGraphInEdgesFormat(componentArray);
+////    PrintSubgraphInEdgesFormat(adjacencyArray, vertexRemap);
+
+    list<list<int>> componentResult;
+
+    ////                cout << "Start algorithm: " << endl << flush;
+    TesterMISS algorithm(componentMatrix, componentArray);
+////    algorithm.SetQuiet(true);
+    algorithm.SetQuiet(false);
+
+    if (bSetCliqueSize) {
+        if (cliques.back().size() >= realClique.size())
+            algorithm.SetMaximumCliqueSize(cliques.back().size() - realClique.size());
+////        algorithm.SetMaximumCliqueSize(0);
+    }
+
+    algorithm.Run(componentResult);
+
+    if (!componentResult.empty() && !componentResult.back().empty()) {
+        for (int const vertex : componentResult.back()) {
+            realClique.push_back(reverseMap[vertex]);
+        }
+    }
+    ////                cout << "    Component has independent set of size " << componentResult.back().size() << endl;
+}
+
 
 void Staging::Run()
 {
@@ -327,6 +442,7 @@ void Staging::Run()
     set<int>    setRemoved;
     vector<pair<int,int>> vAddedEdges;
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
+    cout << "Removed " << vIsolates.size() << " isolates, graph has " << isolates.GetInGraph().Size() << "/" << m_AdjacencyList.size() << " vertices remaining" << endl;
 
 #if 0
     vRemoved.insert(vRemoved.end(), vIsolates.begin(), vIsolates.end());
@@ -439,6 +555,7 @@ void Staging::Run()
     cout << "Total clique size: " << realClique.size() << endl << flush;
 #endif // 0
 #else
+#if 0
     size_t numVertices(0);
     size_t numEdges(0);
 
@@ -459,6 +576,7 @@ void Staging::Run()
             cout << vertexRemap[vertex] << "," << vertexRemap[neighbor] << endl;
         }
     }
+#endif // 0
 #endif // 0
 
     vector<vector<char>> adjacencyMatrix(m_AdjacencyList.size());
@@ -481,45 +599,80 @@ void Staging::Run()
         vVertices.push_back(i);
     }
 
-    sort (vVertices.begin(), vVertices.end(), [this](int const left, int const right) { return m_AdjacencyList[left].size() > m_AdjacencyList[right].size(); });
+    vector<int> vNumEdgesInTwoNeighborhood(m_AdjacencyList.size(), 0);
+    for (int vertex = 0; vertex < m_AdjacencyList.size(); ++vertex) {
+        for (int const neighbor : m_AdjacencyList[vertex]) {
+            vNumEdgesInTwoNeighborhood[vertex] += m_AdjacencyList[neighbor].size();
+        }
+    }
+
+
+////    sort (vVertices.begin(), vVertices.end(), [this](int const left, int const right) { return m_AdjacencyList[left].size() > m_AdjacencyList[right].size(); });
+    sort (vVertices.begin(), vVertices.end(), [&vNumEdgesInTwoNeighborhood](int const left, int const right) { return vNumEdgesInTwoNeighborhood[left] > vNumEdgesInTwoNeighborhood[right]; });
 
     std::random_device generator;
-    std::uniform_int_distribution<int> distribution(0,(int)(size *0.30));
+    std::uniform_int_distribution<int> distribution1(0,(int)(size * 0.01));
+    std::uniform_int_distribution<int> distribution5(0,(int)(size * 0.05));
+    std::uniform_int_distribution<int> distribution10(0,(int)(size * 0.10));
+    std::uniform_int_distribution<int> distribution20(0,(int)(size * 0.20));
+    std::uniform_int_distribution<int> distribution30(0,(int)(size * 0.30));
+    std::uniform_int_distribution<int> distribution50(0,(int)(size * 0.50));
 ////    int dice_roll = distribution(generator);  // generates number in the range 1..6
 
     vector<pair<int,int>> vAddedEdgesUnused;
 
 #if 0
-    while (loops < 10000) {
-        vector<int> vRemoved;
-        for (int i=0; i < 3; ++i) {
-            int vertexToRemove = vVertices[distribution(generator)];
-            if (!isolates.GetInGraph().Contains(vertexToRemove)) {
-                i--;
-                continue;
+    for (int initialIndex = 0; initialIndex < vVertices.size(); ++initialIndex) {
+        vector<int> vInitialRemoved;
+        int const initialVertex(vVertices[initialIndex]);
+        vInitialRemoved.push_back(initialVertex);
+        isolates.RemoveVertexAndNeighbors(initialVertex, vInitialRemoved);
+        int innerLoops(0);
+        while (innerLoops < 200) {
+            vector<int> vRemoved;
+            for (int i=0; i < 2; ++i) {
+                int vertexToRemove(-1);
+                int const generated(distribution5(generator));
+////                int const firstGenerated(initialIndex >= generated5 ? (initialIndex - generated5) : generated5 );
+                int const firstGenerated(generated);
+                switch (i) {
+                    case 0: vertexToRemove = vVertices[firstGenerated]; break;
+                    case 1: vertexToRemove = vVertices[firstGenerated + distribution1(generator)]; break;
+                    case 2: vertexToRemove = vVertices[distribution10(generator)]; break;
+                    case 3: vertexToRemove = vVertices[distribution20(generator)]; break;
+                };
+                if (!isolates.GetInGraph().Contains(vertexToRemove)) {
+                    i--;
+                    continue;
+                }
+                vRemoved.push_back(vertexToRemove);
+                isolates.RemoveVertexAndNeighbors(vertexToRemove, vRemoved);
+                isolates.RemoveVertex(vertexToRemove);
+                isolates.RemoveAllIsolates(0, vRemoved, vRemoved, vAddedEdgesUnused, false);
             }
-            vRemoved.push_back(vertexToRemove);
-            isolates.RemoveVertexAndNeighbors(vertexToRemove, vRemoved);
-////            isolates.RemoveVertex(vertexToRemove);
+
+            vector<vector<int>> vComponents;
+            ComputeConnectedComponents(isolates, vComponents);
+            size_t biggest(0);
+            for (vector<int> const &vComponent : vComponents) {
+                biggest = max(vComponent.size(), biggest);
+            }
+            if (biggest < best) {
+                best = biggest;
+                cout << "best so far: components=" << vComponents.size() << ", max-component-size=" << best << endl;
+                innerLoops = 0; // this might be a good vertex to keep considering...
+            }
+            innerLoops++;
+            isolates.ReplaceAllRemoved(vRemoved);
         }
 
-        isolates.RemoveAllIsolates(0, vRemoved, vRemoved, vAddedEdgesUnused, false);
-        vector<vector<int>> vComponents;
-        ComputeConnectedComponents(isolates, vComponents);
-        size_t biggest(0);
-        for (vector<int> const &vComponent : vComponents) {
-            biggest = max(vComponent.size(), biggest);
-        }
-        if (biggest < best) {
-            best = biggest;
-            cout << "best so far: max component of size " << best << endl;
-        }
-        loops++;
-        isolates.ReplaceAllRemoved(vRemoved);
+        isolates.ReplaceAllRemoved(vInitialRemoved);
     }
 #endif //0
-#if 0
+#if 1
     int savedi(0), savedj(0), savedk(0);
+#if 1
+#if 0
     for (size_t i = 0; i < size; i++) {
         vector<int> v_iNeighbors;
         isolates.RemoveVertexAndNeighbors(vVertices[i], v_iNeighbors);
@@ -532,9 +685,14 @@ void Staging::Run()
             biggest = max(vComponent.size(), biggest);
         }
 
+        if (i % int(size*0.1) == 0) {
+            cout << "finished evaluating " << (i*100.0/size) << "%" << endl;
+        }
+
         if (biggest < best) {
             best = biggest;
             cout << "best so far: remove " << i << " for max component of size " << best << endl;
+            cout << "best so far: components=" << vComponents.size() << ", max-component-size=" << best << endl;
             savedi = i;
         }
 
@@ -548,11 +706,16 @@ void Staging::Run()
 ////            isolates.RemoveVertexAndNeighbors(savedk, vRemovedNeighbors);
 ////        }
     }
+#endif // 0
 
-    for (size_t i = 0; i < size*0.10; i++) {
+    int lastPercentage = 0;
+#if 0
+////    for (size_t i = 0; i < size*0.01; i++) {
+    for (size_t i = 0; i < size*0.05; i++) {
         vector<int> v_iNeighbors;
         isolates.RemoveVertexAndNeighbors(vVertices[i], v_iNeighbors);
-        for (size_t j = i+1; j < size*0.10; j++) {
+////        for (size_t j = i+1; j < i + size*0.10; j++) {
+        for (size_t j = i+1; j < i + size*0.5; j++) {
             vector<int> v_jNeighbors;
             isolates.RemoveVertexAndNeighbors(vVertices[j], v_jNeighbors);
             isolates.RemoveAllIsolates(0, v_jNeighbors, v_jNeighbors, vAddedEdgesUnused, false);
@@ -564,9 +727,18 @@ void Staging::Run()
                     biggest = max(vComponent.size(), biggest);
                 }
 
+////                int const percentage((int((i*size*0.10 + j)*100.0/((size*0.01)*(size*0.10)))));
+////                int const percentage((int((i*size + j)*100.0/((size)*(size)))));
+                int const percentage((int((i*size + j)*100.0/((size*0.05)*(size*0.5)))));
+                if (percentage > lastPercentage) {
+                    cout << "finished evaluating " << percentage << "%" << endl;
+                    lastPercentage = percentage;
+                }
+
                 if (biggest < best) {
                     best = biggest;
                     cout << "best so far: remove " << i << " " << j << " for max component of size " << best << endl;
+                    cout << "best so far: components=" << vComponents.size() << ", max-component-size=" << best << endl;
                     savedi = i;
                     savedj = j;
                 }
@@ -577,6 +749,8 @@ void Staging::Run()
         v_iNeighbors.push_back(i);
         isolates.ReplaceAllRemoved(v_iNeighbors);
     }
+#endif // 0
+#endif // 0
 ////        if (loops % 5000 == 0) { break; }
 ////            cout << "Removing " << savedi << " " << savedj << " " << savedk << endl;
 ////            vector<int> vRemovedNeighbors;
@@ -586,18 +760,52 @@ void Staging::Run()
 ////        }
 ////    }
 
-    for (size_t i = 0; i < size*0.05; i++) {
+    lastPercentage = 0;
+////    for (size_t i = 0; i < size; i++) {
+    for (size_t i = 0; i < size*0.10; i++) {
         vector<int> v_iNeighbors;
         isolates.RemoveVertexAndNeighbors(vVertices[i], v_iNeighbors);
-        for (size_t j = i+1; j < size*0.05; j++) {
+        isolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, vAddedEdgesUnused, false);
+
+        vector<int> vLeftOver1(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
+        vector<int> vTwoNeighborhood1(m_AdjacencyList.size(), 0);
+        for (int const vertex : vLeftOver1) {
+            for (int const neighbor : isolates.Neighbors()[vertex]) {
+                vTwoNeighborhood1[vertex] += isolates.Neighbors()[neighbor].Size();
+            }
+        }
+
+        sort (vLeftOver1.begin(), vLeftOver1.end(), [&vTwoNeighborhood1](int const left, int const right) { return vTwoNeighborhood1[left] > vTwoNeighborhood1[right]; });
+////        for (size_t j = i+1; j < i + size*0.01; j++) {
+        for (size_t j = 0; j < min(int(vLeftOver1.size()*0.01), 100); j++) {
             vector<int> v_jNeighbors;
-            isolates.RemoveVertexAndNeighbors(vVertices[j], v_jNeighbors);
-            for (size_t k = j+1; k < size*0.05; k++) {
+            int const secondVertex(vLeftOver1[j]);
+            if (isolates.GetInGraph().Contains(secondVertex)) {
+                v_jNeighbors.push_back(secondVertex);
+                isolates.RemoveVertexAndNeighbors(secondVertex, v_jNeighbors);
+                isolates.RemoveAllIsolates(0, v_jNeighbors, v_jNeighbors, vAddedEdgesUnused, false);
+            }
+
+            vector<int> vLeftOver2(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
+            vector<int> vTwoNeighborhood2(m_AdjacencyList.size(), 0);
+            for (int const vertex : vLeftOver2) {
+                for (int const neighbor : isolates.Neighbors()[vertex]) {
+                    vTwoNeighborhood2[vertex] += isolates.Neighbors()[neighbor].Size();
+                }
+            }
+
+            sort (vLeftOver2.begin(), vLeftOver2.end(), [&vTwoNeighborhood2](int const left, int const right) { return vTwoNeighborhood2[left] > vTwoNeighborhood2[right]; });
+////            for (size_t k = j+1; k < j+ size*0.05; k++) {
+            for (size_t k = 0; k < min(int(vLeftOver2.size()*0.01), 100); k++) {
                 loops++;
 ////                if (loops %10 == 0) { break; }
+                int const thirdVertex(vLeftOver2[k]);
                 vector<int> v_kNeighbors;
-                isolates.RemoveVertexAndNeighbors(vVertices[k], v_kNeighbors);
-                isolates.RemoveAllIsolates(0, v_kNeighbors, v_kNeighbors, vAddedEdgesUnused, false);
+                if (isolates.GetInGraph().Contains(thirdVertex)) {
+                    v_kNeighbors.push_back(thirdVertex);
+                    isolates.RemoveVertexAndNeighbors(thirdVertex, v_kNeighbors);
+                    isolates.RemoveAllIsolates(0, v_kNeighbors, v_kNeighbors, vAddedEdgesUnused, false);
+                }
 
                 vector<vector<int>> vComponents;
                 ComputeConnectedComponents(isolates, vComponents);
@@ -606,22 +814,33 @@ void Staging::Run()
                     biggest = max(vComponent.size(), biggest);
                 }
 
+
                 if (biggest < best) {
                     best = biggest;
-                    cout << "best so far: remove " << i << " " << j << " " << k << " for max component of size " << best << endl;
+                    cout << "best so far: remove " << vVertices[i] << " " << vLeftOver1[j] << " " << vLeftOver2[k] << " for max component of size " << best << endl;
+                    cout << "best so far: components=" << vComponents.size() << ", max-component-size=" << best << endl;
                     savedi = i;
                     savedj = j;
                     savedk = k;
+
+                    if (best == 1470) {
+                        PrintGraphInEdgesFormat(ComputeSubgraphOfSize(isolates, m_AdjacencyList.size(), 3000));
+                    }
                 }
                 isolates.ReplaceAllRemoved(v_kNeighbors);
             }
-            v_jNeighbors.push_back(j);
             isolates.ReplaceAllRemoved(v_jNeighbors);
 ////            if (loops % 100 == 0) break;
         }
-        v_iNeighbors.push_back(i);
+        v_iNeighbors.push_back(vVertices[i]);
         isolates.ReplaceAllRemoved(v_iNeighbors);
-////        if (loops % 5000 == 0) { break; }
+
+////        int const percentage((int((i*size*0.15 + j*0.10 + k)*100.0/((size*0.01)*(size*0.05)*(size*0.10)))));
+////        if (percentage > lastPercentage + 1) {
+            cout << "finished evaluating " << i << "/" << size*0.10 << " first vertices" << endl;
+////            lastPercentage = percentage;
+////        }
+        ////        if (loops % 5000 == 0) { break; }
 ////            cout << "Removing " << savedi << " " << savedj << " " << savedk << endl;
 ////            vector<int> vRemovedNeighbors;
 ////            isolates.RemoveVertexAndNeighbors(savedi, vRemovedNeighbors);
@@ -631,8 +850,68 @@ void Staging::Run()
     }
 #endif // 0
 
+#if 0
+    vector<int> const criticalSet = CliqueTools::ComputeMaximumCriticalIndependentSet(m_AdjacencyList);
+    cout << "Critical set (" << criticalSet.size() << " elements):" << endl;
+    vector<int> vRemovedUnused;
+    for (int const vertex : criticalSet) {
+        cout << vertex << " ";
+        isolates.RemoveVertexAndNeighbors(vertex, vRemovedUnused);
+    }
+    cout << endl;
+    cout << "After Removing Critical Set, graph has " << isolates.GetInGraph().Size() << " vertices remaining." << endl;
 
-    // try removing high-impact reduction vertices at first, then run regular algorithm on resulcting connected
+    set<int> const setVertices(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
+
+    map<int,int> mapUnused;
+
+    vector<vector<int>> subgraphAdjacencyList;
+    GraphTools::ComputeInducedSubgraph(m_AdjacencyList, setVertices, subgraphAdjacencyList, mapUnused);
+
+    cout << "Subgraph size=" << subgraphAdjacencyList.size() << endl << flush;
+
+    vector<vector<char>> subgraphAdjacencyMatrix(subgraphAdjacencyList.size());
+    for (size_t index = 0; index < subgraphAdjacencyList.size(); ++index) {
+        subgraphAdjacencyMatrix[index].resize(subgraphAdjacencyList.size(), 0);
+        for (int const neighbor : subgraphAdjacencyList[index]) {
+            subgraphAdjacencyMatrix[index][neighbor] = 1;
+        }
+    }
+
+    TesterMISS algorithm(subgraphAdjacencyMatrix, subgraphAdjacencyList);
+////    LightWeightFullMISS algorithm(subgraphAdjacencyMatrix);
+    list<list<int>> cliques;
+    algorithm.Run(cliques);
+    cout << "Actual largest independentSet: " << (cliques.back().size() + vIsolates.size() + criticalSet.size()) << endl << flush;
+#endif // 0
+
+#if 0
+////    vector<vector<int>> const biDoubleArray(GraphTools::ComputeBiDoubleGraph(m_AdjacencyList));
+////    PrintGraphInEdgesFormat(biDoubleArray);
+
+    vector<vector<int>> const biDoubleArray(m_AdjacencyList);
+    PrintGraphInEdgesFormat(biDoubleArray);
+
+    vector<vector<char>> biDoubleMatrix(biDoubleArray.size());
+    for (size_t index = 0; index < biDoubleArray.size(); ++index) {
+        biDoubleMatrix[index].resize(biDoubleArray.size(), 0);
+        for (int const neighbor : biDoubleArray[index]) {
+            biDoubleMatrix[index][neighbor] = 1;
+        }
+    }
+
+    TesterMISS algorithm(biDoubleMatrix, biDoubleArray);
+    list<list<int>> cliques;
+    algorithm.Run(cliques);
+
+    int const minVertexCoverSize(GraphTools::ComputeMaximumMatchingSize(biDoubleArray));
+
+    cout << "Flow-computed min vertex cover size : " << minVertexCoverSize << endl;
+    cout << "Flow-computed independent set size  : " << (biDoubleArray.size() - minVertexCoverSize) << endl;
+#endif //0
+
+#if 0
+    // try removing high-impact reduction vertices at first, then run regular algorithm on resulting connected
     // components.
 ////    vector<pair<int,int>> vAddedEdgesUnused;
 ////    vector<int> vRemoved1;
@@ -666,7 +945,7 @@ void Staging::Run()
 
                 if (uSizeOfLargestComponent < bestComponentSize) {
                     bestComponentSize = uSizeOfLargestComponent;
-                    cout << "best so far: remove " << i << " for " << vComponents.size() << " components, with max component of size " << bestComponentSize << endl;
+////                    cout << "best so far: remove " << i << " for " << vComponents.size() << " components, with max component of size " << bestComponentSize << endl;
                     bestVertex = i;
                 }
 
@@ -676,7 +955,7 @@ void Staging::Run()
         } else {
             sort (vToConsider.begin(), vToConsider.end(), [&theIsolates](int const left, int const right) { return theIsolates.Neighbors()[left].Size() > theIsolates.Neighbors()[right].Size(); });
 
-            for (size_t i = 0; i < vToConsider.size()/* *0.20 */; i++) {
+            for (size_t i = 0; i < vToConsider.size() /**0.20*/; i++) {
                 vector<int> v_iNeighbors;
                 theIsolates.RemoveVertexAndNeighbors(vToConsider[i], v_iNeighbors);
                 theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, vAddedEdgesUnused, false);
@@ -792,10 +1071,84 @@ void Staging::Run()
 
     IndependentSetColoringStrategy coloringStrategy(adjacencyMatrix);
 
+    auto NewChooseNextVertex = [&adjacencyMatrix, &vAddedEdgesUnused, &coloringStrategy](
+            Isolates4<SparseArraySet> &theIsolates,
+            vector<int> const &vAdjunctOrdering,
+            size_t const uCurrentCliqueSize,
+            size_t const uMaximumCliqueSize,
+            int const nextVertex)
+    {
+
+        cout << "Test:    Max clique size=" << uMaximumCliqueSize << endl;
+        int vertexToChoose(-1);
+        size_t minNumLeft(string::npos);
+        vector<int> vNewAdjunctOrdering;
+        vector<int> vNewOrdering;
+        vector<int> vNewColoring;
+        vector<int> vToConsider(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
+        for (int const vertex : vToConsider) {
+            vector<int> vCliqueVertices;
+            vector<int> vRemoved;
+            theIsolates.RemoveVertex(vertex);
+////            theIsolates.RemoveVertexAndNeighbors(vertex, vRemoved);
+            vRemoved.push_back(vertex);
+            theIsolates.RemoveAllIsolates(0, vCliqueVertices, vRemoved, vAddedEdgesUnused, false);
+
+            size_t uNewSize(0);
+            vNewAdjunctOrdering.resize(vAdjunctOrdering.size());
+            for (size_t index = 0; index < vAdjunctOrdering.size(); ++index) {
+                int const vertexInOrder(vAdjunctOrdering[index]);
+                if (theIsolates.GetInGraph().Contains(vertexInOrder)) {
+                    vNewAdjunctOrdering[uNewSize++] = vertexInOrder;
+                }
+            }
+
+            vNewAdjunctOrdering.resize(uNewSize);
+            vNewOrdering.resize(vNewAdjunctOrdering.size());
+            vNewColoring.resize(vNewAdjunctOrdering.size());
+
+////            if (vertex == nextVertex) {
+////                cout << "Test   Ordering: ";
+////                for (int const vertexInOrder : vNewAdjunctOrdering) {
+////                    cout << vertexInOrder << " ";
+////                }
+////                cout << endl;
+////            }
+
+            if (vertex == nextVertex) { ////5 || vertex == 802 || vertex == 45 || vertex == 33) {
+                cout << "Test:    Vertex " << vertex << " has " << uCurrentCliqueSize << " + " <<  vCliqueVertices.size() << " clique vertices " << endl;
+            }
+            coloringStrategy.Recolor(adjacencyMatrix, vNewAdjunctOrdering, vNewOrdering, vNewColoring, uCurrentCliqueSize + vCliqueVertices.size(), uMaximumCliqueSize);
+
+            size_t numLeft = vNewColoring.size();
+            for (; numLeft > 0; --numLeft) {
+                if (uCurrentCliqueSize + vCliqueVertices.size() + vNewColoring[numLeft-1] <= uMaximumCliqueSize) { break; }
+            }
+            numLeft = vNewColoring.size() - numLeft;
+            if (vertex == nextVertex) {
+                cout << "vertex " << vertex << ": P.left = " << numLeft << endl;
+            }
+            if (numLeft < minNumLeft) {
+                vertexToChoose = vertex;
+                minNumLeft = numLeft;
+////                cout << ", P.left = " << numLeft << endl;
+            }
+
+            theIsolates.ReplaceAllRemoved(vCliqueVertices);
+            theIsolates.ReplaceAllRemoved(vRemoved);
+        }
+
+        cout << "Choosing next vertex " << vertexToChoose << " will minimize the number of vertices for consideration to " << minNumLeft << endl;
+
+        return vertexToChoose;
+    };
+
+
     vector<int> vOrdering;
     vector<int> vColoring;
 
     size_t cliqueSize(0);
+////    OrderingTools::InitialOrderingReduction(isolates, vOrdering, vColoring);
     OrderingTools::InitialOrderingMISR(m_AdjacencyList, isolates, vOrdering, vColoring, cliqueSize);
 
     vector<int> vAdjunctOrdering = vOrdering;
@@ -806,18 +1159,51 @@ void Staging::Run()
 
 ////    coloringStrategy.Recolor(adjacencyMatrix, vAdjunctOrdering, vOrdering, vColoring, cliqueSize, cliqueSize);
 
-    while (isolates.GetInGraph().Size() > 932) {
-////    while (!isolates.GetInGraph().Empty()) {
+////    bool firstIteration(true);
+////    size_t count1(0);
+
+    map<int,int> remap;
+
+    while (isolates.GetInGraph().Size() > 913) {
+////    while (count1++ < 5 && !isolates.GetInGraph().Empty()) {
 #ifdef TWO_LEVEL
-        int const nextVertex1 = ChooseNextVertex(isolates, true /* first level selection*/);
+        int nextVertex1 = ChooseNextVertex(isolates, true /* first level selection*/);
+////        int nextVertex1 = ChooseNextVertex(isolates, false /* only select single vertex best */);
+////        int const nextVertex1 = NewChooseNextVertex(isolates, vAdjunctOrdering, vCliqueVerticesPersistent1.size(), cliques.back().size(), -1);
+
 #else
-        int const nextVertex1 = ChooseNextVertex(isolates, false /* only select single vertex best */);
+        int nextVertex1 = ChooseNextVertex(isolates, false /* only select single vertex best */);
 #endif // TWO_LEVEL
+////        int const unusedVertex = NewChooseNextVertex(isolates, vAdjunctOrdering, vCliqueVerticesPersistent1.size(), cliques.back().size(), nextVertex1);
+////        if (firstIteration) {
+////            firstIteration = false;
+////            nextVertex1 = ChooseNextVertex(isolates, false /* only select single vertex best */);
+////        } else {
+////            nextVertex1 = NewChooseNextVertex(isolates, vAdjunctOrdering, vCliqueVerticesPersistent1.size(), cliques.back().size(), nextVertex1);
+////        }
+
+        if (isolates.GetInGraph().Size() == 924) {
+            list<int> realClique;
+            realClique.insert(realClique.end(), vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
+
+            vector<int> const vRemainingVertices(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
+            GetVertexRemap(vRemainingVertices, isolates, remap);
+        }
+
         if (nextVertex1 == -1) break;
         cout << "Next vertex: " << nextVertex1 << endl;
         if (vColoring.back() + vCliqueVerticesPersistent1.size() <= cliques.back().size()) break;
 
         cout << "Vertices remaining: " << isolates.GetInGraph().Size() << endl << flush;
+
+////        {
+////        size_t numLeft = vColoring.size();
+////        for (; numLeft > 0; --numLeft) {
+////            if (vCliqueVerticesPersistent1.size() + vColoring[numLeft-1] <= cliques.back().size()) { break; }
+////        }
+////        numLeft = vColoring.size() - numLeft;
+////        cout << ", P.before.left = " << numLeft << endl;
+////        }
 
         vector<int> vRemoved1;
         vector<int> vCliqueVertices1; vCliqueVertices1.push_back(nextVertex1);
@@ -834,7 +1220,7 @@ void Staging::Run()
             if (currentClique.size() + vColoring[numLeft-1] <= cliques.back().size()) { break; }
         }
         numLeft = vColoring.size() - numLeft;
-        cout << ", P.left = " << numLeft << endl;
+        cout << ", P.after.left = " << numLeft << endl;
 
 #ifdef TWO_LEVEL
 
@@ -853,7 +1239,10 @@ void Staging::Run()
         vector<int> vNewOrdering = vOrdering;
         vector<int> vNewColoring = vColoring;
         ////        while (!isolates.GetInGraph().Empty()) {
+////        size_t count2(0);
+////        while (!isolates.GetInGraph().Empty() && count2++ < 5) {
         while (isolates.GetInGraph().Size() > 700) {
+////        if (!isolates.GetInGraph().Empty()) {
 
             vector<vector<int>> vComponents;
             ComputeConnectedComponents(isolates, vComponents);
@@ -885,6 +1274,7 @@ void Staging::Run()
             if (vNewColoring.back() + newRealClique.size() <= cliques.back().size()) break;
 
             int const nextVertex2 = ChooseNextVertex(isolates, false /* second level selection */);
+////            int const nextVertex2 = NewChooseNextVertex(isolates, vNewAdjunctOrdering, newRealClique.size(), cliques.back().size(), -1);
             if (nextVertex2 == -1) {
                 break;
             }
@@ -913,10 +1303,10 @@ void Staging::Run()
             sort (vNewComponents.begin(), vNewComponents.end(), [this](vector<int> const &left, vector<int> const &right) { return left.size() < right.size(); });
 
 ////            cout << "Components:" << endl;
-            for (size_t index = 0; index < vNewComponents.size(); ++index) {
-                if (vNewComponents[index].size() == 0) continue;
-                ComputeOnConnectedComponent(vNewComponents[index], isolates, m_AdjacencyList, realClique, cliques, index == vNewComponents.size()-1);
-            }
+////            for (size_t index = 0; index < vNewComponents.size(); ++index) {
+////                if (vNewComponents[index].size() == 0) continue;
+////                ComputeOnConnectedComponent(vNewComponents[index], isolates, m_AdjacencyList, realClique, cliques, index == vNewComponents.size()-1);
+////            }
 
             if (realClique.size() > cliques.back().size()) {
                 cliques.back().clear();
@@ -939,8 +1329,8 @@ void Staging::Run()
                 }
             }
             vNewAdjunctOrdering.resize(uNewSize);
-            vOrdering.resize(vNewAdjunctOrdering.size());
-            vColoring.resize(vNewAdjunctOrdering.size());
+            vNewOrdering.resize(vNewAdjunctOrdering.size());
+            vNewColoring.resize(vNewAdjunctOrdering.size());
 
             list<int> newClique(vCliqueVertices1.begin(), vCliqueVertices1.end());
             newClique.insert(newClique.end(), vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
@@ -988,9 +1378,18 @@ void Staging::Run()
         vOrdering.resize(vAdjunctOrdering.size());
         vColoring.resize(vAdjunctOrdering.size());
 
+////        cout << "Actual Ordering: ";
+////        for (int const vertexInOrder : vAdjunctOrdering) {
+////            cout << vertexInOrder << " ";
+////        }
+////        cout << endl;
+
 ////        OrderingTools::InitialOrderingMISR(m_AdjacencyList, isolates, vOrdering, vColoring, cliqueSize);
         currentClique = list<int>(vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
         coloringStrategy.Recolor(adjacencyMatrix, vAdjunctOrdering, vOrdering, vColoring, currentClique.size(), cliques.back().size());
+
+        cout << "Actual:  Max clique size=" << cliques.back().size() << endl;
+        cout << "Actual:  Vertex " << nextVertex1 << " has " << currentClique.size() << " clique vertices " << endl;
     }
 
     if (!isolates.GetInGraph().Empty() && vColoring.back() + vCliqueVerticesPersistent1.size() > cliques.back().size()) {
@@ -998,7 +1397,7 @@ void Staging::Run()
         realClique.insert(realClique.end(), vCliqueVerticesPersistent1.begin(), vCliqueVerticesPersistent1.end());
 
         vector<int> const vRemainingVertices(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
-        ComputeOnConnectedComponent(vRemainingVertices, isolates, m_AdjacencyList, realClique, cliques, true);
+        ComputeOnConnectedComponent(vRemainingVertices, isolates, m_AdjacencyList, realClique, cliques, remap, true);
 
         if (realClique.size() > cliques.back().size()) {
             cliques.back().clear();
@@ -1008,6 +1407,7 @@ void Staging::Run()
     }
 
     cout << "Found independent set of size: " << cliques.back().size() << endl << flush;
+#endif // 0
 
 #if 0
 int savedi(0), savedj(0), savedk(0);
@@ -1069,7 +1469,7 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
     // need the degrees to be high, and the connected components to be roughly the same size.
 
     vector<int> vNeighborsRemoved;
-    vector<pair<int,int>> vAddedEdgesUnused;
+////    vector<pair<int,int>> vAddedEdgesUnused;
     for (size_t index = vOrdering.size(); index > 0; --index) {
         if (isolates.GetInGraph().Contains(vOrdering[index-1]))
             isolates.RemoveVertexAndNeighbors(vOrdering[index-1], vNeighborsRemoved);

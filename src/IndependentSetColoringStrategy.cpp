@@ -100,7 +100,7 @@ int IndependentSetColoringStrategy::ColorWithoutReorder(vector<vector<char>> con
 
 void IndependentSetColoringStrategy::Color(vector<vector<char>> const &adjacencyMatrix, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
 {
-    if (vVerticesToReorder.empty()) return;
+    if (vVertexOrder.empty()) return;
 
 #if 0
     cout << "Coloring (in ): ";
@@ -114,7 +114,9 @@ void IndependentSetColoringStrategy::Color(vector<vector<char>> const &adjacency
 
     size_t maxColor(0);
 
-    size_t const numVerticesToReorder(vVerticesToReorder.size());
+    size_t const numVerticesToReorder(vVertexOrder.size());
+    vVerticesToReorder.resize(vVertexOrder.size());
+    vColors.resize(vVertexOrder.size());
 
     for (int const vertex : vVertexOrder) {
         size_t color = 0;
@@ -224,6 +226,9 @@ void IndependentSetColoringStrategy::Recolor(vector<vector<char>> const &adjacen
                 maxColor--;
         }
     }
+
+////    vVerticesToReorder.resize(vVertexOrder.size());
+////    vColors.resize(vVertexOrder.size());
 
 ////    cout << "maxColor=" << maxColor << ", numVertices=" << vVerticesToReorder.size() << endl;
 

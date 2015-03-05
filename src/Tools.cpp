@@ -716,7 +716,7 @@ void InvertGraph(vector<list<int>> const &adjList)
     }
 }
 
-string GetTimeInSeconds(clock_t delta) {
+string Tools::GetTimeInSeconds(clock_t delta) {
     stringstream strm;
 
     strm.precision(2);

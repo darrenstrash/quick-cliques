@@ -201,7 +201,7 @@ void ConnectedComponentMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOr
                 uNumberOfVerticesEvaluated += vComponent.size();
 
         if (depth == 0 && !m_bQuiet) {
-            cout << "Only " << P.size() - uNumberOfVerticesEvaluated << " more vertices to go! " << GetTimeInSeconds(clock() - startTime) << endl;
+            cout << "Only " << P.size() - uNumberOfVerticesEvaluated << " more vertices to go! " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
             cout << "Current best clique: " << m_uMaximumCliqueSize << endl;
         }
 
@@ -236,7 +236,7 @@ void ConnectedComponentMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOr
 #endif // 0
 
     if (nodeCount%10000 == 0) {
-        cout << "Evaluated " << nodeCount << " nodes. " << GetTimeInSeconds(clock() - startTime) << endl;
+        cout << "Evaluated " << nodeCount << " nodes. " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
         PrintState();
     }
 
@@ -245,7 +245,7 @@ void ConnectedComponentMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOr
 ////        cout << depth << ": P has " << P.size() << " elements" << endl;
 
         if (depth == 0 && !m_bQuiet) {
-            cout << "Only " << P.size() << " more vertices to go! " << GetTimeInSeconds(clock() - startTime) << endl;
+            cout << "Only " << P.size() << " more vertices to go! " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
             cout << "Current best clique: " << m_uMaximumCliqueSize << endl;
         }
 
@@ -414,7 +414,7 @@ void ConnectedComponentMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOr
                 uNumberOfVerticesEvaluated += vComponent.size();
 
         if (depth == 0 && !m_bQuiet) {
-            cout << "Only " << P.size() - uNumberOfVerticesEvaluated << " more vertices to go! " << GetTimeInSeconds(clock() - startTime) << endl;
+            cout << "Only " << P.size() - uNumberOfVerticesEvaluated << " more vertices to go! " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
             cout << "Current best clique: " << m_uMaximumCliqueSize << endl;
         }
 

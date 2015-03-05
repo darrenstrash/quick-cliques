@@ -471,8 +471,8 @@ void Isolates3<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vec
 
         // TODO/DS: Put this in; it saves us from having to consider obvious non-candidates. Only works if we establish
         // the invariant that the graph contains no vertices that can be reduced.
-////        if (bConsiderAllVertices) { ////true) { //bConsiderAllVertices) {
         if (true) { //bConsiderAllVertices) {
+////        if (bConsiderAllVertices) {
             remaining.Clear();
             for (int const vertex : inGraph) {
                 remaining.Insert(vertex);

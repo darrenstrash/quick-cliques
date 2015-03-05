@@ -263,6 +263,7 @@ void TesterMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std:
             // TODO/DS verify that we don't need to recolor,
             // removing unneeded colors should suffice
 #ifndef REMOVE_ISOLATES_BEFORE_ONLY
+#if 1 ////def COLOR
             if (bRemoveIsolates) {
 #ifdef RECOLOR
 ////                cout << __LINE__ << ": Recoloring..." << endl;
@@ -291,9 +292,22 @@ void TesterMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std:
                     vColors = proposedColors;
                 }
 #else
-                Color(vVertexOrder, P, vColors);
+////                if (depth != 0)
+////                    Color(vVertexOrder, P, vColors);
+////                    InitializeOrder(P, vVertexOrder, vColors);
+
+////                if (!vTempCliqueVertices.empty()) {
+////                if (depth == 0) {
+////                    size_t unused(0);
+////                    OrderingTools::InitialOrderingMISR(m_AdjacencyArray, isolates, P, vColors, unused);
+////                    P = vVertexOrder;
+////                } else {
+                    Color(vVertexOrder, P, vColors);
+////                }
+////                }
 #endif //RECOLOR
             }
+#endif //COLOR
 #endif //REMOVE_ISOLATES_BEFORE_ONLY
         }
 

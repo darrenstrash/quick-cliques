@@ -23,6 +23,7 @@ SOURCES_TMP += Reducer.cpp
 SOURCES_TMP += LightWeightSparseMCQ.cpp
 SOURCES_TMP += LightWeightReductionDominationMISQ.cpp
 SOURCES_TMP += MaxSubgraphAlgorithm.cpp
+SOURCES_TMP += IsolatesIndependentSetColoringStrategy.cpp
 SOURCES_TMP += SparseIndependentSetColoringStrategy.cpp
 SOURCES_TMP += LightWeightReductionSparseFullMISS.cpp
 SOURCES_TMP += LightWeightReductionSparseStaticOrderMISS.cpp

@@ -25,6 +25,7 @@
 #include "HybridAlgorithm.h"
 #include "DegeneracyAlgorithm.h"
 #include "FasterDegeneracyAlgorithm.h"
+#include "GraphTools.h"
 
 #include "TesterMISS.h"
 #include "ComparisonFullMISS.h"
@@ -147,6 +148,7 @@ void RunUnitTests()
 {
     std::cout << "Running unit tests..." << std::endl;
     ArraySet::Test();
+    GraphTools::TestMatchingCount();
 }
 
 int main(int argc, char** argv)
