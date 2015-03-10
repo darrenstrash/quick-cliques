@@ -41,6 +41,8 @@ public:
 
     void SetR(std::vector<int> const &newR) { R = newR; }
     void SetMaximumCliqueSize(size_t const newCliqueSize) { m_uMaximumCliqueSize = newCliqueSize; }
+
+    void SetOnlyVertex(int const vertex) { m_iOnlyVertex = vertex; }
 protected:
     size_t m_uMaximumCliqueSize;
     std::vector<int> R;
@@ -54,5 +56,6 @@ protected:
     bool    m_bQuiet;
     std::vector<bool> stackEvaluatedHalfVertices;
 ////    bool m_bInvert;
+    int m_iOnlyVertex;
 };
 #endif // MAX_SUBGRAPH_ALGORITHM_H

@@ -13,9 +13,6 @@ CFLAGS = -Winline -O2 -std=c++11 -g
 SOURCES_TMP += TesterMISS.cpp
 SOURCES_TMP += TesterStaticOrderMISS.cpp
 SOURCES_TMP += TesterMISQ.cpp
-SOURCES_TMP += ComparisonFullMISS.cpp
-SOURCES_TMP += ComparisonStaticOrderMISS.cpp
-SOURCES_TMP += ComparisonMISQ.cpp
 SOURCES_TMP += ConnectedComponentMISS2.cpp
 SOURCES_TMP += ConnectedComponentMISS.cpp
 SOURCES_TMP += LightWeightReductionDominationMISR.cpp
@@ -52,6 +49,7 @@ SOURCES_TMP += Isolates.cpp
 SOURCES_TMP += Isolates2.cpp
 SOURCES_TMP += Isolates3.cpp
 SOURCES_TMP += Isolates4.cpp
+SOURCES_TMP += IsolatesWithMatrix.cpp
 SOURCES_TMP += ExperimentalReduction.cpp
 SOURCES_TMP += IndependentSetsReduction.cpp
 SOURCES_TMP += Staging.cpp
@@ -83,6 +81,9 @@ SOURCES_TMP += DegeneracyAlgorithm.cpp
 SOURCES_TMP += FasterDegeneracyAlgorithm.cpp
 SOURCES_TMP += DegeneracyTools.cpp
 SOURCES_TMP += Tools.cpp
+#SOURCES_TMP += ComparisonFullMISS.cpp
+#SOURCES_TMP += ComparisonStaticOrderMISS.cpp
+#SOURCES_TMP += ComparisonMISQ.cpp
 
 SOURCES=$(addprefix $(SOURCES_DIR)/, $(SOURCES_TMP))
 

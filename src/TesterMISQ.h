@@ -6,6 +6,7 @@
 #include "ArraySet.h"
 #include "Isolates2.h"
 #include "Isolates3.h"
+#include "IsolatesWithMatrix.h"
 
 #include <ctime>
 #include <vector>
@@ -25,11 +26,11 @@ public:
     virtual void ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex);
     virtual void ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors);
 
-    void SetIsolates(Isolates3<ArraySet> const &newIsolates)
-    {
-        isolates = newIsolates;
-    }
-
+////    void SetIsolates(Isolates3<ArraySet> const &newIsolates)
+////    {
+////        isolates = newIsolates;
+////    }
+////
 ////    virtual void PrintState() const;
 
 protected:
@@ -40,7 +41,8 @@ protected:
     std::vector<std::vector<int>> stackOther;
     std::vector<std::vector<int>> stackPersistentClique;
     std::vector<std::vector<int>> stackPersistentOther;
-    Isolates3<ArraySet> isolates;
+////    Isolates3<ArraySet> isolates;
+    IsolatesWithMatrix<ArraySet> isolates;
     std::vector<bool> vRemoveIsolates;
 ////    bool m_bInvert;
 };

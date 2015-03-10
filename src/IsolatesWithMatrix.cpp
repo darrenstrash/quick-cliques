@@ -1,4 +1,4 @@
-#include "Isolates3.h"
+#include "IsolatesWithMatrix.h"
 #include "ArraySet.h"
 #include "SparseArraySet.h"
 
@@ -13,8 +13,9 @@
 using namespace std;
 
 template <typename NeighborSet>
-Isolates3<NeighborSet>::Isolates3(vector<vector<int>> const &adjacencyArray)
- : m_ReorderedAdjacencyArray(adjacencyArray)
+IsolatesWithMatrix<NeighborSet>::IsolatesWithMatrix(vector<vector<char>> const &adjacencyMatrix, vector<vector<int>> const &adjacencyArray)
+ : m_AdjacencyMatrix(adjacencyMatrix)
+ , m_ReorderedAdjacencyArray(adjacencyArray)
  , neighbors(adjacencyArray.size())
  , inGraph(adjacencyArray.size())
  , isolates(adjacencyArray.size())
@@ -48,7 +49,7 @@ Isolates3<NeighborSet>::Isolates3(vector<vector<int>> const &adjacencyArray)
 }
 
 template <typename NeighborSet>
-Isolates3<NeighborSet>::~Isolates3()
+IsolatesWithMatrix<NeighborSet>::~IsolatesWithMatrix()
 {
 
 #ifdef TIMERS
@@ -63,7 +64,7 @@ Isolates3<NeighborSet>::~Isolates3()
 #endif // TIMERS
 }
 
-////void Isolates3::RemoveEdges(vector<pair<int,int>> const &vEdges)
+////void IsolatesWithMatrix::RemoveEdges(vector<pair<int,int>> const &vEdges)
 ////{
 ////    for (pair<int,int> const &edge : vEdges) {
 ////        neighbors[edge.first].Remove(edge.second);
@@ -75,7 +76,7 @@ Isolates3<NeighborSet>::~Isolates3()
 ////}
 
 template <typename NeighborSet>
-bool Isolates3<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
+bool IsolatesWithMatrix<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
 {
 ////    bool const debug(vertex==40653);
 ////    if (vertex == 31) {
@@ -97,6 +98,16 @@ bool Isolates3<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 ////    if (debug) {
 ////        cout << "vertex" << vertex << " has " << neighbors[vertex].size() << " neighbors." << endl << flush;
 ////    }
+
+#if 0
+    for (int index1 = 0; index1 < neighbors[vertex].Size(); ++index1) {
+        int const neighbor1(neighbors[vertex][index1]);
+        for (int index2 = index1+1; index2 < neighbors[vertex].Size(); ++index2) {
+            int const neighbor2(neighbors[vertex][index2]);
+            if (!m_AdjacencyMatrix[neighbor1][neighbor2]) return false;
+        }
+    }
+#endif // 0
 
 #if 1
 ////    bool const debug(true); //vertex==12);
@@ -156,7 +167,6 @@ bool Isolates3<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
         ////            }
         ////            cout << endl << flush;
     }
-#else
 
     for (int const neighbor : neighbors[vertex]) {
 ////        cout << "Evaluating neighbor: " << neighbor << endl << flush;
@@ -189,7 +199,7 @@ bool Isolates3<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
         ////            }
         ////            cout << endl << flush;
     }
-#endif
+#endif // 1
 
 ////    cout << "Done evaluating neighbors" << endl << flush;
 
@@ -270,7 +280,7 @@ bool Isolates3<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 #if 0
 // TODO/DS: need to remember added edge, so we can remove it later.
 // TODO/DS: not currently working, proceeding without it.
-bool Isolates3::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges)
+bool IsolatesWithMatrix::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges)
 {
     if (neighbors[vertex].Size() != 2) return false;
 
@@ -345,7 +355,7 @@ bool Isolates3::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertic
 #endif //0
 
 template <typename NeighborSet>
-void Isolates3<NeighborSet>::SwapToEnd(vector<int> &vVertices, int const vertexToSwap)
+void IsolatesWithMatrix<NeighborSet>::SwapToEnd(vector<int> &vVertices, int const vertexToSwap)
 {
 #if 0
     size_t vertexIndex = ULONG_MAX;
@@ -385,7 +395,7 @@ void Isolates3<NeighborSet>::SwapToEnd(vector<int> &vVertices, int const vertexT
 
 // TODO/DS: need to add 2-neighbors to remaining.
 template <typename NeighborSet>
-void Isolates3<NeighborSet>::RemoveVertex(int const vertex)
+void IsolatesWithMatrix<NeighborSet>::RemoveVertex(int const vertex)
 {
     if (!inGraph.Contains(vertex)) return;
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
@@ -409,7 +419,7 @@ void Isolates3<NeighborSet>::RemoveVertex(int const vertex)
 
 //TODO/DS: need to add 2-neighbors to remaining.
 template <typename NeighborSet>
-void Isolates3<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
+void IsolatesWithMatrix<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
 {
     if (!inGraph.Contains(vertex)) return;
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
@@ -461,7 +471,7 @@ void Isolates3<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<i
 }
 
 template <typename NeighborSet>
-void Isolates3<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges, bool bConsiderAllVertices)
+void IsolatesWithMatrix<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges, bool bConsiderAllVertices)
 {
 ////    if (find (vIsolateVertices.begin(), vIsolateVertices.end(), 31) != vIsolateVertices.end())
 ////        cout << "Calling RemoveAllIsolates with 31 in the isolate set!" << endl;
@@ -539,7 +549,7 @@ void Isolates3<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vec
 }
 
 template <typename NeighborSet>
-void Isolates3<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges, bool bConsiderAllVertices, ArraySet const &onlyConsider)
+void IsolatesWithMatrix<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges, bool bConsiderAllVertices, ArraySet const &onlyConsider)
 {
 ////    if (find (vIsolateVertices.begin(), vIsolateVertices.end(), 31) != vIsolateVertices.end())
 ////        cout << "Calling RemoveAllIsolates with 31 in the isolate set!" << endl;
@@ -614,7 +624,7 @@ void Isolates3<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vec
 }
 
 template <typename NeighborSet>
-void Isolates3<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
+void IsolatesWithMatrix<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
 {
 #ifdef TIMERS
     clock_t startClock = clock();
@@ -655,7 +665,7 @@ void Isolates3<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
 }
 
 template <typename NeighborSet>
-int Isolates3<NeighborSet>::NextVertexToRemove(std::vector<int> &vVertices)
+int IsolatesWithMatrix<NeighborSet>::NextVertexToRemove(std::vector<int> &vVertices)
 {
 #ifdef TIMERS
     clock_t startClock = clock();
@@ -906,7 +916,7 @@ int Isolates3<NeighborSet>::NextVertexToRemove(std::vector<int> &vVertices)
 }
 
 template <typename NeighborSet>
-int Isolates3<NeighborSet>::NextVertexToRemove()
+int IsolatesWithMatrix<NeighborSet>::NextVertexToRemove()
 {
     vector<int> vVertices;
     vVertices.insert(vVertices.end(), inGraph.begin(), inGraph.end());
@@ -914,7 +924,7 @@ int Isolates3<NeighborSet>::NextVertexToRemove()
 }
 
 template <typename NeighborSet>
-int Isolates3<NeighborSet>::GetAlternativeVertex(int const vertex) const
+int IsolatesWithMatrix<NeighborSet>::GetAlternativeVertex(int const vertex) const
 {
     map<int,int>::const_iterator cit(m_AlternativeVertices.find(vertex));
     if (cit != m_AlternativeVertices.end()) {
@@ -926,7 +936,7 @@ int Isolates3<NeighborSet>::GetAlternativeVertex(int const vertex) const
 // vVertices needs to be a subset of the graph, otherwise this will
 // fail horribly.
 template <typename NeighborSet>
-void Isolates3<NeighborSet>::SetConnectedComponent(vector<int> const &vVertices)
+void IsolatesWithMatrix<NeighborSet>::SetConnectedComponent(vector<int> const &vVertices)
 {
     inGraph.Clear();
     for (int const vertex : vVertices) {
@@ -937,7 +947,7 @@ void Isolates3<NeighborSet>::SetConnectedComponent(vector<int> const &vVertices)
 }
 
 template <typename NeighborSet>
-double Isolates3<NeighborSet>::GetDensity() const
+double IsolatesWithMatrix<NeighborSet>::GetDensity() const
 {
     size_t edges(0);
     for (int const vertex : inGraph) {
@@ -948,7 +958,7 @@ double Isolates3<NeighborSet>::GetDensity() const
 }
 
 template <typename NeighborSet>
-size_t Isolates3<NeighborSet>::GetMaxDegree() const
+size_t IsolatesWithMatrix<NeighborSet>::GetMaxDegree() const
 {
     size_t maxDegree(0);
     for (int const vertex : inGraph) {
@@ -957,6 +967,6 @@ size_t Isolates3<NeighborSet>::GetMaxDegree() const
     return maxDegree;
 }
 
-template class Isolates3<ArraySet>;
-template class Isolates3<SparseArraySet>;
+template class IsolatesWithMatrix<ArraySet>;
+template class IsolatesWithMatrix<SparseArraySet>;
 

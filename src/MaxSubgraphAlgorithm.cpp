@@ -18,6 +18,7 @@ MaxSubgraphAlgorithm::MaxSubgraphAlgorithm(string const &name)
 , m_bQuiet(false)
 , stackEvaluatedHalfVertices()
 ////, m_bInvert(0)
+, m_iOnlyVertex(-1)
 {
 }
 
@@ -55,7 +56,9 @@ long MaxSubgraphAlgorithm::Run(list<std::list<int>> &cliques)
     }
 
     depth++;
-    RunRecursive(P, vVertexOrder, cliques, vColors);
+    if (!P.empty()) {
+        RunRecursive(P, vVertexOrder, cliques, vColors);
+    }
     return cliques.size();
 }
 

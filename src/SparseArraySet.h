@@ -86,6 +86,14 @@ public:
     std::vector<int>::const_iterator begin() const { return m_Elements.begin() + m_iBegin;   }
     std::vector<int>::const_iterator end()   const { return m_Elements.begin() + m_iEnd + 1; }
 
+    int At(size_t const index) const
+    {
+        return m_Elements[index];
+    }
+
+    int operator[](size_t const index) const { return At(index); }
+
+
     void SaveState()
     {
 ////        std::cout << "Saving State" << std::endl << std::flush;

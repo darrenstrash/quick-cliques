@@ -1,5 +1,9 @@
 #include "IsolatesIndependentSetColoringStrategy.h"
 #include "DegeneracyTools.h"
+#include "Isolates3.h"
+#include "Isolates4.h"
+#include "IsolatesWithMatrix.h"
+#include "ArraySet.h"
 
 #include <cmath>
 #include <vector>
@@ -8,7 +12,8 @@
 
 using namespace std;
 
-IsolatesIndependentSetColoringStrategy::IsolatesIndependentSetColoringStrategy(Isolates3<ArraySet> const &isolates, size_t const numVerticesInOriginalGraph)
+template <typename IsolatesType>
+IsolatesIndependentSetColoringStrategy<IsolatesType>::IsolatesIndependentSetColoringStrategy(IsolatesType const &isolates, size_t const numVerticesInOriginalGraph)
  : ColoringStrategy()
  , m_vVertexToColor(numVerticesInOriginalGraph, -1)
  , m_vvVerticesWithColor(numVerticesInOriginalGraph)
@@ -16,10 +21,18 @@ IsolatesIndependentSetColoringStrategy::IsolatesIndependentSetColoringStrategy(I
  , m_vbNeighbors(numVerticesInOriginalGraph, false)
  , m_vbConflictNeighbors(numVerticesInOriginalGraph, false)
  , m_Isolates(isolates)
+ , m_ColorTimer(0)
 {
 }
 
-void IsolatesIndependentSetColoringStrategy::Color(Isolates3<ArraySet> const &isolates, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
+template <typename IsolatesType>
+IsolatesIndependentSetColoringStrategy<IsolatesType>::~IsolatesIndependentSetColoringStrategy()
+{
+    cout << "Total time to perform coloring: " << Tools::GetTimeInSeconds(m_ColorTimer) << endl << flush;
+}
+
+template <typename IsolatesType>
+void IsolatesIndependentSetColoringStrategy<IsolatesType>::Color(IsolatesType const &isolates, vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors)
 {
     if (vVerticesToReorder.empty()) return;
 
@@ -132,9 +145,12 @@ void IsolatesIndependentSetColoringStrategy::Color(Isolates3<ArraySet> const &is
 
 
 // TODO/DS: Speedup recolor in sparse framework
-void IsolatesIndependentSetColoringStrategy::Recolor(Isolates3<ArraySet> const &isolates,  vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors, int const currentBestCliqueSize, int const currentCliqueSize)
+template <typename IsolatesType>
+void IsolatesIndependentSetColoringStrategy<IsolatesType>::Recolor(IsolatesType const &isolates,  vector<int> const &vVertexOrder, vector<int> &vVerticesToReorder, vector<int> &vColors, int const currentBestCliqueSize, int const currentCliqueSize)
 {
     if (vVerticesToReorder.empty()) return;
+
+////    clock_t const start(clock());
 
 #if 0
     cout << "Coloring (in ): ";
@@ -281,9 +297,12 @@ void IsolatesIndependentSetColoringStrategy::Recolor(Isolates3<ArraySet> const &
         }
     }
 #endif // DEBUG
+
+////    m_ColorTimer += (clock() - start);
 }
 
-bool IsolatesIndependentSetColoringStrategy::HasConflict(int const vertex, vector<int> const &vVerticesWithColor)
+template <typename IsolatesType>
+bool IsolatesIndependentSetColoringStrategy<IsolatesType>::HasConflict(int const vertex, vector<int> const &vVerticesWithColor)
 {
     if (vVerticesWithColor.empty()) return false;
     for (int const coloredVertex : vVerticesWithColor) {
@@ -296,7 +315,8 @@ bool IsolatesIndependentSetColoringStrategy::HasConflict(int const vertex, vecto
     return false;
 }
 
-int IsolatesIndependentSetColoringStrategy::GetConflictingVertex(int const vertex, vector<int> const &vVerticesWithColor)
+template <typename IsolatesType>
+int IsolatesIndependentSetColoringStrategy<IsolatesType>::GetConflictingVertex(int const vertex, vector<int> const &vVerticesWithColor)
 {
     int conflictingVertex(-1);
     int count(0);
@@ -310,7 +330,8 @@ int IsolatesIndependentSetColoringStrategy::GetConflictingVertex(int const verte
     return conflictingVertex;
 }
 
-bool IsolatesIndependentSetColoringStrategy::Repair(int const vertex, int const color, int const iBestCliqueDelta)
+template <typename IsolatesType>
+bool IsolatesIndependentSetColoringStrategy<IsolatesType>::Repair(int const vertex, int const color, int const iBestCliqueDelta)
 {
     for (int newColor = 0; newColor <= iBestCliqueDelta-1; newColor++) {
         int const conflictingVertex(GetConflictingVertex(vertex, m_vvVerticesWithColor[newColor]));
@@ -344,3 +365,7 @@ bool IsolatesIndependentSetColoringStrategy::Repair(int const vertex, int const 
     }
     return false;
 }
+
+template class IsolatesIndependentSetColoringStrategy<Isolates3<ArraySet>>;
+template class IsolatesIndependentSetColoringStrategy<IsolatesWithMatrix<ArraySet>>;
+template class IsolatesIndependentSetColoringStrategy<Isolates4<SparseArraySet>>;

@@ -14,6 +14,9 @@
 #include "ConnectedComponentMISS.h"
 #include "OrderingTools.h"
 #include "GraphTools.h"
+#include "Tools.h"
+
+#include "IsolatesIndependentSetColoringStrategy.h"
 
 // system includes
 #include <vector>
@@ -336,6 +339,105 @@ void ComputeOnConnectedComponent(vector<int> const &vVertices, Isolates4<SparseA
         }
     }
     ////                cout << "    Component has independent set of size " << componentResult.back().size() << endl;
+}
+
+void Staging::BuildSingleEdgeIsolateGraph(ArraySet &removed, ArraySet &isolatedSet)
+{
+    vector<int> vGraphVertices(m_AdjacencyList.size());
+    for (int i = 0; i < vGraphVertices.size(); ++i) {
+        vGraphVertices[i] = i;
+    }
+
+    sort (vGraphVertices.begin(), vGraphVertices.end(), [this](int const &left, int const &right) { return m_AdjacencyList[left].size() < m_AdjacencyList[right].size(); });
+
+    cout << "min-degree=" << m_AdjacencyList[vGraphVertices.front()].size() << ", max-degree=" << m_AdjacencyList[vGraphVertices.back()].size() << endl;
+
+    ArraySet adjacentToIsolated(m_AdjacencyList.size());
+
+    ArraySet remaining(m_AdjacencyList.size());
+    for (int const vertex : vGraphVertices) {
+        remaining.Insert(vertex);
+    }
+
+    // select first edge to be removed = min degree with min degree neighbor.
+
+    int const firstVertex(vGraphVertices[0]);
+    int secondVertex(-1);
+    size_t smallestDegree(ULONG_MAX);
+    for (int const neighbor : m_AdjacencyList[firstVertex]) {
+        if (m_AdjacencyList[neighbor].size() < smallestDegree) {
+            secondVertex = neighbor;
+            smallestDegree = m_AdjacencyList[neighbor].size();
+        }
+    }
+
+    removed.Insert(firstVertex);
+    removed.Insert(secondVertex);
+    remaining.Remove(firstVertex);
+    remaining.Remove(secondVertex);
+    isolatedSet.Insert(firstVertex);
+    for (int const neighbor : m_AdjacencyList[firstVertex]) {
+        if (!removed.Contains(neighbor)) {
+            adjacentToIsolated.Insert(neighbor);
+        }
+    }
+
+    while (!remaining.Empty()) {
+        cout << "Must remove " << adjacentToIsolated.Size() << " vertices to reduce " << removed.Size() << " vertices" << endl;
+
+        int neighborToRemove(-1);
+        int isolateToRemove(-1);
+        size_t neighbors(ULONG_MAX);
+////        for (int const vertex : adjacentToIsolated) {
+        for (int const vertex : remaining) {
+            bool goodVertex(true);
+            int tempNeighborToRemove(-1);
+            for (int const neighbor : m_AdjacencyList[vertex]) {
+                if (removed.Contains(neighbor)) { goodVertex = false; break; } // can't remove as an isolate
+                tempNeighborToRemove = neighbor;
+            }
+
+            if (goodVertex && neighbors > m_AdjacencyList[vertex].size()) {
+                isolateToRemove = vertex;
+                neighborToRemove = tempNeighborToRemove;
+                neighbors = m_AdjacencyList[vertex].size();
+            }
+        }
+
+        if (isolateToRemove != -1) { // found a neighbor we could remove...
+            adjacentToIsolated.Remove(isolateToRemove);
+            if (adjacentToIsolated.Contains(neighborToRemove)) {
+                adjacentToIsolated.Remove(neighborToRemove);
+            }
+
+            removed.Insert(isolateToRemove);
+            removed.Insert(neighborToRemove);
+
+            remaining.Remove(neighborToRemove);
+            remaining.Remove(isolateToRemove);
+            isolatedSet.Insert(isolateToRemove);
+
+            for (int const neighbor : m_AdjacencyList[isolateToRemove]) {
+                if (!removed.Contains(neighbor) && !adjacentToIsolated.Contains(neighbor)) {
+                    adjacentToIsolated.Insert(neighbor);
+                }
+            }
+        } else { // no more to remove...
+            break;
+        }
+////        else { // no neighbor we could remove, so remove a different one
+////            bool goodVertex(true)
+////            for (int const vertex : remaining) {
+////                for (int const neighbor : m_AdjacencyList[vertex]) {
+////                    if (remove.Contains(neighbor)) { goodVertex = false; break; }
+////                }
+////
+////                if (goodVertex == true) {
+////                }
+////            }
+////        }
+    }
+    cout << "Must remove " << adjacentToIsolated.Size() << " vertices to reduce " << removed.Size() << " vertices" << endl;
 }
 
 
@@ -669,7 +771,7 @@ void Staging::Run()
         isolates.ReplaceAllRemoved(vInitialRemoved);
     }
 #endif //0
-#if 1
+#if 0
     int savedi(0), savedj(0), savedk(0);
 #if 1
 #if 0
@@ -1603,6 +1705,162 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
     cout << "Removed " << vRemoved.size() << " vertices." << endl << flush;
     cout << "Found independent set of size: " << isolates.size() << endl << flush;
 #endif // 0
+
+#endif // 0
+
+// try to build up a graph from isolated vertices. remaining graph needs to be removed to empty the graph
+// assume there aren't any isolates vertices
+#if 1
+
+    // Attempt #1, build up graph with only degree 1 vertices.
+    cout << "Computing upper bound: " << endl << flush;
+
+    vector<int> vOriginalAdjunctOrdering;
+    vector<int> vOriginalOrdering;
+    vector<int> vOriginalColoring;
+
+    size_t cliqueSize(0);
+
+////    OrderingTools::InitialOrderingMISR(m_AdjacencyList, vOriginalAdjunctOrdering, vOriginalColoring, cliqueSize);
+    OrderingTools::InitialOrderingMISR(m_AdjacencyList, vOriginalAdjunctOrdering, vOriginalColoring, cliqueSize);
+
+    cout << "Original upper bound from ordering: " << vOriginalColoring.back() << endl << flush;
+    cout << "Original lower bound from ordering: " << cliqueSize << endl << flush;
+
+    ArraySet removed(m_AdjacencyList.size());
+    ArraySet isolatedSet(m_AdjacencyList.size());
+#if 0
+    BuildSingleEdgeIsolateGraph(removed, isolatedSet);
+#else
+    vector<int> independentSet(vOriginalAdjunctOrdering.begin(), vOriginalAdjunctOrdering.begin() + cliqueSize);
+    ArraySet forbidden(m_AdjacencyList.size());
+    for (int const independentVertex : independentSet) {
+        isolatedSet.Insert(independentVertex);
+        removed.Insert(independentVertex);
+        for (int const neighbor : m_AdjacencyList[independentVertex]) {
+            if (!removed.Contains(neighbor) && !forbidden.Contains(neighbor)) {
+                removed.Insert(neighbor);
+                break;
+            }
+        }
+
+        for (int const neighbor : m_AdjacencyList[independentVertex]) {
+            forbidden.Insert(neighbor);
+        }
+    }
+#endif // 0
+
+    for (int const vertex : removed) {
+        isolates.RemoveVertex(vertex);
+    }
+
+    IsolatesIndependentSetColoringStrategy<Isolates4<SparseArraySet>> coloringStrategy(isolates, m_AdjacencyList.size());
+
+    coloringStrategy.Recolor(isolates, vOriginalAdjunctOrdering, vOriginalOrdering, vOriginalColoring, cliqueSize, 0);
+    cout << "Aftering recoloring: " << vOriginalColoring.back() << endl << flush;
+
+    vector<int> vAdjunctOrdering;
+    vector<int> vColoring;
+    vector<int> vOrderedVertices;
+
+    vector<int> vNewIsolates;
+    vector<int> vNewRemoved;
+////    isolates.RemoveAllIsolates(0, vNewIsolates, vNewRemoved, vAddedEdgesUnused, true /* consider all vertices for removal */);
+
+    for (int const vertex : vOriginalAdjunctOrdering) {
+        if (isolates.GetInGraph().Contains(vertex)) {
+            vAdjunctOrdering.push_back(vertex);
+        }
+    }
+
+    vColoring.resize(vAdjunctOrdering.size());
+    vOrderedVertices.resize(vAdjunctOrdering.size());
+
+    coloringStrategy.Recolor(isolates, vAdjunctOrdering, vOrderedVertices, vColoring, cliqueSize, 0);
+
+    cout << "Estimate: " << isolatedSet.Size() << "+" << vNewIsolates.size() << "+" <<  vColoring.back() << "=" << (isolatedSet.Size() + vNewIsolates.size() + vColoring.back()) << endl;
+
+    cout << "Remaining vertices: " << isolates.GetInGraph().Size() << "/" << m_AdjacencyList.size() << endl << flush;
+
+    vector<vector<int>> const subgraphList = ComputeSubgraphOfSize(isolates, m_AdjacencyList.size(), 3000);
+
+    vector<vector<char>> subgraphMatrix(subgraphList.size());
+    for (size_t index = 0; index < subgraphList.size(); ++index) {
+        subgraphMatrix[index].resize(subgraphList.size(), 0);
+        for (int const neighbor : subgraphList[index]) {
+            subgraphMatrix[index][neighbor] = 1;
+        }
+    }
+
+    list<list<int>> cliques;
+    TesterMISS algorithm(subgraphMatrix, subgraphList);
+////    algorithm.SetQuiet(true);
+////    algorithm.SetOnlyVertex(vOrdering[splitPoint]);
+    algorithm.Run(cliques);
+#else
+    vector<int> vOrdering;
+    vector<int> vColoring;
+    size_t cliqueSize(0);
+    OrderingTools::InitialOrderingMISR(m_AdjacencyList, vOrdering, vColoring, cliqueSize);
+
+//    size_t pivot(0);
+//    for (size_t afterIndex = vColoring.size(); afterIndex > 0; afterIndex--) {
+//        if (vColoring[afterIndex-1] <= cliqueSize) { pivot = afterIndex-1; break; }
+//    }
+
+    map<int,int> mapUnused;
+////    set<int>     setVertices;
+    size_t const startVertex(2000);
+////    size_t const startVertex(0);
+////    set<int>     setVertices(vOrdering.begin(), vOrdering.begin() + startVertex);
+    set<int>     setVertices(vOrdering.begin() + startVertex, vOrdering.end());
+    clock_t startTime(clock());
+////    for (size_t splitPoint = startVertex/*vOrdering.size()/2*/; splitPoint < vOrdering.size(); splitPoint++) {
+    for (size_t splitPoint = startVertex/*vOrdering.size()/2*/; splitPoint > 0; splitPoint--) {
+        setVertices.insert(vOrdering[splitPoint]);
+        vector<vector<int>> subgraphAdjacencyList;
+        GraphTools::ComputeInducedSubgraph(m_AdjacencyList, setVertices, subgraphAdjacencyList, mapUnused);
+
+        cout << "Subgraph size=" << subgraphAdjacencyList.size() << " " << Tools::GetTimeInSeconds(clock() - startTime) << endl << flush;
+
+        vector<vector<char>> subgraphAdjacencyMatrix(subgraphAdjacencyList.size());
+        for (size_t index = 0; index < subgraphAdjacencyList.size(); ++index) {
+            subgraphAdjacencyMatrix[index].resize(subgraphAdjacencyList.size(), 0);
+            for (int const neighbor : subgraphAdjacencyList[index]) {
+                subgraphAdjacencyMatrix[index][neighbor] = 1;
+            }
+        }
+
+        list<list<int>> cliques;
+
+        Isolates3<ArraySet> newIsolates(subgraphAdjacencyList);
+        vector<int> vRemoved;
+        newIsolates.RemoveAllIsolates(0, vRemoved, vRemoved, vAddedEdgesUnused, true);
+        vector<vector<int>> vComponents;
+        GraphTools::ComputeConnectedComponents(newIsolates, vComponents, subgraphAdjacencyList.size());
+        cerr << "# vertices remaining in graph: " << newIsolates.GetInGraph().Size() << "/" << subgraphAdjacencyList.size() << endl << flush;
+        cerr << "# connected components       : " << vComponents.size() << endl << flush;
+        cerr << "size of connected components : ";
+        cout << "[ ";
+
+        for (size_t index = 0; index < vComponents.size(); ++index) {
+            vector<int> const& vComponent(vComponents[index]);
+            cout << vComponent.size() << " ";
+        }
+        cout << "]" << endl;
+
+        TesterMISS algorithm(subgraphAdjacencyMatrix, subgraphAdjacencyList);
+////        algorithm.SetQuiet(true);
+////        algorithm.SetOnlyVertex(vOrdering[splitPoint]);
+        algorithm.Run(cliques);
+
+
+        if (cliques.back().size() > cliqueSize) {
+            cliqueSize = cliques.back().size();
+            cout << "At " << splitPoint << "/" << vOrdering.size() << ", found a better independent set: size=" << cliqueSize << endl;
+        }
+        break;
+    }
 
 #endif // 1
 }

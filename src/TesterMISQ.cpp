@@ -24,7 +24,7 @@ TesterMISQ::TesterMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vect
 , stackPersistentOther(vAdjacencyMatrix.size() + 1)
 ////, nodeCount(0)
 ////, depth(-1)
-, isolates(vAdjacencyArray)
+, isolates(vAdjacencyMatrix, vAdjacencyArray)
 ////, startTime(clock())
 ////, m_bInvert(0)
 {

@@ -3,6 +3,7 @@
 
 // local includes
 #include "Algorithm.h"
+#include "ArraySet.h"
 
 // system includes
 #include <vector>
@@ -17,6 +18,7 @@ public:
     virtual long Run(std::list<std::list<int>> &cliques) { Run(); return -1; }
     virtual void Run();
 
+    void BuildSingleEdgeIsolateGraph(ArraySet &removed, ArraySet &isolatedSet);
 private:
     std::vector<std::vector<int>> &m_AdjacencyList;
 
