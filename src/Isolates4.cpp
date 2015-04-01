@@ -33,6 +33,7 @@ Isolates4<NeighborSet>::Isolates4(vector<vector<int>> const &adjacencyArray)
  , replaceDuringNextTimer(0)
  #endif // TIMERS
  , m_bConnectedComponentMode(false)
+ , m_vReductions()
 {
     for (size_t u=0; u < adjacencyArray.size(); ++u) {
         remaining.Insert(u);
@@ -213,6 +214,9 @@ bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 ////        }
 ////        cout << endl;
 
+        Reduction reduction(ISOLATED_VERTEX);
+        reduction.SetVertex(vertex);
+
         for (int const neighbor : neighbors[vertex]) {
 ////            if (!inGraph.Contains(neighbor)) {
 ////                cout << "Trying to remove non-existant neighbor " << neighbor << " from " << vertex << " neighbor list!" << endl << flush;
@@ -220,6 +224,9 @@ bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 ////            cout << __LINE__ << ": calling remove" << endl << flush;
             inGraph.Remove(neighbor);
             remaining.Remove(neighbor);
+            reduction.AddNeighbor(neighbor);
+            reduction.AddRemovedEdge(vertex,   neighbor);
+            reduction.AddRemovedEdge(neighbor, vertex);
         }
 
 ////        if (!inGraph.Contains(vertex)) {
@@ -244,6 +251,8 @@ bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 
                 if (nNeighbor != vertex) {
                     neighbors[nNeighbor].Remove(neighbor);
+                    reduction.AddRemovedEdge(nNeighbor, neighbor);
+                    reduction.AddRemovedEdge(neighbor, nNeighbor);
                 }
             }
             neighbors[neighbor].Clear();
@@ -253,6 +262,8 @@ bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 ////    if (vertex == 21952) {
 ////        cout << "vertex" << vertex << " is being removed." << endl << flush;
 ////    }
+
+        m_vReductions.emplace_back(std::move(reduction));
         
         return true;
     }
@@ -263,7 +274,7 @@ bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 // TODO/DS: need to remember added edge, so we can remove it later.
 // TODO/DS: not currently working, proceeding without it.
 
-////int numDominatedVertices(0);
+int numDominatedVertices(0);
 template <typename NeighborSet>
 bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
 {
@@ -283,10 +294,8 @@ bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int>
         }
     }
 
-    bool removed(false);
-
     for (int const neighbor : neighbors[vertex]) {
-////        numDominatedVertices++;
+        numDominatedVertices++;
         // does neighbor dominate vertex?
         int commonNeighborCount(0);
         for (int const nNeighbor : neighbors[neighbor]) {
@@ -295,6 +304,10 @@ bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int>
 
         // has every neighbor of vertex, + vertex - neighbor
         if (commonNeighborCount == neighbors[vertex].Size()) {
+
+            Reduction reduction(DOMINATED_VERTEX);
+            reduction.SetVertex(neighbor);
+
             vMarkedVertices[vertex] = false;
             for (int const neighbor : neighbors[vertex]) {
                 vMarkedVertices[neighbor] = false;
@@ -306,11 +319,15 @@ bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int>
             for (int const nNeighbor : neighbors[neighbor]) {
                 remaining.Insert(nNeighbor);
                 neighbors[nNeighbor].Remove(neighbor);
+                reduction.AddRemovedEdge(nNeighbor, neighbor);
+                reduction.AddRemovedEdge(neighbor, nNeighbor);
             }
+
             neighbors[neighbor].Clear();
             vOtherRemovedVertices.push_back(neighbor);
 ////            vMarkedVertices[nNeighbor] = false;
-            removed = true;
+
+            m_vReductions.emplace_back(std::move(reduction));
             return true;
         }
     }
@@ -320,7 +337,11 @@ bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int>
         vMarkedVertices[neighbor] = false;
     }
 
-    return removed;
+////    if (removed) {
+////        neighbors[vertex].Clear();
+////    }
+
+    return false;
 }
 
 ////size_t numFoldedVertices(0);
@@ -339,6 +360,11 @@ bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateV
     int const vertex1(neighbors[vertex][0]);
     int const vertex2(neighbors[vertex][1]);
     vVertexFolds.emplace_back(std::move(VertexFold(vertex1, vertex2, vertex)));
+
+    Reduction reduction(FOLDED_VERTEX);
+    reduction.SetVertex(vertex);
+    reduction.AddNeighbor(vertex1);
+    reduction.AddNeighbor(vertex2);
 
 ////    bool const debug(numFoldedVertices == 83);
 ////    bool const debug(vertex == 62431);
@@ -368,9 +394,17 @@ bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateV
     neighbors[vertex].Resize(neighbors[vertex1].Size() + neighbors[vertex2].Size());
     neighbors[vertex1].Remove(vertex);
     neighbors[vertex2].Remove(vertex);
+
+    reduction.AddRemovedEdge(vertex, vertex1);
+    reduction.AddRemovedEdge(vertex1, vertex);
+    reduction.AddRemovedEdge(vertex, vertex2);
+    reduction.AddRemovedEdge(vertex2, vertex);
+
     for (int const neighbor1 : neighbors[vertex1]) {
         if (neighbor1 == vertex) continue;
         neighbors[neighbor1].Remove(vertex1);
+        reduction.AddRemovedEdge(neighbor1, vertex1);
+        reduction.AddRemovedEdge(vertex1, neighbor1);
 ////        neighbors[neighbor1].Insert(vertex);
         neighbors[vertex].Insert(neighbor1);
         remaining.Insert(neighbor1);
@@ -382,6 +416,8 @@ bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateV
     for (int const neighbor2 : neighbors[vertex2]) {
         if (neighbor2 == vertex) continue;
         neighbors[neighbor2].Remove(vertex2);
+        reduction.AddRemovedEdge(neighbor2, vertex2);
+        reduction.AddRemovedEdge(vertex2, neighbor2);
 ////        neighbors[neighbor2].Insert(vertex);
         neighbors[vertex].Insert(neighbor2);
         remaining.Insert(neighbor2);
@@ -400,6 +436,8 @@ bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateV
 ////    cout << "vertex " << vertex << " contains self?=" << (neighbors[vertex].Contains(vertex)) << endl;
 
     remaining.Insert(vertex);
+
+    m_vReductions.emplace_back(std::move(reduction));
 
     // which one goes in independent set? Need to update...
     vOtherRemovedVertices.push_back(vertex1);
@@ -716,11 +754,12 @@ void Isolates4<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vec
 
         bool reduction = RemoveIsolatedClique(vertex, vIsolateVertices, vOtherRemovedVertices);
 #ifdef NEW_ISOLATE_CHECKS
+#if 1 ////def FOLD_VERTEX
         if (!reduction) {
 ////            reduction = RemoveIsolatedPath(vertex, vIsolateVertices, vOtherRemovedVertices, vAddedEdges);
             reduction = FoldVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vVertexFolds);
         }
-
+#endif
         if (!reduction) {
             reduction = RemoveDominatedVertex(vertex, vIsolateVertices, vOtherRemovedVertices);
         }
@@ -756,6 +795,48 @@ void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
 #ifdef TIMERS
     clock_t startClock = clock();
 #endif //TIMERS
+#if 1
+    for (size_t index = m_vReductions.size(); index > 0; index--) {
+        Reduction const &reduction(m_vReductions[index-1]);
+
+        switch(reduction.GetType()) {
+            case ISOLATED_VERTEX:
+                inGraph.Insert(reduction.GetVertex());
+                isolates.Remove(reduction.GetVertex());
+                for (int const neighbor : reduction.GetNeighbors()) {
+                    inGraph.Insert(neighbor);
+                }
+                for (pair<int,int> const &edge : reduction.GetRemovedEdges()) {
+                    neighbors[edge.first].Insert(edge.second);
+                }
+            break;
+            case DOMINATED_VERTEX:
+            inGraph.Insert(reduction.GetVertex());
+                for (pair<int,int> const &edge : reduction.GetRemovedEdges()) {
+                    neighbors[edge.first].Insert(edge.second);
+                }
+            break;
+            case FOLDED_VERTEX:
+                inGraph.Insert(reduction.GetNeighbors()[0]);
+                inGraph.Insert(reduction.GetNeighbors()[1]);
+                // first remove all added edges
+                for (int const neighbor : neighbors[reduction.GetVertex()]) {
+                    neighbors[neighbor].Remove(reduction.GetVertex());
+                }
+                neighbors[reduction.GetVertex()].Clear();
+                // then replace all removed edges
+                for (pair<int,int> const &edge : reduction.GetRemovedEdges()) {
+                    neighbors[edge.first].Insert(edge.second);
+                }
+            break;
+            default:
+                cout << "ERROR!: Unsupported reduction type used..." << endl << flush;
+                exit(1);
+            break;
+        };
+    }
+    m_vReductions.clear();
+#else
     for (int const removedVertex : vRemoved) {
         inGraph.Insert(removedVertex);
         isolates.Remove(removedVertex);
@@ -772,6 +853,7 @@ void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
         }
     }
 ////    cout << "Done replacing vertices..." << endl << flush;
+#endif // 1
 
 #ifdef TIMERS
     clock_t endClock = clock();

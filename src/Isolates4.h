@@ -4,6 +4,7 @@
 #include "Set.h"
 #include "ArraySet.h"
 #include "SparseArraySet.h"
+#include "Reduction.h"
 
 #include <vector>
 #include <map>
@@ -86,6 +87,7 @@ protected: // members
     clock_t replaceDuringNextTimer;
     #endif // TIMERS
     bool m_bConnectedComponentMode;
+    std::vector<Reduction> m_vReductions;
 };
 
 #endif //ISOLATES_4_H

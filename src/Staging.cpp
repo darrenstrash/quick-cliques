@@ -193,18 +193,21 @@ void PrintGraphInEdgesFormat(vector<vector<int>> const &adjacencyArray)
 
 void PrintSubgraphInEdgesFormat(vector<vector<int>> const &adjacencyArray, map<int,int> const &vertexMap)
 {
-    cout << adjacencyArray.size() << endl;
+    cout << vertexMap.size() << endl;
     size_t edges(0);
-    for (vector<int> const &neighborList : adjacencyArray) {
-        edges+= neighborList.size();
+    for (int index = 0; index < adjacencyArray.size(); ++index) {
+        if (vertexMap.find(index) == vertexMap.end()) continue;
+        for (int const neighbor : adjacencyArray[index]) {
+            if (vertexMap.find(neighbor) != vertexMap.end()) edges++;
+        }
     }
     cout << edges << endl;
 
-    for (size_t index = 0; index < adjacencyArray.size(); ++index) {
+    for (int index = 0; index < adjacencyArray.size(); ++index) {
         if (vertexMap.find(index) == vertexMap.end()) continue;
         for (int const neighbor : adjacencyArray[index]) {
             if (vertexMap.find(neighbor) == vertexMap.end()) continue;
-            cout << index << "," << neighbor << endl;
+            cout << vertexMap.at(index) << "," << vertexMap.at(neighbor) << endl;
         }
     }
 }
@@ -1723,6 +1726,39 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
     }
     edges >>= 1;
 
+    cout << "Checking undo reductions..." << endl << flush;
+    if (true)
+    {
+        isolates.ReplaceAllRemoved(vRemoved);
+        for (size_t vertex = 0; vertex < m_AdjacencyList.size(); ++vertex) {
+            if (!isolates.GetInGraph().Contains(vertex)) {
+                cout << "ERROR during sanity check." << endl << flush;
+                cout << "Vertex " << vertex << " is excluded from graph after undoing all reductions." << endl;
+                exit(1);
+            }
+            if (isolates.Neighbors()[vertex].Size() != m_AdjacencyList[vertex].size()) {
+                cout << "ERROR during sanity check." << endl << flush;
+                cout << "Vertex " << vertex << " does not have same number of neighbors after undoing all reductions." << endl;
+                exit(1);
+            }
+
+            for (int const neighbor : m_AdjacencyList[vertex]) {
+                if (!isolates.Neighbors()[vertex].Contains(neighbor)) {
+                    cout << "ERROR during sanity check." << endl << flush;
+                    cout << "Vertex " << vertex << " has is missing neighbor " << neighbor << " after undoing all reductions." << endl;
+                    exit(1);
+                }
+            }
+        }
+    }
+
+    vIsolates.clear();
+    vRemoved.clear();
+    vVertexFolds.clear();
+    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vVertexFolds, true /* consider all vertices for reduction */);
+
+    cout << "Removed " << vIsolates.size() << " isolates, graph has " << isolates.GetInGraph().Size() << "/" << m_AdjacencyList.size() << " vertices remaining" << endl;
+
     vector<vector<int>> vComponents;
     GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyList.size());
 
@@ -1741,17 +1777,17 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
     size_t independentSetSize(isolates.size());
     vector<bool> vIndependentVertices(m_AdjacencyList.size(), false);
 
-////    int const testVertex(62431);
-////    int const testVertex2(29943);
+    int const testVertex(2745);
+    int const testVertex2(168585);
 
     for (int const vertex : vIsolates) {
         vIndependentVertices[vertex] = true;
-////        if (vertex == testVertex) {
-////            cout << "Test vertex " << testVertex << " is removed in initial isolates" << endl << flush;
-////        }
-////        if (vertex == testVertex2) {
-////            cout << "Test vertex " << testVertex2 << " is removed in initial isolates" << endl << flush;
-////        }
+        if (vertex == testVertex) {
+            cout << "Test vertex " << testVertex << " is removed in initial isolates" << endl << flush;
+        }
+        if (vertex == testVertex2) {
+            cout << "Test vertex " << testVertex2 << " is removed in initial isolates" << endl << flush;
+        }
     }
 
 ////    cout << "Neighbors of test vertex " << testVertex << ":" << endl << flush;
@@ -1774,13 +1810,34 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
         independentSetSize += clique.size();
         for (int const vertex : clique) {
             vIndependentVertices[vertex] = true;
-////            if (vertex == testVertex) {
-////                cout << "Test vertex " << testVertex << " is added in clique finding." << endl << flush;
-////            }
-////            if (vertex == testVertex2) {
-////                cout << "Test vertex " << testVertex2 << " is added in clique finding." << endl << flush;
-////            }
+            if (vertex == testVertex) {
+                cout << "Test vertex " << testVertex << " is added in clique finding." << endl << flush;
+            }
+            if (vertex == testVertex2) {
+                cout << "Test vertex " << testVertex2 << " is added in clique finding." << endl << flush;
+            }
         }
+
+#if 1
+        list<int> vertexSet;
+        for (int vertex = 0; vertex < vIndependentVertices.size(); ++vertex) {
+            if (vIndependentVertices[vertex])
+                vertexSet.push_back(vertex);
+        }
+
+////        if (vIndependentVertices[testVertex]) {
+////            cout << "Test vertex " << testVertex << " is in independent set" << endl << flush;
+////        }
+
+        if (!CliqueTools::IsIndependentSet(m_AdjacencyList, vertexSet, false /* be quiet */)) {
+            cout << "Is not an independent set!" << endl << flush;
+            if (vComponent.size() == 111) {
+                map<int,int> remap;
+                GetVertexRemap(vComponent, isolates, remap);
+                PrintSubgraphInEdgesFormat(m_AdjacencyList, remap);
+            }
+        }
+#endif // 0
     }
     cout << "Original graph size           : " << m_AdjacencyList.size() << endl << flush;
     cout << "New      graph size           : " << isolates.GetInGraph().Size() << endl << flush;
@@ -1813,9 +1870,9 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
                 vertexSet.push_back(vertex);
         }
 
-        if (vIndependentVertices[testVertex]) {
-            cout << "Test vertex " << testVertex << " is in independent set" << endl << flush;
-        }
+////        if (vIndependentVertices[testVertex]) {
+////            cout << "Test vertex " << testVertex << " is in independent set" << endl << flush;
+////        }
 
         if (!CliqueTools::IsIndependentSet(m_AdjacencyList, vertexSet, false /* be quiet */)) {
             cout << "Is not an independent set!" << endl << flush;

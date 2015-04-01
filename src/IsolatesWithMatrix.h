@@ -4,6 +4,7 @@
 #include "Set.h"
 #include "ArraySet.h"
 #include "SparseArraySet.h"
+#include "Reduction.h"
 
 #include <vector>
 #include <map>
@@ -78,8 +79,9 @@ protected: // members
     clock_t removeOneDuringNextTimer;
     clock_t removeDuringNextTimer;
     clock_t replaceDuringNextTimer;
-    #endif // TIMERS
+#endif // TIMERS
     bool m_bConnectedComponentMode;
+    std::vector<Reduction> m_vReductions;
 };
 
 #endif //ISOLATES_WITH_MATRIX_H

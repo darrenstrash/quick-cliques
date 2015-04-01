@@ -33,6 +33,7 @@ IsolatesWithMatrix<NeighborSet>::IsolatesWithMatrix(vector<vector<char>> const &
  , replaceDuringNextTimer(0)
  #endif // TIMERS
  , m_bConnectedComponentMode(false)
+ , m_vReductions()
 {
     for (size_t u=0; u < adjacencyArray.size(); ++u) {
         remaining.Insert(u);
@@ -100,9 +101,12 @@ bool IsolatesWithMatrix<NeighborSet>::RemoveDominatedVertex(int const vertex, ve
         // has every neighbor of vertex, + vertex - neighbor
         if (commonNeighborCount == neighbors[vertex].Size()) {
 
+            Reduction reduction(DOMINATED_VERTEX);
+            reduction.SetVertex(neighbor);
+
             vMarkedVertices[vertex] = false;
-            for (int const neighbor : neighbors[vertex]) {
-                vMarkedVertices[neighbor] = false;
+            for (int const otherNeighbor : neighbors[vertex]) {
+                vMarkedVertices[otherNeighbor] = false;
             }
 
             // remove neighbor from graph
@@ -115,10 +119,14 @@ bool IsolatesWithMatrix<NeighborSet>::RemoveDominatedVertex(int const vertex, ve
                 remaining.Insert(nNeighbor);
                 SwapToEnd(m_ReorderedAdjacencyArray[nNeighbor], neighbor);
                 neighbors[nNeighbor].Remove(neighbor);
+                reduction.AddRemovedEdge(nNeighbor, neighbor);
+                reduction.AddRemovedEdge(neighbor, nNeighbor);
             }
             neighbors[neighbor].Clear();
             vOtherRemovedVertices.push_back(neighbor);
 ////            vMarkedVertices[nNeighbor] = false;
+
+            m_vReductions.emplace_back(std::move(reduction));
 
             vRecentlyRemovedVertices[neighbor] = false;
             return true;
@@ -280,6 +288,9 @@ bool IsolatesWithMatrix<NeighborSet>::RemoveIsolatedClique(int const vertex, vec
 ////        }
 ////        cout << endl;
 
+        Reduction reduction(ISOLATED_VERTEX);
+        reduction.SetVertex(vertex);
+
         for (int const neighbor : neighbors[vertex]) {
 ////            if (!inGraph.Contains(neighbor)) {
 ////                cout << "Trying to remove non-existant neighbor " << neighbor << " from " << vertex << " neighbor list!" << endl << flush;
@@ -288,6 +299,7 @@ bool IsolatesWithMatrix<NeighborSet>::RemoveIsolatedClique(int const vertex, vec
             inGraph.Remove(neighbor);
             remaining.Remove(neighbor);
             vRecentlyRemovedVertices[neighbor] = true;
+            reduction.AddNeighbor(neighbor);
         }
 
 ////        if (!inGraph.Contains(vertex)) {
@@ -314,6 +326,7 @@ bool IsolatesWithMatrix<NeighborSet>::RemoveIsolatedClique(int const vertex, vec
                 if (nNeighbor != vertex) {
                     SwapToEnd(m_ReorderedAdjacencyArray[nNeighbor], neighbor);
                     neighbors[nNeighbor].Remove(neighbor);
+                    reduction.AddRemovedEdge(nNeighbor, neighbor);
                 }
             }
             neighbors[neighbor].Clear();
@@ -329,6 +342,8 @@ bool IsolatesWithMatrix<NeighborSet>::RemoveIsolatedClique(int const vertex, vec
 ////    if (vertex == 21952) {
 ////        cout << "vertex" << vertex << " is being removed." << endl << flush;
 ////    }
+
+        m_vReductions.emplace_back(std::move(reduction));
         
         return true;
     }
