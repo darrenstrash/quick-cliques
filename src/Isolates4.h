@@ -34,14 +34,16 @@ public:
     Isolates4(std::vector<std::vector<int>> const &adjacencyArray);
     ~Isolates4();
 
-    void RemoveVertexAndNeighbors(int const vertex, std::vector<int> &vRemoved);
-    void RemoveVertex(int const vertex);
+    void RemoveVertexAndNeighbors(int const vertex, std::vector<int> &vRemoved, std::vector<Reduction> &vReductions);
+    void RemoveVertex(int const vertex, std::vector<Reduction> &vReductions);
 
-    void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<VertexFold> &vVertexFolds, bool const bConsiderAllVertices);
-    void ReplaceAllRemoved(std::vector<int> const &vRemoved);
+    void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions, bool const bConsiderAllVertices);
+    void ReplaceAllRemoved(std::vector<Reduction> const &vReductions);
 
+#if 0
     int NextVertexToRemove(std::vector<int> &vVertices);
     int NextVertexToRemove();
+#endif //0
 
     size_t size() const { return isolates.Size(); }
 
@@ -60,10 +62,10 @@ public:
     void SetConnectedComponent(std::vector<int> const &vVertices);
 
 protected: // methods
-    bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices);
+    bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
 ////    bool RemoveIsolatedPath      (int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
-    bool RemoveDominatedVertex(int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices);
-    bool FoldVertex(int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<VertexFold> &vVertexFolds);
+    bool RemoveDominatedVertex(int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
+    bool FoldVertex(int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
 
 protected: // members
     std::vector<std::vector<int>> const &m_AdjacencyArray;
@@ -87,7 +89,6 @@ protected: // members
     clock_t replaceDuringNextTimer;
     #endif // TIMERS
     bool m_bConnectedComponentMode;
-    std::vector<Reduction> m_vReductions;
 };
 
 #endif //ISOLATES_4_H

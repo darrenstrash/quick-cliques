@@ -144,8 +144,8 @@ vector<vector<int>> ComputeSubgraphOfSize(Isolates4<SparseArraySet> const &isola
     set<int>    setRemoved;
 ////    vector<pair<int,int>> vAddedEdges;
 ////    subgraphIsolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
-    vector<VertexFold> vVertexFolds;
-    subgraphIsolates.RemoveAllIsolates(0, vIsolates, vRemoved, vVertexFolds, true /* consider all vertices for reduction */);
+    vector<Reduction> vReductions;
+    subgraphIsolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for reduction */);
 
     if (subgraphIsolates.GetInGraph().Size() == vAdjacencyArray.size()) {
         return vAdjacencyArray;
@@ -549,8 +549,8 @@ void Staging::Run()
     vector<int> vIsolates;
     set<int>    setRemoved;
 ////    vector<pair<int,int>> vAddedEdges;
-    vector<VertexFold> vVertexFolds;
-    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vVertexFolds, true /* consider all vertices for reduction */);
+    vector<Reduction> vReductions;
+    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for reduction */);
     cout << "Removed " << vIsolates.size() << " isolates, graph has " << isolates.GetInGraph().Size() << "/" << m_AdjacencyList.size() << " vertices remaining" << endl;
 
 #if 0
@@ -1726,16 +1726,35 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
     }
     edges >>= 1;
 
+    cout << "Begin removal of rest of graph..." << endl << flush;
+
+    // remove remaining vertices
+    while (!isolates.GetInGraph().Empty()) {
+        int const nextVertex = (*isolates.GetInGraph().begin());
+        isolates.RemoveVertexAndNeighbors(nextVertex, vRemoved, vReductions);
+////        isolates.RemoveVertex(nextVertex, vReductions);
+        isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for reduction */);
+    }
+
+    size_t setSize(0);
+    for (Reduction const &reduction : vReductions) {
+        if (reduction.GetType() != DOMINATED_VERTEX) {
+            setSize++;
+        }
+    }
+    cout << "Found set of size: " << setSize << endl << flush;
+
     cout << "Checking undo reductions..." << endl << flush;
     if (true)
     {
-        isolates.ReplaceAllRemoved(vRemoved);
+        isolates.ReplaceAllRemoved(vReductions);
         for (size_t vertex = 0; vertex < m_AdjacencyList.size(); ++vertex) {
             if (!isolates.GetInGraph().Contains(vertex)) {
                 cout << "ERROR during sanity check." << endl << flush;
                 cout << "Vertex " << vertex << " is excluded from graph after undoing all reductions." << endl;
                 exit(1);
             }
+
             if (isolates.Neighbors()[vertex].Size() != m_AdjacencyList[vertex].size()) {
                 cout << "ERROR during sanity check." << endl << flush;
                 cout << "Vertex " << vertex << " does not have same number of neighbors after undoing all reductions." << endl;
@@ -1745,7 +1764,7 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
             for (int const neighbor : m_AdjacencyList[vertex]) {
                 if (!isolates.Neighbors()[vertex].Contains(neighbor)) {
                     cout << "ERROR during sanity check." << endl << flush;
-                    cout << "Vertex " << vertex << " has is missing neighbor " << neighbor << " after undoing all reductions." << endl;
+                    cout << "Vertex " << vertex << " is missing neighbor " << neighbor << " after undoing all reductions." << endl;
                     exit(1);
                 }
             }
@@ -1754,8 +1773,8 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
 
     vIsolates.clear();
     vRemoved.clear();
-    vVertexFolds.clear();
-    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vVertexFolds, true /* consider all vertices for reduction */);
+    vReductions.clear();
+    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for reduction */);
 
     cout << "Removed " << vIsolates.size() << " isolates, graph has " << isolates.GetInGraph().Size() << "/" << m_AdjacencyList.size() << " vertices remaining" << endl;
 
@@ -1844,7 +1863,6 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
     cout << "Removed  vertices             : " << vIsolates.size() + vRemoved.size() << endl << flush;
     cout << "Recomputed new graph size     : " << m_AdjacencyList.size() - (vIsolates.size() + vRemoved.size()) << endl << flush;
     cout << "Computed independent set size : " << independentSetSize  << endl << flush;
-    cout << "Potential additions           : " << vVertexFolds.size() << endl << flush;
     // include folded vertices into independent set:
 
 ////    cout << "Neighbors of test vertex " << testVertex << ":" << endl << flush;
@@ -1860,9 +1878,13 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
 ////        cout << "Test vertex " << testVertex << " is in independent set with test vertex " << testVertex2 << endl << flush;
 ////    }
     int actualAdditions(0);
-    for (size_t index = vVertexFolds.size(); index > 0; index--) {
-        VertexFold const &vertexFold(vVertexFolds[index-1]);
-#if 0
+    for (size_t index = vReductions.size(); index > 0; index--) {
+        Reduction const &reduction(vReductions[index-1]);
+        if (reduction.GetType() != FOLDED_VERTEX) continue;
+        int const newVertex(reduction.GetVertex());
+        int const removedVertex1(reduction.GetNeighbors()[0]);
+        int const removedVertex2(reduction.GetNeighbors()[1]);
+ #if 0
         list<int> vertexSet;
         cout << "Adding vertex fold #" << actualAdditions << ":" << vertexFold.newVertex << " <- " << vertexFold.removedVertex1 << " , " << vertexFold.removedVertex2  << endl << flush;
         for (int vertex = 0; vertex < vIndependentVertices.size(); ++vertex) {
@@ -1879,21 +1901,21 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
         }
 #endif // 0
 
-        if (vIndependentVertices[vertexFold.newVertex]) {
+        if (vIndependentVertices[newVertex]) {
             actualAdditions++;
-            if (vIndependentVertices[vertexFold.removedVertex1] || vIndependentVertices[vertexFold.removedVertex2]) {
+            if (vIndependentVertices[removedVertex1] || vIndependentVertices[removedVertex2]) {
                 cout << "ERROR: Something is wrong..." << endl << flush;
             }
-            vIndependentVertices[vertexFold.removedVertex1] = true;
-            vIndependentVertices[vertexFold.removedVertex2] = true;
-            vIndependentVertices[vertexFold.newVertex] = false;
+            vIndependentVertices[removedVertex1] = true;
+            vIndependentVertices[removedVertex2] = true;
+            vIndependentVertices[newVertex] = false;
 ////            cout << "Removing " << vertexFold.newVertex << ", replacing with " << vertexFold.removedVertex1 << " , " << vertexFold.removedVertex2 << endl << flush;
         } else {
             actualAdditions++;
-            if (vIndependentVertices[vertexFold.removedVertex1] || vIndependentVertices[vertexFold.removedVertex2]) {
+            if (vIndependentVertices[removedVertex1] || vIndependentVertices[removedVertex2]) {
                 cout << "ERROR: Something is wrong..." << endl << flush;
             }
-            vIndependentVertices[vertexFold.newVertex] = true;
+            vIndependentVertices[newVertex] = true;
 ////            cout << "Adding " << vertexFold.newVertex << " to independent set" << endl << flush;
         }
     }

@@ -33,7 +33,6 @@ Isolates4<NeighborSet>::Isolates4(vector<vector<int>> const &adjacencyArray)
  , replaceDuringNextTimer(0)
  #endif // TIMERS
  , m_bConnectedComponentMode(false)
- , m_vReductions()
 {
     for (size_t u=0; u < adjacencyArray.size(); ++u) {
         remaining.Insert(u);
@@ -77,7 +76,7 @@ Isolates4<NeighborSet>::~Isolates4()
 ////}
 
 template <typename NeighborSet>
-bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
+bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<Reduction> &vReductions)
 {
 ////    bool const debug(vertex==40653);
 ////    if (vertex == 31) {
@@ -217,6 +216,7 @@ bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
         Reduction reduction(ISOLATED_VERTEX);
         reduction.SetVertex(vertex);
 
+////        cout << "Removing isolated vertex " << vertex << " with neighbors ";
         for (int const neighbor : neighbors[vertex]) {
 ////            if (!inGraph.Contains(neighbor)) {
 ////                cout << "Trying to remove non-existant neighbor " << neighbor << " from " << vertex << " neighbor list!" << endl << flush;
@@ -227,7 +227,9 @@ bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
             reduction.AddNeighbor(neighbor);
             reduction.AddRemovedEdge(vertex,   neighbor);
             reduction.AddRemovedEdge(neighbor, vertex);
+////            cout << neighbor << " ";
         }
+////        cout << endl << flush;
 
 ////        if (!inGraph.Contains(vertex)) {
 ////            cout << "Trying to remove non-existant vertex " << vertex << " from graph!" << endl << flush;
@@ -263,7 +265,7 @@ bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 ////        cout << "vertex" << vertex << " is being removed." << endl << flush;
 ////    }
 
-        m_vReductions.emplace_back(std::move(reduction));
+        vReductions.emplace_back(std::move(reduction));
         
         return true;
     }
@@ -276,7 +278,7 @@ bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
 
 int numDominatedVertices(0);
 template <typename NeighborSet>
-bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
+bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<Reduction> &vReductions)
 {
     if (neighbors[vertex].Empty()) return false;
 ////    if (numDominatedVertices > 303) return false;
@@ -327,7 +329,8 @@ bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int>
             vOtherRemovedVertices.push_back(neighbor);
 ////            vMarkedVertices[nNeighbor] = false;
 
-            m_vReductions.emplace_back(std::move(reduction));
+            vReductions.emplace_back(std::move(reduction));
+////            cout << "Removing dominated vertex " << neighbor << endl;
             return true;
         }
     }
@@ -347,7 +350,7 @@ bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int>
 ////size_t numFoldedVertices(0);
 
 template <typename NeighborSet>
-bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<VertexFold> &vVertexFolds)
+bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<Reduction> &vReductions)
 {
 #ifdef NON_PATH
     if (neighbors[vertex].Size() != 2) return false;
@@ -359,7 +362,6 @@ bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateV
 
     int const vertex1(neighbors[vertex][0]);
     int const vertex2(neighbors[vertex][1]);
-    vVertexFolds.emplace_back(std::move(VertexFold(vertex1, vertex2, vertex)));
 
     Reduction reduction(FOLDED_VERTEX);
     reduction.SetVertex(vertex);
@@ -437,7 +439,7 @@ bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateV
 
     remaining.Insert(vertex);
 
-    m_vReductions.emplace_back(std::move(reduction));
+    vReductions.emplace_back(std::move(reduction));
 
     // which one goes in independent set? Need to update...
     vOtherRemovedVertices.push_back(vertex1);
@@ -648,7 +650,7 @@ bool Isolates4<NeighborSet>::RemoveIsolatedPath(int const vertex, vector<int> &v
 
 // TODO/DS: need to add 2-neighbors to remaining.
 template <typename NeighborSet>
-void Isolates4<NeighborSet>::RemoveVertex(int const vertex)
+void Isolates4<NeighborSet>::RemoveVertex(int const vertex, vector<Reduction> &vReductions)
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
 ////    cout << __LINE__ << ": calling remove" << endl << flush;
@@ -656,17 +658,24 @@ void Isolates4<NeighborSet>::RemoveVertex(int const vertex)
     remaining.Remove(vertex);
     isolates.Remove(vertex);
 
+    Reduction reduction(REMOVED_VERTEX);
+    reduction.SetVertex(vertex);
+
     for (int const neighbor : neighbors[vertex]) {
         neighbors[neighbor].Remove(vertex);
         remaining.Insert(neighbor);
+        reduction.AddRemovedEdge(vertex, neighbor);
+        reduction.AddRemovedEdge(neighbor, vertex);
     }
+
+    vReductions.emplace_back(reduction);
 
     neighbors[vertex].Clear();
 }
 
 //TODO/DS: need to add 2-neighbors to remaining.
 template <typename NeighborSet>
-void Isolates4<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved)
+void Isolates4<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved, vector<Reduction> &vReductions)
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
 ////    cout << __LINE__ << ": calling remove" << endl << flush;
@@ -674,6 +683,9 @@ void Isolates4<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<i
     remaining.Remove(vertex);
     isolates.Insert(vertex);
     vRemoved.push_back(vertex);
+
+    Reduction reduction(REMOVED_VERTEX_AND_NEIGHBORS);
+    reduction.SetVertex(vertex);
 ////    if (vertex == 0) {
 ////        cout << __LINE__ << ": Removing " << vertex << " from graph." << endl << flush;
 ////    }
@@ -684,6 +696,10 @@ void Isolates4<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<i
         inGraph.Remove(neighbor);
         remaining.Remove(neighbor);
         vRemoved.push_back(neighbor);
+
+        reduction.AddNeighbor(neighbor);
+        reduction.AddRemovedEdge(vertex, neighbor);
+        reduction.AddRemovedEdge(neighbor, vertex);
 ////        if (neighbor == 0) {
 ////            cout << __LINE__ << ": Removing " << neighbor << " from graph." << endl << flush;
 ////        }
@@ -693,8 +709,11 @@ void Isolates4<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<i
             if (nNeighbor == vertex) continue;
             neighbors[nNeighbor].Remove(neighbor);
 ////            cout << __LINE__ << ":         Done removing" << endl << flush;
-            if (inGraph.Contains(nNeighbor))
+            if (inGraph.Contains(nNeighbor)) {
                 remaining.Insert(nNeighbor);
+                reduction.AddRemovedEdge(neighbor, nNeighbor);
+                reduction.AddRemovedEdge(nNeighbor, neighbor);
+            }
         }
 ////        cout << __LINE__ << ":     Done Removing neighbor" << neighbor << endl << flush;
         neighbors[neighbor].Clear();
@@ -703,11 +722,13 @@ void Isolates4<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<i
 
 ////    cout << __LINE__ << ": Done Removing vertex " << vertex << endl << flush;
     neighbors[vertex].Clear();
+
+    vReductions.emplace_back(std::move(reduction));
 ////    cout << __LINE__ << ": Cleared neighbors: " << vertex << endl << flush;
 }
 
 template <typename NeighborSet>
-void Isolates4<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<VertexFold> &vVertexFolds, bool bConsiderAllVertices)
+void Isolates4<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<Reduction> &vReductions, bool bConsiderAllVertices)
 {
 ////    if (find (vIsolateVertices.begin(), vIsolateVertices.end(), 31) != vIsolateVertices.end())
 ////        cout << "Calling RemoveAllIsolates with 31 in the isolate set!" << endl;
@@ -752,17 +773,17 @@ void Isolates4<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vec
 
 ////        cout << "Attempting to remove vertex " << vertex << endl << flush;
 
-        bool reduction = RemoveIsolatedClique(vertex, vIsolateVertices, vOtherRemovedVertices);
+        bool reduction = RemoveIsolatedClique(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
 #ifdef NEW_ISOLATE_CHECKS
 #if 1 ////def FOLD_VERTEX
         if (!reduction) {
 ////            reduction = RemoveIsolatedPath(vertex, vIsolateVertices, vOtherRemovedVertices, vAddedEdges);
-            reduction = FoldVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vVertexFolds);
+            reduction = FoldVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
+        }
+        if (!reduction) {
+            reduction = RemoveDominatedVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
         }
 #endif
-        if (!reduction) {
-            reduction = RemoveDominatedVertex(vertex, vIsolateVertices, vOtherRemovedVertices);
-        }
 
 #endif // NEW_ISOLATE_CHECKS
 
@@ -790,14 +811,14 @@ void Isolates4<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vec
 }
 
 template <typename NeighborSet>
-void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
+void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<Reduction> const &vReductions)
 {
 #ifdef TIMERS
     clock_t startClock = clock();
 #endif //TIMERS
 #if 1
-    for (size_t index = m_vReductions.size(); index > 0; index--) {
-        Reduction const &reduction(m_vReductions[index-1]);
+    for (size_t index = vReductions.size(); index > 0; index--) {
+        Reduction const &reduction(vReductions[index-1]);
 
         switch(reduction.GetType()) {
             case ISOLATED_VERTEX:
@@ -811,7 +832,7 @@ void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
                 }
             break;
             case DOMINATED_VERTEX:
-            inGraph.Insert(reduction.GetVertex());
+                inGraph.Insert(reduction.GetVertex());
                 for (pair<int,int> const &edge : reduction.GetRemovedEdges()) {
                     neighbors[edge.first].Insert(edge.second);
                 }
@@ -829,13 +850,30 @@ void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
                     neighbors[edge.first].Insert(edge.second);
                 }
             break;
+            case REMOVED_VERTEX:
+                inGraph.Insert(reduction.GetVertex());
+                // then replace all removed edges
+                for (pair<int,int> const &edge : reduction.GetRemovedEdges()) {
+                    neighbors[edge.first].Insert(edge.second);
+                }
+            break;
+            case REMOVED_VERTEX_AND_NEIGHBORS:
+                inGraph.Insert(reduction.GetVertex());
+                isolates.Remove(reduction.GetVertex());
+                for (int const neighbor : reduction.GetNeighbors()) {
+                    inGraph.Insert(neighbor);
+                }
+                // then replace all removed edges
+                for (pair<int,int> const &edge : reduction.GetRemovedEdges()) {
+                    neighbors[edge.first].Insert(edge.second);
+                }
+            break;
             default:
                 cout << "ERROR!: Unsupported reduction type used..." << endl << flush;
                 exit(1);
             break;
         };
     }
-    m_vReductions.clear();
 #else
     for (int const removedVertex : vRemoved) {
         inGraph.Insert(removedVertex);
@@ -861,6 +899,7 @@ void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<int> const &vRemoved)
     #endif // TIMERS
 }
 
+#if 0
 template <typename NeighborSet>
 int Isolates4<NeighborSet>::NextVertexToRemove(std::vector<int> &vVertices)
 {
@@ -1119,6 +1158,7 @@ int Isolates4<NeighborSet>::NextVertexToRemove()
     vVertices.insert(vVertices.end(), inGraph.begin(), inGraph.end());
     return NextVertexToRemove(vVertices);
 }
+#endif // 0
 
 template <typename NeighborSet>
 int Isolates4<NeighborSet>::GetAlternativeVertex(int const vertex) const
