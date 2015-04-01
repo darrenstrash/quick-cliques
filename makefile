@@ -3,8 +3,8 @@ BUILD_DIR = build
 SRC_DIR   = src
 BIN_DIR   = bin
 
-CFLAGS = -Winline -O2 -std=c++11 -g
-#CFLAGS = -Winline -DDEBUG_MESSAGE -O0 -std=c++11 -g
+CFLAGS = -Winline -O2 -std=c++0x -g
+#CFLAGS = -Winline -DDEBUG_MESSAGE -O0 -std=c++0x -g
 
 #SOURCES_TMP += LightWeightSparseFullMCS.cpp
 #SOURCES_TMP += LightWeightSparseStaticOrderMCS.cpp

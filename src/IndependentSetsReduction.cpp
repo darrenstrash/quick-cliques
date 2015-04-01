@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <cstring> // memcpy
+#include <algorithm>
 
 using namespace std;
 

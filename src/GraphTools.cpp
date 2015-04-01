@@ -3,6 +3,7 @@
 #include "ArraySet.h"
 #include "Isolates2.h"
 #include "Isolates3.h"
+#include "Isolates4.h"
 #include "IsolatesWithMatrix.h"
 
 #include <set>
@@ -10,6 +11,7 @@
 #include <list>
 #include <map>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -492,4 +494,7 @@ void GraphTools::ComputeConnectedComponents<Isolates3<ArraySet>>(Isolates3<Array
 
 template
 void GraphTools::ComputeConnectedComponents<IsolatesWithMatrix<ArraySet>>(IsolatesWithMatrix<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
+
+template
+void GraphTools::ComputeConnectedComponents<Isolates4<SparseArraySet>>(Isolates4<SparseArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
 

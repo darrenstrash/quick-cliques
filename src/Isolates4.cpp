@@ -7,8 +7,12 @@
 #include <iostream>
 #include <ctime>
 #include <cassert>
+#include <climits>
 
 using namespace std;
+
+#define NEW_ISOLATE_CHECKS
+#define NON_PATH
 
 template <typename NeighborSet>
 Isolates4<NeighborSet>::Isolates4(vector<vector<int>> const &adjacencyArray)
@@ -255,12 +259,281 @@ bool Isolates4<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> 
     return false;
 }
 
-#if 0
+#ifdef NEW_ISOLATE_CHECKS
 // TODO/DS: need to remember added edge, so we can remove it later.
 // TODO/DS: not currently working, proceeding without it.
-bool Isolates4::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges)
+
+////int numDominatedVertices(0);
+template <typename NeighborSet>
+bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
+{
+    if (neighbors[vertex].Empty()) return false;
+////    if (numDominatedVertices > 303) return false;
+
+    size_t smallestNeighborhood(ULONG_MAX);
+    int vertexWithSmallestNeighborhood(-1);
+    vMarkedVertices[vertex] = true;
+    for (int const neighbor : neighbors[vertex]) {
+////        if (neighbor == vertex)
+////            cout << "Something is very wrong... vertex " << vertex << " is neighbor of itself" << endl << flush;
+        vMarkedVertices[neighbor] = true;
+        if (neighbors[neighbor].Size() < smallestNeighborhood) {
+            smallestNeighborhood = neighbors[neighbor].Size();
+            vertexWithSmallestNeighborhood = neighbor;
+        }
+    }
+
+    bool removed(false);
+
+    for (int const neighbor : neighbors[vertex]) {
+////        numDominatedVertices++;
+        // does neighbor dominate vertex?
+        int commonNeighborCount(0);
+        for (int const nNeighbor : neighbors[neighbor]) {
+            if (vMarkedVertices[nNeighbor]) commonNeighborCount++;
+        }
+
+        // has every neighbor of vertex, + vertex - neighbor
+        if (commonNeighborCount == neighbors[vertex].Size()) {
+            vMarkedVertices[vertex] = false;
+            for (int const neighbor : neighbors[vertex]) {
+                vMarkedVertices[neighbor] = false;
+            }
+
+            // remove vertex from graph
+            inGraph.Remove(neighbor);
+            remaining.Remove(neighbor);
+            for (int const nNeighbor : neighbors[neighbor]) {
+                remaining.Insert(nNeighbor);
+                neighbors[nNeighbor].Remove(neighbor);
+            }
+            neighbors[neighbor].Clear();
+            vOtherRemovedVertices.push_back(neighbor);
+////            vMarkedVertices[nNeighbor] = false;
+            removed = true;
+            return true;
+        }
+    }
+
+    vMarkedVertices[vertex] = false;
+    for (int const neighbor : neighbors[vertex]) {
+        vMarkedVertices[neighbor] = false;
+    }
+
+    return removed;
+}
+
+////size_t numFoldedVertices(0);
+
+template <typename NeighborSet>
+bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<VertexFold> &vVertexFolds)
+{
+#ifdef NON_PATH
+    if (neighbors[vertex].Size() != 2) return false;
+    if (neighbors[neighbors[vertex][0]].Contains(neighbors[vertex][1])) return false; // neighbors can't be adjacent.
+
+////    numFoldedVertices++;
+
+////    if (numFoldedVertices > 84) return false;
+
+    int const vertex1(neighbors[vertex][0]);
+    int const vertex2(neighbors[vertex][1]);
+    vVertexFolds.emplace_back(std::move(VertexFold(vertex1, vertex2, vertex)));
+
+////    bool const debug(numFoldedVertices == 83);
+////    bool const debug(vertex == 62431);
+////    if (debug) {
+////        cout << "Folding: " << vertex << ", " << vertex1 << ", " << vertex2 << endl;
+////        cout << "BEFORE:" << endl;
+////        cout << vertex << ":";
+////        for (int const neighbor : neighbors[vertex]) {
+////            cout << " " << neighbor;
+////        }
+////        cout << endl;
+////
+////        cout << vertex1 << ":";
+////        for (int const neighbor : neighbors[vertex1]) {
+////            cout << " " << neighbor;
+////        }
+////        cout << endl;
+////
+////        cout << vertex2 << ":";
+////        for (int const neighbor : neighbors[vertex2]) {
+////            cout << " " << neighbor;
+////        }
+////        cout << endl;
+////    }
+
+    neighbors[vertex].Clear();
+    neighbors[vertex].Resize(neighbors[vertex1].Size() + neighbors[vertex2].Size());
+    neighbors[vertex1].Remove(vertex);
+    neighbors[vertex2].Remove(vertex);
+    for (int const neighbor1 : neighbors[vertex1]) {
+        if (neighbor1 == vertex) continue;
+        neighbors[neighbor1].Remove(vertex1);
+////        neighbors[neighbor1].Insert(vertex);
+        neighbors[vertex].Insert(neighbor1);
+        remaining.Insert(neighbor1);
+    }
+    neighbors[vertex1].Clear();
+
+////    cout << "vertex " << vertex << " contains self?=" << (neighbors[vertex].Contains(vertex)) << endl;
+
+    for (int const neighbor2 : neighbors[vertex2]) {
+        if (neighbor2 == vertex) continue;
+        neighbors[neighbor2].Remove(vertex2);
+////        neighbors[neighbor2].Insert(vertex);
+        neighbors[vertex].Insert(neighbor2);
+        remaining.Insert(neighbor2);
+    }
+
+////    cout << "vertex " << vertex << " contains self?=" << (neighbors[vertex].Contains(vertex)) << endl;
+
+    neighbors[vertex2].Clear();
+    for (int const neighbor : neighbors[vertex]) {
+////        if (neighbor == vertex) {
+////            cout << "Something is very wrong..." << endl;
+////        }
+        neighbors[neighbor].Insert(vertex);
+    }
+
+////    cout << "vertex " << vertex << " contains self?=" << (neighbors[vertex].Contains(vertex)) << endl;
+
+    remaining.Insert(vertex);
+
+    // which one goes in independent set? Need to update...
+    vOtherRemovedVertices.push_back(vertex1);
+    vOtherRemovedVertices.push_back(vertex2);
+
+    remaining.Remove(vertex1);
+    remaining.Remove(vertex2);
+    inGraph.Remove(vertex2);
+    inGraph.Remove(vertex1);
+
+////    if (debug) {
+////        cout << "AFTER:" << endl;
+////        cout << vertex << ":";
+////        for (int const neighbor : neighbors[vertex]) {
+////            cout << " " << neighbor;
+////        }
+////        cout << endl;
+////
+////        cout << vertex1 << ":";
+////        for (int const neighbor : neighbors[vertex1]) {
+////            cout << " " << neighbor;
+////        }
+////        cout << endl;
+////
+////        cout << vertex2 << ":";
+////        for (int const neighbor : neighbors[vertex2]) {
+////            cout << " " << neighbor;
+////        }
+////        cout << endl;
+////    }
+    return true;
+#else
+    return false;
+#endif 
+}
+
+
+#if 0
+template <typename NeighborSet>
+bool Isolates4<NeighborSet>::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges)
 {
     if (neighbors[vertex].Size() != 2) return false;
+#ifdef NON_PATH
+    if (neighbors[neighbors[vertex][0]].Contains(neighbors[vertex][1])) return false; // neighbors can't be adjacent.
+
+    int const vertex1(neighbors[vertex][0]);
+    int const vertex2(neighbors[vertex][1]);
+
+////    cout << "Folding: " << vertex << ", " << vertex1 << ", " << vertex2 << endl;
+////    cout << "BEFORE:" << endl;
+////    cout << vertex << ":";
+////    for (int const neighbor : neighbors[vertex]) {
+////        cout << " " << neighbor;
+////    }
+////    cout << endl;
+////
+////    cout << vertex1 << ":";
+////    for (int const neighbor : neighbors[vertex1]) {
+////        cout << " " << neighbor;
+////    }
+////    cout << endl;
+////
+////    cout << vertex2 << ":";
+////    for (int const neighbor : neighbors[vertex2]) {
+////        cout << " " << neighbor;
+////    }
+////    cout << endl;
+
+    neighbors[vertex].Clear();
+    neighbors[vertex].Resize(neighbors[vertex1].Size() + neighbors[vertex2].Size());
+    neighbors[vertex1].Remove(vertex);
+    neighbors[vertex2].Remove(vertex);
+    for (int const neighbor1 : neighbors[vertex1]) {
+        if (neighbor1 == vertex) continue;
+        neighbors[neighbor1].Remove(vertex1);
+////        neighbors[neighbor1].Insert(vertex);
+        neighbors[vertex].Insert(neighbor1);
+        remaining.Insert(neighbor1);
+    }
+    neighbors[vertex1].Clear();
+
+////    cout << "vertex " << vertex << " contains self?=" << (neighbors[vertex].Contains(vertex)) << endl;
+
+    for (int const neighbor2 : neighbors[vertex2]) {
+        if (neighbor2 == vertex) continue;
+        neighbors[neighbor2].Remove(vertex2);
+////        neighbors[neighbor2].Insert(vertex);
+        neighbors[vertex].Insert(neighbor2);
+        remaining.Insert(neighbor2);
+    }
+
+////    cout << "vertex " << vertex << " contains self?=" << (neighbors[vertex].Contains(vertex)) << endl;
+
+    neighbors[vertex2].Clear();
+    for (int const neighbor : neighbors[vertex]) {
+////        if (neighbor == vertex) {
+////            cout << "Something is very wrong..." << endl;
+////        }
+        neighbors[neighbor].Insert(vertex);
+    }
+
+////    cout << "vertex " << vertex << " contains self?=" << (neighbors[vertex].Contains(vertex)) << endl;
+
+    remaining.Insert(vertex);
+
+    // which one goes in independent set? Need to update...
+    vOtherRemovedVertices.push_back(vertex1);
+    vOtherRemovedVertices.push_back(vertex2);
+
+    remaining.Remove(vertex1);
+    remaining.Remove(vertex2);
+    inGraph.Remove(vertex2);
+    inGraph.Remove(vertex1);
+
+////    cout << "AFTER:" << endl;
+////    cout << vertex << ":";
+////    for (int const neighbor : neighbors[vertex]) {
+////        cout << " " << neighbor;
+////    }
+////    cout << endl;
+////
+////    cout << vertex1 << ":";
+////    for (int const neighbor : neighbors[vertex1]) {
+////        cout << " " << neighbor;
+////    }
+////    cout << endl;
+////
+////    cout << vertex2 << ":";
+////    for (int const neighbor : neighbors[vertex2]) {
+////        cout << " " << neighbor;
+////    }
+////    cout << endl;
+
+#else
 
     for (int const neighbor : neighbors[vertex]) {
         if (neighbors[neighbor].Size() == 2) {
@@ -328,9 +601,11 @@ bool Isolates4::RemoveIsolatedPath(int const vertex, vector<int> &vIsolateVertic
             return true;
         }
     }
+#endif
     return false;
 }
-#endif //0
+#endif // 0
+#endif // NEW_ISOLATE_CHECKS
 
 
 // TODO/DS: need to add 2-neighbors to remaining.
@@ -394,7 +669,7 @@ void Isolates4<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<i
 }
 
 template <typename NeighborSet>
-void Isolates4<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<pair<int,int>> &vAddedEdges, bool bConsiderAllVertices)
+void Isolates4<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<VertexFold> &vVertexFolds, bool bConsiderAllVertices)
 {
 ////    if (find (vIsolateVertices.begin(), vIsolateVertices.end(), 31) != vIsolateVertices.end())
 ////        cout << "Calling RemoveAllIsolates with 31 in the isolate set!" << endl;
@@ -440,9 +715,17 @@ void Isolates4<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vec
 ////        cout << "Attempting to remove vertex " << vertex << endl << flush;
 
         bool reduction = RemoveIsolatedClique(vertex, vIsolateVertices, vOtherRemovedVertices);
-////        if (!reduction) {
+#ifdef NEW_ISOLATE_CHECKS
+        if (!reduction) {
 ////            reduction = RemoveIsolatedPath(vertex, vIsolateVertices, vOtherRemovedVertices, vAddedEdges);
-////        }
+            reduction = FoldVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vVertexFolds);
+        }
+
+        if (!reduction) {
+            reduction = RemoveDominatedVertex(vertex, vIsolateVertices, vOtherRemovedVertices);
+        }
+
+#endif // NEW_ISOLATE_CHECKS
 
 ////    if (find (vIsolateVertices.begin(), vIsolateVertices.end(), 31) != vIsolateVertices.end())
 ////        cout << "31 was added to the isolate set!" << endl;

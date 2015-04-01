@@ -142,8 +142,10 @@ vector<vector<int>> ComputeSubgraphOfSize(Isolates4<SparseArraySet> const &isola
     vector<int> vRemoved;
     vector<int> vIsolates;
     set<int>    setRemoved;
-    vector<pair<int,int>> vAddedEdges;
-    subgraphIsolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
+////    vector<pair<int,int>> vAddedEdges;
+////    subgraphIsolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
+    vector<VertexFold> vVertexFolds;
+    subgraphIsolates.RemoveAllIsolates(0, vIsolates, vRemoved, vVertexFolds, true /* consider all vertices for reduction */);
 
     if (subgraphIsolates.GetInGraph().Size() == vAdjacencyArray.size()) {
         return vAdjacencyArray;
@@ -241,7 +243,7 @@ void ComputeOnConnectedComponent(vector<int> const &vVertices, Isolates4<SparseA
         int const newVertex(vertexRemap[vertex]);
         componentMatrix[newVertex][newVertex] = 1;
         ////                    cout << newVertex << ":";
-        for (int const neighbor : adjacencyArray[vertex]) {
+        for (int const neighbor : isolates.Neighbors()[vertex]) {
             if (vertexRemap.find(neighbor) != vertexRemap.end()) {
                 int const newNeighbor(vertexRemap[neighbor]);
                 ////                    cout << "Adding edge " << newVertex << "," << newNeighbor << endl << flush;
@@ -261,8 +263,9 @@ void ComputeOnConnectedComponent(vector<int> const &vVertices, Isolates4<SparseA
 
     ////                cout << "Start algorithm: " << endl << flush;
     TesterMISS algorithm(componentMatrix, componentArray);
+////    LightWeightFullMISS algorithm(componentMatrix);
 ////    algorithm.SetQuiet(true);
-    algorithm.SetQuiet(false);
+////    algorithm.SetQuiet(false);
 
     if (bSetCliqueSize) {
         if (cliques.back().size() >= realClique.size())
@@ -542,8 +545,9 @@ void Staging::Run()
     vector<int> vRemoved;
     vector<int> vIsolates;
     set<int>    setRemoved;
-    vector<pair<int,int>> vAddedEdges;
-    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vAddedEdges, true /* consider all vertices for reduction */);
+////    vector<pair<int,int>> vAddedEdges;
+    vector<VertexFold> vVertexFolds;
+    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vVertexFolds, true /* consider all vertices for reduction */);
     cout << "Removed " << vIsolates.size() << " isolates, graph has " << isolates.GetInGraph().Size() << "/" << m_AdjacencyList.size() << " vertices remaining" << endl;
 
 #if 0
@@ -681,6 +685,7 @@ void Staging::Run()
 #endif // 0
 #endif // 0
 
+#if 0
     vector<vector<char>> adjacencyMatrix(m_AdjacencyList.size());
     for (size_t index = 0; index < m_AdjacencyList.size(); ++index) {
         adjacencyMatrix[index].resize(m_AdjacencyList.size(), 0);
@@ -720,6 +725,8 @@ void Staging::Run()
     std::uniform_int_distribution<int> distribution30(0,(int)(size * 0.30));
     std::uniform_int_distribution<int> distribution50(0,(int)(size * 0.50));
 ////    int dice_roll = distribution(generator);  // generates number in the range 1..6
+
+#endif // 0
 
     vector<pair<int,int>> vAddedEdgesUnused;
 
@@ -1708,9 +1715,178 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
 
 #endif // 0
 
+    //// print graph size and kernel size.
+#if 1
+    size_t edges(0);
+    for (vector<int> const &neighbors : m_AdjacencyList) {
+        edges += neighbors.size();
+    }
+    edges >>= 1;
+
+    vector<vector<int>> vComponents;
+    GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyList.size());
+
+    size_t maxComponentSize(0);
+    size_t maxComponentIndex(0);
+    for (size_t index = 0; index < vComponents.size(); ++index) {
+        vector<int> const &vComponent(vComponents[index]);
+        if (vComponent.size() > maxComponentSize) {
+            maxComponentSize = max(maxComponentSize, vComponent.size());
+            maxComponentIndex = index;
+        }
+    }
+
+    cout << "latex:" << m_AdjacencyList.size() << " & " << edges << " & " << isolates.GetInGraph().Size() << " & " << vComponents.size() << " & " << maxComponentSize << endl;
+
+    size_t independentSetSize(isolates.size());
+    vector<bool> vIndependentVertices(m_AdjacencyList.size(), false);
+
+////    int const testVertex(62431);
+////    int const testVertex2(29943);
+
+    for (int const vertex : vIsolates) {
+        vIndependentVertices[vertex] = true;
+////        if (vertex == testVertex) {
+////            cout << "Test vertex " << testVertex << " is removed in initial isolates" << endl << flush;
+////        }
+////        if (vertex == testVertex2) {
+////            cout << "Test vertex " << testVertex2 << " is removed in initial isolates" << endl << flush;
+////        }
+    }
+
+////    cout << "Neighbors of test vertex " << testVertex << ":" << endl << flush;
+////    for (int const neighbor : isolates.Neighbors()[testVertex]) {
+////        cout << neighbor << ": ";
+////        for (int const nNeighbor : isolates.Neighbors()[neighbor]) {
+////            cout << nNeighbor << " ";
+////        }
+////        cout << endl << flush;
+////    }
+////    cout << endl << flush;
+
+////    if (maxComponentSize < 1000) {
+    for (vector<int> const vComponent : vComponents) {
+        list<int> clique;
+        list<list<int>> cliques;
+        cout << "Running connect component algorithm..." << endl;
+////        ComputeOnConnectedComponent(vComponents[maxComponentIndex], isolates, m_AdjacencyList, clique, cliques, false /* don't set clique size */);
+        ComputeOnConnectedComponent(vComponent, isolates, m_AdjacencyList, clique, cliques, false /* don't set clique size */);
+        independentSetSize += clique.size();
+        for (int const vertex : clique) {
+            vIndependentVertices[vertex] = true;
+////            if (vertex == testVertex) {
+////                cout << "Test vertex " << testVertex << " is added in clique finding." << endl << flush;
+////            }
+////            if (vertex == testVertex2) {
+////                cout << "Test vertex " << testVertex2 << " is added in clique finding." << endl << flush;
+////            }
+        }
+    }
+    cout << "Original graph size           : " << m_AdjacencyList.size() << endl << flush;
+    cout << "New      graph size           : " << isolates.GetInGraph().Size() << endl << flush;
+    cout << "Removed  vertices             : " << vIsolates.size() + vRemoved.size() << endl << flush;
+    cout << "Recomputed new graph size     : " << m_AdjacencyList.size() - (vIsolates.size() + vRemoved.size()) << endl << flush;
+    cout << "Computed independent set size : " << independentSetSize  << endl << flush;
+    cout << "Potential additions           : " << vVertexFolds.size() << endl << flush;
+    // include folded vertices into independent set:
+
+////    cout << "Neighbors of test vertex " << testVertex << ":" << endl << flush;
+////    for (int const neighbor : isolates.Neighbors()[testVertex]) {
+////        cout << neighbor << ": ";
+////        for (int const nNeighbor : isolates.Neighbors()[neighbor]) {
+////            cout << nNeighbor << " ";
+////        }
+////        cout << endl << flush;
+////    }
+////    cout << endl << flush;
+////    if (vIndependentVertices[testVertex] && vIndependentVertices[testVertex2]) {
+////        cout << "Test vertex " << testVertex << " is in independent set with test vertex " << testVertex2 << endl << flush;
+////    }
+    int actualAdditions(0);
+    for (size_t index = vVertexFolds.size(); index > 0; index--) {
+        VertexFold const &vertexFold(vVertexFolds[index-1]);
+#if 0
+        list<int> vertexSet;
+        cout << "Adding vertex fold #" << actualAdditions << ":" << vertexFold.newVertex << " <- " << vertexFold.removedVertex1 << " , " << vertexFold.removedVertex2  << endl << flush;
+        for (int vertex = 0; vertex < vIndependentVertices.size(); ++vertex) {
+            if (vIndependentVertices[vertex])
+                vertexSet.push_back(vertex);
+        }
+
+        if (vIndependentVertices[testVertex]) {
+            cout << "Test vertex " << testVertex << " is in independent set" << endl << flush;
+        }
+
+        if (!CliqueTools::IsIndependentSet(m_AdjacencyList, vertexSet, false /* be quiet */)) {
+            cout << "Is not an independent set!" << endl << flush;
+        }
+#endif // 0
+
+        if (vIndependentVertices[vertexFold.newVertex]) {
+            actualAdditions++;
+            if (vIndependentVertices[vertexFold.removedVertex1] || vIndependentVertices[vertexFold.removedVertex2]) {
+                cout << "ERROR: Something is wrong..." << endl << flush;
+            }
+            vIndependentVertices[vertexFold.removedVertex1] = true;
+            vIndependentVertices[vertexFold.removedVertex2] = true;
+            vIndependentVertices[vertexFold.newVertex] = false;
+////            cout << "Removing " << vertexFold.newVertex << ", replacing with " << vertexFold.removedVertex1 << " , " << vertexFold.removedVertex2 << endl << flush;
+        } else {
+            actualAdditions++;
+            if (vIndependentVertices[vertexFold.removedVertex1] || vIndependentVertices[vertexFold.removedVertex2]) {
+                cout << "ERROR: Something is wrong..." << endl << flush;
+            }
+            vIndependentVertices[vertexFold.newVertex] = true;
+////            cout << "Adding " << vertexFold.newVertex << " to independent set" << endl << flush;
+        }
+    }
+
+    list<int> vertexSet;
+    for (int vertex = 0; vertex < vIndependentVertices.size(); ++vertex) {
+        if (vIndependentVertices[vertex])
+            vertexSet.push_back(vertex);
+    }
+
+    cout << "Final Check: " << endl << flush;
+    if (!CliqueTools::IsIndependentSet(m_AdjacencyList, vertexSet, false /* be quiet */)) {
+        cout << "Is not an independent set!" << endl << flush;
+    }
+
+    cout << "Actual    additions           : " << actualAdditions << endl << flush;
+    cout << "New      independent set size : " << independentSetSize + actualAdditions << endl << flush;
+
+#if 1
+    cout << endl << "Processing dominated vertices..." << endl << flush;
+    for (size_t index = vRemoved.size(); index > 0; index--) {
+        int const vertex(vRemoved[index-1]);
+        if (vIndependentVertices[vertex]) continue;
+        bool noNeighbor(true);
+        for (int const neighbor : m_AdjacencyList[vertex]) {
+            if (vIndependentVertices[neighbor]) {
+                noNeighbor = false;
+                break;
+            }
+        }
+
+        if (noNeighbor) {
+            actualAdditions++;
+            vIndependentVertices[vertex] = true;
+        }
+    }
+
+    cout << "Final Check(2): " << endl << flush;
+    if (!CliqueTools::IsIndependentSet(m_AdjacencyList, vertexSet, false /* be quiet */)) {
+        cout << "Is not an independent set!" << endl << flush;
+    }
+
+    cout << "New       additions           : " << actualAdditions << endl << flush;
+    cout << "New      independent set size : " << independentSetSize + actualAdditions << endl << flush;
+#endif // 0
+#endif //1
+
 // try to build up a graph from isolated vertices. remaining graph needs to be removed to empty the graph
 // assume there aren't any isolates vertices
-#if 1
+#if 0
 
     // Attempt #1, build up graph with only degree 1 vertices.
     cout << "Computing upper bound: " << endl << flush;
@@ -1798,6 +1974,7 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
 ////    algorithm.SetOnlyVertex(vOrdering[splitPoint]);
     algorithm.Run(cliques);
 #else
+#if 0
     vector<int> vOrdering;
     vector<int> vColoring;
     size_t cliqueSize(0);
@@ -1862,5 +2039,6 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
         break;
     }
 
+#endif // 0
 #endif // 1
 }

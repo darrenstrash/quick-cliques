@@ -75,6 +75,64 @@ IsolatesWithMatrix<NeighborSet>::~IsolatesWithMatrix()
 ////    }
 ////}
 
+////int numDominatedVertices(0);
+template <typename NeighborSet>
+bool IsolatesWithMatrix<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
+{
+    if (neighbors[vertex].Empty()) return false;
+////    if (numDominatedVertices > 303) return false;
+
+    vMarkedVertices[vertex] = true;
+    for (int const neighbor : neighbors[vertex]) {
+////        if (neighbor == vertex)
+////            cout << "Something is very wrong... vertex " << vertex << " is neighbor of itself" << endl << flush;
+        vMarkedVertices[neighbor] = true;
+    }
+
+    for (int const neighbor : neighbors[vertex]) {
+////        numDominatedVertices++;
+        // does neighbor dominate vertex?
+        int commonNeighborCount(0);
+        for (int const nNeighbor : neighbors[neighbor]) {
+            if (vMarkedVertices[nNeighbor]) commonNeighborCount++;
+        }
+
+        // has every neighbor of vertex, + vertex - neighbor
+        if (commonNeighborCount == neighbors[vertex].Size()) {
+
+            vMarkedVertices[vertex] = false;
+            for (int const neighbor : neighbors[vertex]) {
+                vMarkedVertices[neighbor] = false;
+            }
+
+            // remove neighbor from graph
+            inGraph.Remove(neighbor);
+            remaining.Remove(neighbor);
+
+            vRecentlyRemovedVertices[neighbor] = true;
+
+            for (int const nNeighbor : neighbors[neighbor]) {
+                remaining.Insert(nNeighbor);
+                SwapToEnd(m_ReorderedAdjacencyArray[nNeighbor], neighbor);
+                neighbors[nNeighbor].Remove(neighbor);
+            }
+            neighbors[neighbor].Clear();
+            vOtherRemovedVertices.push_back(neighbor);
+////            vMarkedVertices[nNeighbor] = false;
+
+            vRecentlyRemovedVertices[neighbor] = false;
+            return true;
+        }
+    }
+
+    vMarkedVertices[vertex] = false;
+    for (int const neighbor : neighbors[vertex]) {
+        vMarkedVertices[neighbor] = false;
+    }
+
+    return false;
+}
+
 template <typename NeighborSet>
 bool IsolatesWithMatrix<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices)
 {
@@ -521,6 +579,9 @@ void IsolatesWithMatrix<NeighborSet>::RemoveAllIsolates(int const independentSet
 ////        cout << "Attempting to remove vertex " << vertex << endl << flush;
 
         bool reduction = RemoveIsolatedClique(vertex, vIsolateVertices, vOtherRemovedVertices);
+        if (!reduction) {
+            reduction = RemoveDominatedVertex(vertex, vIsolateVertices, vOtherRemovedVertices);
+        }
 ////        if (!reduction) {
 ////            reduction = RemoveIsolatedPath(vertex, vIsolateVertices, vOtherRemovedVertices, vAddedEdges);
 ////        }

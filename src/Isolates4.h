@@ -14,6 +14,19 @@
 ////#define TIMERS
 ////#define SPARSE
 
+struct VertexFold
+{
+    VertexFold(int const _removed1, int const _removed2, int const _new)
+    : removedVertex1(_removed1)
+    , removedVertex2(_removed2)
+    , newVertex(_new)
+    { }
+
+    int removedVertex1;
+    int removedVertex2;
+    int newVertex;
+};
+
 template <typename NeighborSet> class Isolates4
 {
 public:
@@ -23,7 +36,7 @@ public:
     void RemoveVertexAndNeighbors(int const vertex, std::vector<int> &vRemoved);
     void RemoveVertex(int const vertex);
 
-    void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges, bool const bConsiderAllVertices);
+    void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<VertexFold> &vVertexFolds, bool const bConsiderAllVertices);
     void ReplaceAllRemoved(std::vector<int> const &vRemoved);
 
     int NextVertexToRemove(std::vector<int> &vVertices);
@@ -48,6 +61,8 @@ public:
 protected: // methods
     bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices);
 ////    bool RemoveIsolatedPath      (int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
+    bool RemoveDominatedVertex(int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices);
+    bool FoldVertex(int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<VertexFold> &vVertexFolds);
 
 protected: // members
     std::vector<std::vector<int>> const &m_AdjacencyArray;
