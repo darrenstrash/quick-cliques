@@ -33,6 +33,8 @@ Isolates4<NeighborSet>::Isolates4(vector<vector<int>> const &adjacencyArray)
  , replaceDuringNextTimer(0)
  #endif // TIMERS
  , m_bConnectedComponentMode(false)
+ , foldedVertexCount(0)
+ , m_bAllowVertexFolds(true)
 {
     for (size_t u=0; u < adjacencyArray.size(); ++u) {
         remaining.Insert(u);
@@ -347,7 +349,7 @@ bool Isolates4<NeighborSet>::RemoveDominatedVertex(int const vertex, vector<int>
     return false;
 }
 
-////size_t numFoldedVertices(0);
+size_t numFoldedVertices(0);
 
 template <typename NeighborSet>
 bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<Reduction> &vReductions)
@@ -356,9 +358,13 @@ bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateV
     if (neighbors[vertex].Size() != 2) return false;
     if (neighbors[neighbors[vertex][0]].Contains(neighbors[vertex][1])) return false; // neighbors can't be adjacent.
 
-////    numFoldedVertices++;
+    foldedVertexCount++;
 
-////    if (numFoldedVertices > 84) return false;
+////    cout << "Folding vertex " << vertex << ":" << endl << flush;
+
+    numFoldedVertices++;
+
+////    if (numFoldedVertices > 100) return false;
 
     int const vertex1(neighbors[vertex][0]);
     int const vertex2(neighbors[vertex][1]);
@@ -369,7 +375,7 @@ bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateV
     reduction.AddNeighbor(vertex2);
 
 ////    bool const debug(numFoldedVertices == 83);
-////    bool const debug(vertex == 62431);
+////    bool const debug(vertex == 1480);
 ////    if (debug) {
 ////        cout << "Folding: " << vertex << ", " << vertex1 << ", " << vertex2 << endl;
 ////        cout << "BEFORE:" << endl;
@@ -470,6 +476,7 @@ bool Isolates4<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsolateV
 ////        }
 ////        cout << endl;
 ////    }
+////    cout << "Done folding..." << endl << flush;
     return true;
 #else
     return false;
@@ -776,14 +783,14 @@ void Isolates4<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vec
         bool reduction = RemoveIsolatedClique(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
 #ifdef NEW_ISOLATE_CHECKS
 #if 1 ////def FOLD_VERTEX
-        if (!reduction) {
+        if (!reduction && m_bAllowVertexFolds) {
 ////            reduction = RemoveIsolatedPath(vertex, vIsolateVertices, vOtherRemovedVertices, vAddedEdges);
             reduction = FoldVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
         }
+#endif // 0
         if (!reduction) {
             reduction = RemoveDominatedVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
         }
-#endif
 
 #endif // NEW_ISOLATE_CHECKS
 
@@ -820,8 +827,13 @@ void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<Reduction> const &vReducti
     for (size_t index = vReductions.size(); index > 0; index--) {
         Reduction const &reduction(vReductions[index-1]);
 
+////        bool const debug(m_AdjacencyArray.size() == 2738);
+
         switch(reduction.GetType()) {
             case ISOLATED_VERTEX:
+////        if (debug) {
+////            cout << "Undoing ISOLATED_VERTEX reduction" << endl;
+////        }
                 inGraph.Insert(reduction.GetVertex());
                 isolates.Remove(reduction.GetVertex());
                 for (int const neighbor : reduction.GetNeighbors()) {
@@ -832,12 +844,19 @@ void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<Reduction> const &vReducti
                 }
             break;
             case DOMINATED_VERTEX:
+////        if (debug) {
+////            cout << "Undoing DOMINATED_VERTEX reduction" << endl;
+////        }
                 inGraph.Insert(reduction.GetVertex());
                 for (pair<int,int> const &edge : reduction.GetRemovedEdges()) {
                     neighbors[edge.first].Insert(edge.second);
                 }
             break;
             case FOLDED_VERTEX:
+////        if (debug) {
+////            cout << "Undoing FOLDED_VERTEX reduction" << endl;
+////        }
+                foldedVertexCount--;
                 inGraph.Insert(reduction.GetNeighbors()[0]);
                 inGraph.Insert(reduction.GetNeighbors()[1]);
                 // first remove all added edges
@@ -851,6 +870,9 @@ void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<Reduction> const &vReducti
                 }
             break;
             case REMOVED_VERTEX:
+////        if (debug) {
+////            cout << "Undoing REMOVED_VERTEX reduction" << endl;
+////        }
                 inGraph.Insert(reduction.GetVertex());
                 // then replace all removed edges
                 for (pair<int,int> const &edge : reduction.GetRemovedEdges()) {
@@ -858,12 +880,18 @@ void Isolates4<NeighborSet>::ReplaceAllRemoved(vector<Reduction> const &vReducti
                 }
             break;
             case REMOVED_VERTEX_AND_NEIGHBORS:
+////        if (debug) {
+////            cout << "Undoing REMOVED_VERTEX_AND_NEIGHBORS reduction" << endl;
+////        }
+////                cout << "Inserting into graph..." << endl << flush;
                 inGraph.Insert(reduction.GetVertex());
                 isolates.Remove(reduction.GetVertex());
+////                cout << "Inserting neighbors..." << endl << flush;
                 for (int const neighbor : reduction.GetNeighbors()) {
                     inGraph.Insert(neighbor);
                 }
                 // then replace all removed edges
+////                cout << "Inserting removed edges..." << endl << flush;
                 for (pair<int,int> const &edge : reduction.GetRemovedEdges()) {
                     neighbors[edge.first].Insert(edge.second);
                 }

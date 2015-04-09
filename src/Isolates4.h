@@ -61,6 +61,10 @@ public:
 
     void SetConnectedComponent(std::vector<int> const &vVertices);
 
+    size_t GetFoldedVertexCount() const { return foldedVertexCount; }
+
+    void SetAllowVertexFolds(bool const allow) { m_bAllowVertexFolds = allow; }
+
 protected: // methods
     bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
 ////    bool RemoveIsolatedPath      (int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
@@ -89,6 +93,8 @@ protected: // members
     clock_t replaceDuringNextTimer;
     #endif // TIMERS
     bool m_bConnectedComponentMode;
+    size_t foldedVertexCount;
+    bool m_bAllowVertexFolds;
 };
 
 #endif //ISOLATES_4_H

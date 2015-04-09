@@ -212,6 +212,30 @@ void PrintSubgraphInEdgesFormat(vector<vector<int>> const &adjacencyArray, map<i
     }
 }
 
+void PrintSubgraphInEdgesFormat(Isolates4<SparseArraySet> const &isolates)
+{
+    map<int,int> vertexMap;
+    cout << isolates.GetInGraph().Size() << endl;
+    size_t edges(0);
+    int newVertex(0);
+    for (int const vertex : isolates.GetInGraph()) {
+        vertexMap[vertex] = newVertex++;
+        for (int const neighbor : isolates.Neighbors()[vertex]) {
+            edges++;
+        }
+    }
+    cout << edges << endl;
+
+    for (int const vertex : isolates.GetInGraph()) {
+        if (vertexMap.find(vertex) == vertexMap.end()) continue;
+        for (int const neighbor : isolates.Neighbors()[vertex]) {
+            if (vertexMap.find(neighbor) == vertexMap.end()) continue;
+            cout << vertexMap.at(vertex) << "," << vertexMap.at(neighbor) << endl;
+        }
+    }
+}
+
+
 void GetVertexRemap(vector<int> const &vVertices, Isolates4<SparseArraySet> const &isolates, map<int,int> &vertexRemap)
 {
 ////    map<int,int> vertexRemap;
@@ -552,6 +576,10 @@ void Staging::Run()
     vector<Reduction> vReductions;
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for reduction */);
     cout << "Removed " << vIsolates.size() << " isolates, graph has " << isolates.GetInGraph().Size() << "/" << m_AdjacencyList.size() << " vertices remaining" << endl;
+
+    cout << "Number to add to final MIS: " << vIsolates.size() + isolates.GetFoldedVertexCount() << endl;
+
+    PrintSubgraphInEdgesFormat(isolates);
 
 #if 0
     vRemoved.insert(vRemoved.end(), vIsolates.begin(), vIsolates.end());
@@ -1719,7 +1747,7 @@ for (size_t i = distribution(generator); i < size-1; i = distribution(generator)
 #endif // 0
 
     //// print graph size and kernel size.
-#if 1
+#if 0
     size_t edges(0);
     for (vector<int> const &neighbors : m_AdjacencyList) {
         edges += neighbors.size();
