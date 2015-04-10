@@ -433,7 +433,7 @@ void Experiments::RunComponentsForwardSearch() const
 
             if (previousTotalCliqueSize + realClique.size() + cliqueDelta > totalCliqueSize) {
                 totalCliqueSize = realClique.size() + cliqueDelta + previousTotalCliqueSize;
-////                cout << "At " << setVertices.size() << "/" << vOrdering.size() << ", found a better independent set: size=" << totalCliqueSize << "=" << realClique.size() << "+" << cliqueDelta << "+" << previousTotalCliqueSize << endl;
+                cout << "At " << setVertices.size() << "/" << vOrdering.size() << ", found a better independent set: size=" << totalCliqueSize << "=" << realClique.size() << "+" << cliqueDelta << "+" << previousTotalCliqueSize << endl;
             }
 
             if (minIndex == maxIndex) break;
