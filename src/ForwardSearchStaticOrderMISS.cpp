@@ -57,7 +57,7 @@ void ForwardSearchStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vec
     bool bRemoveIsolates((vColors.size() < 10) || (vColors[vColors.size()-10] + R.size() + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize));
 #else
     bool bRemoveIsolates(true);
-#endif //NO_ISOLATES_P_LEFT_10
+#endif
 ////    size_t index = vColors.size();
 ////    for (; index > 0; --index) {
 ////        if (R.size() + vColors[index] <= m_uMaximumCliqueSize) { bRemoveIsolates = !(P.size() - index < 10); break; }
@@ -128,8 +128,6 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
         }
     }
 
-    bool pivot(false);
-
     vector<pair<int,int>> vAddedEdgesUnused;
 
     bool firstIteration(true);
@@ -138,8 +136,37 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
     bool selectMinComponent(false);
     bool checkTime(false); ////isolates.GetInGraph().Size() > 700);
 
+    size_t uIndexIntoP(0);
 
-    while (!P.empty() && !pivot && !m_bTimedOut) {
+    vector<Reduction> vRemovedVerticesFromP;
+    for (int const p : P) {
+        isolates.RemoveVertex(p, vRemovedVerticesFromP);
+    }
+
+    size_t sizeOfOriginalP(P.size());
+
+    P.clear();
+
+    vector<int> const vOriginalVertexOrder(vVertexOrder);
+
+    while (P.size() != sizeOfOriginalP && !m_bTimedOut) {
+
+        int const nextVertex(vRemovedVerticesFromP[uIndexIntoP].GetVertex());
+        P.push_back(nextVertex);
+        vector<Reduction> vVertexReduction;
+        vVertexReduction.push_back(vRemovedVerticesFromP[uIndexIntoP]);
+        isolates.ReplaceAllRemoved(vVertexReduction);
+
+        vVertexOrder.resize(P.size());
+        size_t vertexOrderIndex(0);
+        for (int const orderedVertex : vOriginalVertexOrder) {
+            if (isolates.GetInGraph().Contains(orderedVertex)) {
+                vVertexOrder[vertexOrderIndex++] = orderedVertex;
+            }
+        }
+
+        uIndexIntoP++;
+
         firstIteration = false;
         if (depth < 3) {
             if (!m_bQuiet) {
@@ -154,177 +181,19 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
             }
         }
 
-        int const largestColor(vColors.back());
-        if (R.size() + largestColor + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize /*&& !selectMinNeighbors && !selectMinComponent*/) {
-////            cout << __LINE__ << endl;
-////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
-////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-            ForwardSearchStaticOrderMISS::ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
-////        cout << __LINE__ << endl;
-////        cout << depth << ": P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
-////        cout << depth << ": Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-            P.clear();
-            return;
-        }
-
-        int vertexToChoose(P.back());
-////        size_t maxNeighborCount(0);
-////
-////        size_t numLeft = P.size();
-////        for (; numLeft > 0; --numLeft) {
-////            if (R.size() + vColors[numLeft-1] <= m_uMaximumCliqueSize) { break; }
+            // TODO/DS: implement pruning...
+////        int const largestColor(vColors.back());
+////        if (R.size() + largestColor + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize /*&& !selectMinNeighbors && !selectMinComponent*/) {
+////////            cout << __LINE__ << endl;
+////////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
+////////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
+////            ForwardSearchStaticOrderMISS::ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
+////////        cout << __LINE__ << endl;
+////////        cout << depth << ": P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
+////////        cout << depth << ": Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
+////            P.clear();
+////            return;
 ////        }
-////
-////        if (selectMinNeighbors) {
-////            for (size_t index = P.size(); index > numLeft; --index) {
-////                vMarkedVertices[P[index-1]] = true;
-////            }
-////
-////            for (size_t index = P.size(); index > numLeft; --index) {
-////                int const vertex(P[index-1]);
-////                size_t neighborCount(0);
-////                for (int const neighbor : isolates.Neighbors()[vertex]) {
-////                    if (vMarkedVertices[neighbor]) neighborCount++;
-////                }
-////                if (neighborCount > maxNeighborCount) {
-////                    maxNeighborCount = neighborCount;
-////                    vertexToChoose = vertex;
-////                }
-////            }
-////
-////            for (size_t index = P.size(); index > numLeft; --index) {
-////                vMarkedVertices[P[index-1]] = false;
-////            }
-////        } else
-
-        if (m_iOnlyVertex != -1 && depth == 0) {
-            if (isolates.GetInGraph().Contains(m_iOnlyVertex)) {
-                vertexToChoose = m_iOnlyVertex;
-            } else {
-                m_iOnlyVertex = -1;
-            }
-        }
-
-        int const nextVertex(vertexToChoose); 
-////        cout << "Removing vertex: " << nextVertex << endl;
-        bool const vertexAtEnd(nextVertex == P.back());
-////        cout << __LINE__ << endl;
-////        cout << depth << ": P        " << ((find(P.begin(), P.end(), 39) != P.end()) ? "contains " : "does not contain ") << 39 << endl;
-////        cout << depth << ": VO       " << ((find(vVertexOrder.begin(), vVertexOrder.end(), 39) != vVertexOrder.end()) ? "contains " : "does not contain ") << 39 << endl;
-////        cout << depth << ": Isolates " << (isolates.GetInGraph().Contains(39) ? "contains " : "does not contain ") << 39 << endl;
-////        cout << depth << ": P        " << ((find(P.begin(), P.end(), nextVertex) != P.end()) ? "contains " : "does not contain ") << nextVertex << endl;
-////        cout << depth << ": VO       " << ((find(vVertexOrder.begin(), vVertexOrder.end(), nextVertex) != vVertexOrder.end()) ? "contains " : "does not contain ") << nextVertex << endl;
-////        cout << depth << ": Isolates " << (isolates.GetInGraph().Contains(nextVertex) ? "contains " : "does not contain ") << nextVertex << endl;
-        if (!vertexAtEnd) {
-            vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), nextVertex));
-            P.resize(vVertexOrder.size());
-            vColors.resize(vVertexOrder.size());
-            Color(vVertexOrder, P, vColors);
-////        cout << __LINE__ << endl;
-////        cout << depth << ": P        " << ((find(P.begin(), P.end(), 39) != P.end()) ? "contains " : "does not contain ") << 39 << endl;
-////        cout << depth << ": VO       " << ((find(vVertexOrder.begin(), vVertexOrder.end(), 39) != vVertexOrder.end()) ? "contains " : "does not contain ") << 39 << endl;
-////        cout << depth << ": P        " << ((find(P.begin(), P.end(), nextVertex) != P.end()) ? "contains " : "does not contain ") << nextVertex << endl;
-////        cout << depth << ": VO       " << ((find(vVertexOrder.begin(), vVertexOrder.end(), nextVertex) != vVertexOrder.end()) ? "contains " : "does not contain ") << nextVertex << endl;
-////        cout << __LINE__ << endl;
-
-#ifdef RECOLOR
-            vector<int> proposedP(vVertexOrder.size());
-            vector<int> proposedColors(vVertexOrder.size());
-////            cout << __LINE__ << ": Recoloring..." << endl;
-            Color(vVertexOrder, proposedP, proposedColors);
-
-            size_t currentNumLeft = P.size();
-            for (; currentNumLeft > 0; --currentNumLeft) {
-                if (R.size() + vColors[currentNumLeft-1] <= m_uMaximumCliqueSize) { break; }
-            }
-
-            currentNumLeft = P.size() - currentNumLeft;
-
-            size_t proposedNumLeft = proposedP.size();
-            for (; proposedNumLeft > 0; --proposedNumLeft) {
-                if (R.size() + proposedColors[proposedNumLeft-1] <= m_uMaximumCliqueSize) { break; }
-            }
-
-            proposedNumLeft = P.size() - proposedNumLeft;
-
-            if (proposedNumLeft < currentNumLeft) {
-////                cout << __LINE__ << ": Recoloring..." << endl;
-                P = proposedP;
-                vColors = proposedColors;
-            }
-#endif // RECOLOR
-
-////            cout << "Done removing..." << endl;
-////            P.erase(find(P.begin(), P.end(), nextVertex));
-////        cout << __LINE__ << endl;
-////        cout << depth << ": P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
-////        cout << depth << ": VO       " << ((find(vVertexOrder.begin(), vVertexOrder.end(), 201) != vVertexOrder.end()) ? "contains " : "does not contain ") << 201 << endl;
-////        cout << depth << ": P        " << ((find(P.begin(), P.end(), nextVertex) != P.end()) ? "contains " : "does not contain ") << nextVertex << endl;
-////        cout << depth << ": VO       " << ((find(vVertexOrder.begin(), vVertexOrder.end(), nextVertex) != vVertexOrder.end()) ? "contains " : "does not contain ") << nextVertex << endl;
-////        cout << __LINE__ << endl;
-        } else {
-////            cout << "Popping off " << P.back() << endl;
-////        cout << __LINE__ << endl;
-            P.pop_back();
-////        cout << __LINE__ << endl;
-            vColors.pop_back();
-////        cout << __LINE__ << endl;
-        }
-////        cout << __LINE__ << endl;
-////        cout << depth << ": P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
-////        cout << depth << ": VO       " << ((find(vVertexOrder.begin(), vVertexOrder.end(), 201) != vVertexOrder.end()) ? "contains " : "does not contain ") << 201 << endl;
-////        cout << depth << ": Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-
-        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
-            vMarkedVertices[neighbor] = true;
-        }
-
-#ifdef DOMINATION
-        bool dominates(false);
-        for (int const x : X) {
-            dominates = true;
-            for (int const neighborX : m_AdjacencyArray[x]) {
-                if (isolates.GetInGraph().Contains(neighborX) && !vMarkedVertices[neighborX]) {
-                    dominates = false;
-                    break;
-                }
-            }
-
-            if (dominates) {
-                break;
-            }
-        }
-
-        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
-            vMarkedVertices[neighbor] = false;
-        }
-
-        if (dominates) {
-////        if (false) {
-////        cout << __LINE__ << endl;
-////            if (!m_bQuiet)
-                cout << depth << ": domination check removed " << nextVertex << endl;
-            isolates.RemoveVertex(nextVertex);
-            if (vertexAtEnd) vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), nextVertex));
-            vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
-            vRemovedVerticesToReplace.push_back(nextVertex);
-////        cout << __LINE__ << endl;
-////        cout << __LINE__ << endl;
-////        cout << depth << ": P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
-////        cout << depth << ": Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-            continue;
-        }
-#endif //DOMINATION
-
-////        cout << __LINE__ << endl;
-////        cout << depth << ": P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
-////        cout << depth << ": Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-
-////        if (numLeft > 10) {
-////            cout << "depth = " << depth << ", P.size = " << P.size() << ", P.left = " << numLeft << ", neighbors=" << isolates.Neighbors()[nextVertex].Size() << endl;
-////        }
-
-        ////        cout << depth << ": Choosing next vertex: " << nextVertex << endl;
 
 ////            cout << __LINE__ << endl;
 ////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
@@ -339,43 +208,9 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
             vNewColors.resize(vNewVertexOrder.size());
             Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
 
-////            if (depth <= 0) {
-////                cout << "Actual : current clique size is: " << R.size() << endl;
-////                cout << "Actual : max     clique size is: " << m_uMaximumCliqueSize << endl;
-////                cout << "Actual : New P is: ";
-////                for (int const pVertex : vNewP) {
-////                    cout << pVertex << " ";
-////                }
-////                cout << endl;
-////                cout << "Actual : New Adjunct is: ";
-////                for (int const aVertex : vNewVertexOrder) {
-////                    cout << aVertex << " ";
-////                }
-////                cout << endl;
-////            }
-////            bool const bSwitchToNoIsolatesAlgorithm((vNewColors.size() < 5) || (vNewColors[vNewColors.size()-5] + R.size() <= m_uMaximumCliqueSize));
-////            bool const bSwitchToNoIsolatesAlgorithm((vNewColors.size() < 10) || (vNewColors[vNewColors.size()-10] + R.size() <= m_uMaximumCliqueSize));
-////            bool const bSwitchToNoIsolatesAlgorithm(false);
-////            if (bSwitchToNoIsolatesAlgorithm) {
-////                depth++;
-////                RunRecursiveNoIsolates(vNewP, vNewVertexOrder, cliques, vNewColors);
-////                depth--;
-////            } else {
-#ifdef PREPRUNE
-                if (R.size() + vNewColors.back() > m_uMaximumCliqueSize) {
-                    depth++;
-                    RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
-////                    cout << __LINE__ << endl;
-////                    cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
-////                    cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-                    depth--;
-                }
-#else
-                depth++;
-                RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
-                depth--;
-#endif // PREPRUNE
-////            }
+            depth++;
+            RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
+            depth--;
         } else if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
             cliques.back().clear();
             cliques.back().insert(cliques.back().end(), R.begin(), R.end());
