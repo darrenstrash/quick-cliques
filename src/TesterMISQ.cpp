@@ -49,11 +49,11 @@ void TesterMISQ::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexO
     P = std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyArray, true /* non-decreasing*/));
 
     size_t maxDegree(0);
-#ifdef SPARSE
-    for (SparseArraySet const &neighborSet : isolates.Neighbors()) {
-#else
-    for (ArraySet const &neighborSet : isolates.Neighbors()) {
-#endif //SPARSE
+////#ifdef SPARSE
+////    for (SparseArraySet const &neighborSet : isolates.Neighbors()) {
+////#else
+    for (auto const &neighborSet : isolates.Neighbors()) {
+////#endif //SPARSE
         maxDegree = max(maxDegree, neighborSet.Size());
     }
 

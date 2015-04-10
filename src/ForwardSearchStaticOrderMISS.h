@@ -1,5 +1,5 @@
-#ifndef TESTER_STATIC_ORDER_MISS_H
-#define TESTER_STATIC_ORDER_MISS_H
+#ifndef FORWARD_SEARCH_STATIC_ORDER_MISS_H
+#define FORWARD_SEARCH_STATIC_ORDER_MISS_H
 
 #include "TesterMISQ.h"
 #include "CliqueColoringStrategy.h"
@@ -9,10 +9,10 @@
 #include <list>
 #include <ctime>
 
-class TesterStaticOrderMISS : public TesterMISQ
+class ForwardSearchStaticOrderMISS : public TesterMISQ
 {
 public:
-    TesterStaticOrderMISS(std::vector<std::vector<char>> const &vAdjacencyMatrix, std::vector<std::vector<int>> const &vAdjacencyArray);
+    ForwardSearchStaticOrderMISS(std::vector<std::vector<char>> const &vAdjacencyMatrix, std::vector<std::vector<int>> const &vAdjacencyArray);
 
     virtual void InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors);
 
@@ -28,4 +28,4 @@ protected:
     std::vector<bool> vMarkedVertices;
 };
 
-#endif //TESTER_STATIC_ORDER_MISS_H
+#endif //FORWARD_SEARCH_STATIC_ORDER_MISS_H

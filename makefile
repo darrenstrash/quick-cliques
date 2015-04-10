@@ -10,6 +10,8 @@ CFLAGS = -Winline -O2 -std=c++0x -g
 #SOURCES_TMP += LightWeightSparseStaticOrderMCS.cpp
 #SOURCES_TMP += LightWeightSparseMCR.cpp
 
+SOURCES_TMP += ForwardSearchMISS.cpp
+SOURCES_TMP += ForwardSearchStaticOrderMISS.cpp
 SOURCES_TMP += Experiments.cpp
 SOURCES_TMP += TesterMISS.cpp
 SOURCES_TMP += TesterStaticOrderMISS.cpp

@@ -15,6 +15,7 @@ public:
     void RunComponentsMISS() const;
     void RunComponentsStandardSearch() const;
     void RunComponentsForwardSearch() const;
+    void RunForwardSearch() const;
 
 private:
     std::string m_sDataSetName;

@@ -1,4 +1,4 @@
-#include "TesterStaticOrderMISS.h"
+#include "ForwardSearchStaticOrderMISS.h"
 #include "OrderingTools.h"
 #include "GraphTools.h"
 #include "Tools.h"
@@ -15,7 +15,7 @@
 
 using namespace std;
 
-TesterStaticOrderMISS::TesterStaticOrderMISS(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
+ForwardSearchStaticOrderMISS::ForwardSearchStaticOrderMISS(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
 : TesterMISQ(vAdjacencyMatrix, vAdjacencyArray)
 , onlyConsider(vAdjacencyArray.size())
 , vMarkedVertices(vAdjacencyArray.size(), false)
@@ -36,7 +36,7 @@ TesterStaticOrderMISS::TesterStaticOrderMISS(vector<vector<char>> const &vAdjace
     }
 }
 
-void TesterStaticOrderMISS::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
+void ForwardSearchStaticOrderMISS::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
     OrderingTools::InitialOrderingMISR(m_AdjacencyArray, P, vColors, m_uMaximumCliqueSize);
 ////    OrderingTools::InitialOrderingMISR(m_AdjacencyMatrix, P, vColors, m_uMaximumCliqueSize);
@@ -45,7 +45,7 @@ void TesterStaticOrderMISS::InitializeOrder(std::vector<int> &P, std::vector<int
     vVertexOrder = P; ////std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, true /* non-decreasing */)); //// = P; //?
 }
 
-void TesterStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
+void ForwardSearchStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 {
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
@@ -103,7 +103,7 @@ void TesterStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int
 ////    }
 }
 
-////void TesterStaticOrderMISS::GetNewOrderNoIsolates(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
+////void ForwardSearchStaticOrderMISS::GetNewOrderNoIsolates(vector<int> &vNewVertexOrder, vector<int> &vVertexOrder, vector<int> const &P, int const chosenVertex)
 ////{
 ////////    cout << "Old order: ";
 ////////    for (int const vertex : vVertexOrder) {
@@ -133,7 +133,7 @@ void TesterStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int
 ////////    cout << endl;
 ////}
 ////
-////void TesterStaticOrderMISS::ProcessOrderAfterRecursionNoIsolates(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
+////void ForwardSearchStaticOrderMISS::ProcessOrderAfterRecursionNoIsolates(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors, int const chosenVertex)
 ////{
 ////////    cout << "LightWeightStaticOrderMISS::ProcessOrderAfterRecursion" << endl;
 ////    if (chosenVertex == -1) return;
@@ -165,7 +165,7 @@ void TesterStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int
 ////    R.pop_back();
 ////}
 
-void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
+void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
 {
     nodeCount++;
     vector<int> &vNewP(stackP[R.size()+1]);
@@ -1227,7 +1227,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
     vNewP.clear();
 }
 
-////void TesterStaticOrderMISS::RunRecursiveNoIsolates(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
+////void ForwardSearchStaticOrderMISS::RunRecursiveNoIsolates(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
 ////{
 ////    nodeCount++;
 ////    vector<int> &vNewP(stackP[R.size()+1]);

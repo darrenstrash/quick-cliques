@@ -44,6 +44,7 @@ protected:
     std::vector<std::vector<int>> stackPersistentClique;
     std::vector<std::vector<int>> stackPersistentOther;
     std::vector<std::vector<Reduction>> stackPersistentReductions;
+////    Isolates4<SparseArraySet> isolates;
     Isolates4<ArraySet> isolates;
 ////    IsolatesWithMatrix<ArraySet> isolates;
     std::vector<bool> vRemoveIsolates;

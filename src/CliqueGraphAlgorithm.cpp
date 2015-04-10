@@ -318,7 +318,7 @@ void CliqueGraphAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cliq
     if (m_pSets->PIsEmpty() && !partialClique.empty()) {
         size_t min2Neighborhood(ULONG_MAX);
         for (int const vertex : partialClique) {
-            size_t twoNeighborhood(m_AdjacencyArray[vertex].size());(0);
+            size_t twoNeighborhood(m_AdjacencyArray[vertex].size());
             if (twoNeighborhood < min2Neighborhood)
                 min2Neighborhood = twoNeighborhood;
         }

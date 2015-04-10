@@ -187,6 +187,8 @@ void RunExperiment(string const &sInputFile, string const &sExperimentName, bool
         experiments.RunComponentsStandardSearch();
     } else if (sExperimentName=="components-forward-search") {
         experiments.RunComponentsForwardSearch();
+    } else if (sExperimentName=="forward-search") {
+        experiments.RunForwardSearch();
     } else {
         cout << "ERROR!: Invalid experiment name: " << sExperimentName << endl << flush;
     }

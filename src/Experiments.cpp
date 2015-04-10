@@ -3,6 +3,7 @@
 #include "Isolates4.h"
 #include "SparseArraySet.h"
 #include "TesterMISS.h"
+#include "ForwardSearchMISS.h"
 #include "LightWeightFullMISS.h"
 #include "GraphTools.h"
 #include "Tools.h"
@@ -453,6 +454,49 @@ void Experiments::RunComponentsForwardSearch() const
     }
 
     clock_t const endTime(clock());
+
+    cout << m_sDataSetName;
+    if (m_bOutputLatex) {
+        cout << " & " << totalCliqueSize << " & " << Tools::GetTimeInSeconds(endTime - startTime, false /* no brackets */) << " \\\\" << endl << flush;
+    } else {
+        cout << "\t" << totalCliqueSize << "\t" << Tools::GetTimeInSeconds(endTime - startTime, false /* no brackets */) << endl << flush;
+    }
+}
+
+void Experiments::RunForwardSearch() const
+{
+    if (m_bPrintHeader) {
+        if (m_bOutputLatex) {
+            cout << "Graph Name & $i$ & time \\\\ \\hline" << endl << flush;
+        } else {
+            cout << "Graph Name\ti\ttime" << endl << flush;
+        }
+    }
+
+    clock_t startTime(clock());
+    Isolates4<SparseArraySet> isolates(m_AdjacencyArray);
+    vector<int> vIsolates;
+    vector<int> vRemoved;
+    vector<Reduction> vReductions;
+    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for removal */);
+
+    map<int,int> mapUnused;
+    vector<vector<int>> subgraphAdjacencyList;
+    set<int> setVertices(isolates.GetInGraph().begin(), isolates.GetInGraph().end());
+    GraphTools::ComputeInducedSubgraphIsolates(isolates, setVertices, subgraphAdjacencyList, mapUnused);
+
+    vector<vector<char>> subgraphAdjacencyMatrix;
+
+    list<list<int>> cliques;
+    ForwardSearchMISS algorithm(subgraphAdjacencyMatrix, subgraphAdjacencyList);
+    algorithm.SetQuiet(true); 
+////    algorithm.SetOnlyVertex(vOrdering[splitPoint]);
+    algorithm.SetTimeOutInSeconds(m_dTimeout);
+    algorithm.Run(cliques);
+
+    clock_t const endTime(clock());
+
+    size_t totalCliqueSize = isolates.size() + isolates.GetFoldedVertexCount() + cliques.back().size();
 
     cout << m_sDataSetName;
     if (m_bOutputLatex) {
