@@ -406,7 +406,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 #else
 void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArray, vector<int> &vOrderedVertices, vector<int> &vColoring, size_t &cliqueSize)
 {
-    clock_t const startTime(clock());
+////    clock_t const startTime(clock());
     vOrderedVertices.resize(adjacencyArray.size(), -1);
     vColoring.resize(adjacencyArray.size(), -1);
 
@@ -518,7 +518,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
                         index++;
                     }
 #endif //0
-                    cout << "Time to perform ordering: " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
+////                    cout << "Time to perform ordering: " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
                     return;
                 } else {
                     // break ties by neighborhood-degree
