@@ -110,22 +110,6 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
     vector<int> &vNewColors(stackColors[R.size()+1]);
     vector<int> &vNewVertexOrder(stackOrder[R.size()+1]);
 
-////    bool &bEvaluatedHalfVertices = stackEvaluatedHalfVertices[R.size() + 1];
-////    stackEvaluatedHalfVertices[depth + 1] = (rand()%(depth+1) == depth);
-////    stackEvaluatedHalfVertices[depth + 1] = true;
-////    stackEvaluatedHalfVertices[depth + 1] = false;
-////    stackEvaluatedHalfVertices[depth + 1] = (depth<=2);
-
-////    size_t halfVertices(0);
-////    size_t index = P.size()+1;
-////    for (; index > 0; --index) {
-////        if (vColors[index-1] + R.size() <= m_uMaximumCliqueSize) {
-////            halfVertices = (index - 1) + 0.9*(P.size() - (index - 1));
-////            break;
-////        }
-////    }
-
-////    stackEvaluatedHalfVertices[depth + 1] = ((P.size() - index) > 50); //(depth<=2);
     stackEvaluatedHalfVertices[depth + 1] = true;
 
 ////    vector<int> X;
@@ -133,7 +117,7 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
     size_t const uOriginalPSize(P.size());
 
 ////    if (nodeCount%10000 == 0) {
-    if (nodeCount%100 == 0) {
+    if (nodeCount%10000 == 0) {
         if (!m_bQuiet) {
             cout << "Evaluated " << nodeCount << " nodes. " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
             PrintState();
@@ -144,674 +128,18 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
         }
     }
 
-////    if (depth <=1)
-////    cout << depth << ": numleft=" << numLeft << endl;
-
-////    for (size_t index = 0; /*P.size() - numLeft;*/ index < P.size(); ++index) {
-////        vector<vector<int>> vComponents;
-////////        int const vertexToRemove(P[index]);
-////////        isolates.RemoveVertex(vertexToRemove);
-////        GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
-////////        vector<int> const vToReplace(1, vertexToRemove);
-////////        isolates.ReplaceAllRemoved(vToReplace);
-////        if (vComponents.size() > 1) {
-////        bool printMessage(false);
-////        ostringstream strm;
-////        strm << depth << ": components : ";
-////        for (size_t index = 0; /*P.size() - numLeft;*/ index < P.size(); ++index) {
-////            size_t firstComponent(string::npos);
-////            for (size_t componentIndex = 0; componentIndex < vComponents.size(); ++componentIndex) {
-////                if (find(vComponents[componentIndex].begin(), vComponents[componentIndex].end(), P[index]) != vComponents[componentIndex].end()) {
-////                    if (firstComponent == string::npos) {
-////                        firstComponent = componentIndex;
-////                    } else if (firstComponent != componentIndex) {
-////                        printMessage = true;
-////                    }
-////                    strm << componentIndex << " ";
-////                }
-////            }
-////        }
-////////        if (printMessage) {
-////        if (true) {
-////            cout << strm.str();
-////            cout << endl;
-////            cerr << "# connected components       : " << vComponents.size() << endl << flush;
-////            cerr << "size of connected components : ";
-////            cout << "[ ";
-////            for (vector<int> const& vComponent : vComponents) {
-////                cout << vComponent.size() << "(mindegree=";
-////                size_t minDegree(string::npos);
-////                for (int const vertex : vComponent) {
-////                    if (isolates.Neighbors()[vertex].Size() < minDegree) {
-////                        minDegree = isolates.Neighbors()[vertex].Size();
-////                    }
-////                }
-////                cout << minDegree << ") ";
-////            }
-////            cout << "]" << endl << flush;
-////        }
-////        }
-////    }
-
-    vector<int> evaluateP;
-////    vector<int> evaluateColors;
-
     bool pivot(false);
 
-    if (false) { ////!P.empty() && depth <= 1) {
-        int const nextVertexToEvaluate(P.back());
-
-        size_t numLeft = P.size();
-        for (; numLeft > 0; --numLeft) {
-            if (R.size() + vColors[numLeft-1] + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize) { break; }
-        }
-
-        numLeft = P.size() - numLeft;
-        if (numLeft > isolates.Neighbors()[nextVertexToEvaluate].Size()) {
-            pivot = true;
-            vMarkedVertices[nextVertexToEvaluate] = true;
-            for (int const neighbor : isolates.Neighbors()[nextVertexToEvaluate]) {
-                vMarkedVertices[neighbor] = true;
-            }
-
-            for (size_t index = 0; index < P.size(); ++index) {
-                int const vertex(P[index]);
-                if (vMarkedVertices[vertex]) {
-                    evaluateP.push_back(vertex);
-////                    evaluateColors.push_back(vertex);
-                }
-            }
-
-            vMarkedVertices[nextVertexToEvaluate] = false;
-            for (int const neighbor : isolates.Neighbors()[nextVertexToEvaluate]) {
-                vMarkedVertices[neighbor] = false;
-            }
-        }
-    }
-
-    if (!evaluateP.empty()) {
-        if (!m_bQuiet) cout << depth << ": Switching to pivot mode." << endl;
-    }
-
-    while (!evaluateP.empty()) {
-        if (depth < 3) {
-            if (!m_bQuiet) {
-                cout << depth << ": Only " << evaluateP.size() << " more vertices to go! " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
-            }
-        }
-
-        int const nextVertex(evaluateP.back()); evaluateP.pop_back();
-
-////        // check if we should return to non-pivot version of the algorithm
-////        P.erase(find(P.begin(), P.end(), nextVertex));
-////        vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), nextVertex));
-        Color(vVertexOrder, P, vColors);
-////        cout << __LINE__ << ": Recoloring..." << endl;
-        size_t numLeft = P.size();
-        for (; numLeft > 0; --numLeft) {
-            if (R.size() + vColors[numLeft-1] + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize) { break; }
-        }
-        numLeft = P.size() - numLeft;
-////        if (numLeft < 3.0*evaluateP.size()/4.0) {
-////            if (!m_bQuiet) cout << depth << ": Switching out of pivot mode" << endl;
-////            pivot = false;
-////            break;
-////        }
-
-////        if (!isolates.GetInGraph().Contains(nextVertex)) { // was filtered by reducer...
-////            X.push_back(nextVertex);
-////            continue;
-////        }
-
-////        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
-////            vMarkedVertices[neighbor] = true;
-////        }
-////
-////        bool dominates(false);
-////        for (int const x : X) {
-////            dominates = true;
-////            for (int const neighborX : m_AdjacencyArray[x]) {
-////                if (isolates.GetInGraph().Contains(neighborX) && !vMarkedVertices[neighborX]) {
-////                    dominates = false;
-////                    break;
-////                }
-////            }
-////
-////            if (dominates) {
-////                break;
-////            }
-////        }
-////
-////        for (int const neighbor : isolates.Neighbors()[nextVertex]) {
-////            vMarkedVertices[neighbor] = false;
-////        }
-////
-////        if (dominates) {
-////////        cout << __LINE__ << endl;
-////////            if (!m_bQuiet)
-////////                cout << depth << ": domination check removed " << nextVertex << endl;
-////            isolates.RemoveVertex(nextVertex);
-////            vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
-////            vRemovedVerticesToReplace.push_back(nextVertex);
-////////        cout << __LINE__ << endl;
-////            continue;
-////        }
-
-////        int const largestColor(evaluateColors.back());
-////        if (R.size() + largestColor <= m_uMaximumCliqueSize) { //// && !selectMinNeighbors) {
-////            ForwardSearchStaticOrderMISS::ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
-////            P.clear();
-////            return;
-////        }
-
-////        evaluateColors.pop_back();
-
-        numLeft = evaluateP.size();
-        if (numLeft > 10 && !m_bQuiet) {
-            cout << "depth = " << depth << ", P.size = " << P.size() << ", P.left = " << numLeft << ", neighbors=" << isolates.Neighbors()[nextVertex].Size() << endl;
-        }
-
-        ////        cout << depth << ": Choosing next vertex: " << nextVertex << endl;
-
-        GetNewOrder(vNewVertexOrder, vVertexOrder, P, nextVertex);
-
-        if (!vNewVertexOrder.empty()) {
-            vNewP.resize(vNewVertexOrder.size());
-            vNewColors.resize(vNewVertexOrder.size());
-            Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
-////            bool const bSwitchToNoIsolatesAlgorithm((vNewColors.size() < 5) || (vNewColors[vNewColors.size()-5] + R.size() + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize));
-////            if (bSwitchToNoIsolatesAlgorithm) {
-////                depth++;
-////                RunRecursiveNoIsolates(vNewP, vNewVertexOrder, cliques, vNewColors);
-////                depth--;
-////            } else {
-#ifdef PREPRUNE
-                if (R.size() + vNewColors.back() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
-                    depth++;
-                    RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
-                    depth--;
-                }
-#else
-                depth++;
-                size_t const savedSize(isolates.GetInGraph().Size());
-                RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
-                if (savedSize != isolates.GetInGraph().Size()) {
-                    cout << "ERROR: Graph changed size!" << endl << flush;
-                }
-                depth--;
-#endif // PREPRUNE
-////            }
-        } else if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
-            cliques.back().clear();
-            cliques.back().insert(cliques.back().end(), R.begin(), R.end());
-            ExecuteCallBacks(cliques.back());
-            m_uMaximumCliqueSize = R.size() + isolates.GetFoldedVertexCount();
-            timeToLargestClique = clock() - startTime;
-        }
-
-////        X.push_back(nextVertex);
-
-        bool bPIsEmpty(evaluateP.empty());
-        ProcessOrderAfterRecursion(vVertexOrder, P, vColors, nextVertex);
-
-        ////        if (R.size() > m_uMaximumCliqueSize && bPIsEmpty && P.empty()) {
-        ////            cout << "ERROR!" << endl << flush;
-        ////        }
-
-        if (!bPIsEmpty && evaluateP.empty()) {
-            if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
-                cliques.back().clear();
-                cliques.back().insert(cliques.back().end(), R.begin(), R.end());
-                ExecuteCallBacks(cliques.back());
-                m_uMaximumCliqueSize = R.size() + isolates.GetFoldedVertexCount();
-            timeToLargestClique = clock() - startTime;
-            }
-        }
-    }
-////
     vector<pair<int,int>> vAddedEdgesUnused;
-#ifdef MIN_COMPONENT
-////    auto ChooseMinComponentVertex = [this, &vAddedEdgesUnused](IsolatesWithMatrix<ArraySet> &theIsolates, vector<int> const &activeSet)
-    auto ChooseMinComponentVertex = [this, &vAddedEdgesUnused](Isolates3<ArraySet> &theIsolates, vector<int> const &activeSet)
-    {
-////        cout << "Before choosing vertex: graph contains " << theIsolates.GetInGraph().Size() << " elements" << endl;
-        size_t bestComponentSize(0); ///string::npos);
-        int    bestVertex(-1);
-////        cout << __LINE__ << endl;
-        vector<int> vToConsider(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
-////        vector<int> vToConsider(activeSet);
-////        vector<int> vToConsider;
-////        if (activeSet.size() > 1000) {
-////            vToConsider.insert(vToConsider.end(), activeSet.end()-1000, activeSet.end());
-////        } else {
-////            vToConsider = activeSet;
-////        }
-            for (int const i : vToConsider) {
-                vector<int> v_iNeighbors;
-                theIsolates.RemoveVertexAndNeighbors(i, v_iNeighbors);
-////                theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, vAddedEdgesUnused, false);
 
-////                vector<vector<int>> vComponents;
-////                GraphTools::ComputeConnectedComponents(theIsolates, vComponents, m_AdjacencyArray.size());
-////                size_t uSizeOfLargestComponent(0);
-////                for (vector<int> const &vComponent : vComponents) {
-////                    uSizeOfLargestComponent = max(vComponent.size(), uSizeOfLargestComponent);
-////                }
-
-////                if (i == 58)
-////                    cout << "Can remove " << i << " for max component of size " << uSizeOfLargestComponent << endl;
-
-                size_t numRemovedFromActiveSet(0);
-                for (int const activeVertex : activeSet) {
-                    if (!theIsolates.GetInGraph().Contains(activeVertex)) {
-////                        removedFromActiveSet = true;
-////                        break;
-                        numRemovedFromActiveSet++;
-                    }
-                }
-
-////                if (uSizeOfLargestComponent < bestComponentSize) { //// && removedFromActiveSet) { // needs to decrease active set by at least one
-////                    bestComponentSize = uSizeOfLargestComponent;
-                if (numRemovedFromActiveSet > bestComponentSize) { //// && removedFromActiveSet) { // needs to decrease active set by at least one
-                    bestComponentSize = numRemovedFromActiveSet;
-////                    cout << "best so far: remove " << i << " for " << vComponents.size() << " components, with max component of size " << bestComponentSize << endl;
-                    bestVertex = i;
-                }
-
-                v_iNeighbors.push_back(i);
-                theIsolates.ReplaceAllRemoved(v_iNeighbors);
-            }
-////        cout << "After  choosing vertex: graph contains " << theIsolates.GetInGraph().Size() << " elements" << endl;
-////        cout << "best vertex: " << bestVertex  << " for max component of size " << bestComponentSize << endl;
-////        cout << __LINE__ << endl;
-        return bestVertex;
-////        return -1;
-    };
-#endif // MIN_COMPONENT
-
-#ifdef MIN_SUBPROBLEM
-////    auto ChooseMinSubproblemVertex = [this, &vAddedEdgesUnused](IsolatesWithMatrix<ArraySet> &theIsolates, vector<int> const &activeSet)
-////    auto ChooseMinSubproblemVertex = [this, &vAddedEdgesUnused](Isolates3<ArraySet> &theIsolates, vector<int> const &activeSet)
-    auto ChooseMinSubproblemVertex = [this, &vAddedEdgesUnused](Isolates4<ArraySet> &theIsolates, vector<int> const &activeSet)
-    {
-////        cout << " Choosing vertex... " << endl << flush;
-        size_t best(ULONG_MAX);
-        int bestVertex(-1);
-        int savedi(-1), savedj(-1), savedk(-1);
-////        vector<int> vVertices(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
-        vector<int> vVertices(activeSet);
-        vector<int> vNumEdgesInTwoNeighborhood(m_AdjacencyArray.size(), 0);
-        for (int const vertex : vVertices) {
-            for (int const neighbor : theIsolates.Neighbors()[vertex]) {
-                vNumEdgesInTwoNeighborhood[vertex] += theIsolates.Neighbors()[neighbor].Size();
-            }
-        }
-
-        int const size = vVertices.size();
-
-        ////    sort (vVertices.begin(), vVertices.end(), [this](int const left, int const right) { return m_AdjacencyArray[left].size() > m_AdjacencyArray[right].size(); });
-        sort (vVertices.begin(), vVertices.end(), [&vNumEdgesInTwoNeighborhood](int const left, int const right) { return vNumEdgesInTwoNeighborhood[left] > vNumEdgesInTwoNeighborhood[right]; });
-
-////        size_t const beforeSize(theIsolates.GetInGraph().Size());
-////        set<int> const beforeSet(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
-////        cout << "before : size=" << theIsolates.GetInGraph().Size() << endl << flush;
-
-        if (depth == 0) {
-        for (size_t i = 0; i < size*0.02; i++) {
-            int const firstVertex(vVertices[i]);
-            vector<int> v_iNeighbors;
-            vector<Reduction> viReductions;
-            theIsolates.RemoveVertexAndNeighbors(firstVertex, v_iNeighbors, viReductions);
-            theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, viReductions, false);
-
-            vector<int> vLeftOver1(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
-            vector<int> vTwoNeighborhood1(m_AdjacencyArray.size(), 0);
-            for (int const vertex : vLeftOver1) {
-                for (int const neighbor : theIsolates.Neighbors()[vertex]) {
-                    vTwoNeighborhood1[vertex] += theIsolates.Neighbors()[neighbor].Size();
-                }
-            }
-
-            sort (vLeftOver1.begin(), vLeftOver1.end(), [&vTwoNeighborhood1](int const left, int const right) { return vTwoNeighborhood1[left] > vTwoNeighborhood1[right]; });
-            ////        for (size_t j = i+1; j < i + size*0.01; j++) {
-            for (size_t j = 0; j < min(int(vLeftOver1.size()*0.01), 100); j++) {
-                vector<int> v_jNeighbors;
-                vector<Reduction> vjReductions;
-                int const secondVertex(vLeftOver1[j]);
-                if (theIsolates.GetInGraph().Contains(secondVertex)) {
-                    v_jNeighbors.push_back(secondVertex);
-                    theIsolates.RemoveVertexAndNeighbors(secondVertex, v_jNeighbors, vjReductions);
-                    theIsolates.RemoveAllIsolates(0, v_jNeighbors, v_jNeighbors, vjReductions, false);
-                }
-
-                vector<int> vLeftOver2(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
-                vector<int> vTwoNeighborhood2(m_AdjacencyArray.size(), 0);
-                for (int const vertex : vLeftOver2) {
-                    for (int const neighbor : theIsolates.Neighbors()[vertex]) {
-                        vTwoNeighborhood2[vertex] += theIsolates.Neighbors()[neighbor].Size();
-                    }
-                }
-
-                sort (vLeftOver2.begin(), vLeftOver2.end(), [&vTwoNeighborhood2](int const left, int const right) { return vTwoNeighborhood2[left] > vTwoNeighborhood2[right]; });
-                ////            for (size_t k = j+1; k < j+ size*0.05; k++) {
-                for (size_t k = 0; k < min(int(vLeftOver2.size()*0.01), 100); k++) {
-                    ////                if (loops %10 == 0) { break; }
-                    int const thirdVertex(vLeftOver2[k]);
-                    vector<int> v_kNeighbors;
-                    vector<Reduction> vkReductions;
-                    if (theIsolates.GetInGraph().Contains(thirdVertex)) {
-                        v_kNeighbors.push_back(thirdVertex);
-                        theIsolates.RemoveVertexAndNeighbors(thirdVertex, v_kNeighbors, vkReductions);
-                        theIsolates.RemoveAllIsolates(0, v_kNeighbors, v_kNeighbors, vkReductions, false);
-                    }
-
-                    vector<vector<int>> vComponents;
-                    GraphTools::ComputeConnectedComponents(theIsolates, vComponents, m_AdjacencyArray.size());
-                    size_t biggest(0);
-                    for (vector<int> const &vComponent : vComponents) {
-                        biggest = max(vComponent.size(), biggest);
-                    }
-
-
-                    if (biggest < best) {
-                        best = biggest;
-                        ////                    cout << "best so far: remove " << vVertices[i] << " " << vLeftOver1[j] << " " << vLeftOver2[k] << " for max component of size " << best << endl;
-////                        cout << "best so far: components=" << vComponents.size() << ", max-component-size=" << best << endl;
-                        savedi = firstVertex;
-                        savedj = secondVertex;
-                        savedk = thirdVertex;
-                    }
-                    theIsolates.ReplaceAllRemoved(vkReductions);
-                } // for k
-                theIsolates.ReplaceAllRemoved(vjReductions);
-                ////            if (loops % 100 == 0) break;
-            } // for j
-
-            v_iNeighbors.push_back(firstVertex);
-            theIsolates.ReplaceAllRemoved(viReductions);
-        } // for i
-
-////        cout << "best: max-component-size=" << best << endl;
-        if (savedj == -1  || savedi == -1 || savedk == -1) bestVertex = -1;
-        else if (vNumEdgesInTwoNeighborhood[savedi] >= vNumEdgesInTwoNeighborhood[savedj] && vNumEdgesInTwoNeighborhood[savedi] >= vNumEdgesInTwoNeighborhood[savedk]) {
-////        if (vNumEdgesInTwoNeighborhood[savedi] <= vNumEdgesInTwoNeighborhood[savedj] && vNumEdgesInTwoNeighborhood[savedi] <= vNumEdgesInTwoNeighborhood[savedk]) {
-            bestVertex = savedi;
-        } else if (vNumEdgesInTwoNeighborhood[savedj] >= vNumEdgesInTwoNeighborhood[savedi] && vNumEdgesInTwoNeighborhood[savedj] >= vNumEdgesInTwoNeighborhood[savedk]) {
-////        if (vNumEdgesInTwoNeighborhood[savedj] <= vNumEdgesInTwoNeighborhood[savedi] && vNumEdgesInTwoNeighborhood[savedj] <= vNumEdgesInTwoNeighborhood[savedk]) {
-            bestVertex = savedj;
-        } else {
-            bestVertex = savedk;
-        }
-        } else if (depth == 1) {
-            for (size_t i = 0; i < size*0.30; i++) {
-                vector<int> v_iNeighbors;
-                vector<Reduction> viReductions;
-                int const firstVertex(vVertices[i]);
-                theIsolates.RemoveVertexAndNeighbors(firstVertex, v_iNeighbors, viReductions);
-                theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, viReductions, false);
-
-                vector<int> vLeftOver1(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
-                vector<int> vTwoNeighborhood1(m_AdjacencyArray.size(), 0);
-                for (int const vertex : vLeftOver1) {
-                    for (int const neighbor : theIsolates.Neighbors()[vertex]) {
-                        vTwoNeighborhood1[vertex] += theIsolates.Neighbors()[neighbor].Size();
-                    }
-                }
-
-                sort (vLeftOver1.begin(), vLeftOver1.end(), [&vTwoNeighborhood1](int const left, int const right) { return vTwoNeighborhood1[left] > vTwoNeighborhood1[right]; });
-                ////        for (size_t j = i+1; j < i + size*0.01; j++) {
-                for (size_t j = 0; j < min(int(vLeftOver1.size()*0.01), 100); j++) {
-                    vector<int> v_jNeighbors;
-                    vector<Reduction> vjReductions;
-                    int const secondVertex(vLeftOver1[j]);
-                    if (theIsolates.GetInGraph().Contains(secondVertex)) {
-                        v_jNeighbors.push_back(secondVertex);
-                        theIsolates.RemoveVertexAndNeighbors(secondVertex, v_jNeighbors, vjReductions);
-                        theIsolates.RemoveAllIsolates(0, v_jNeighbors, v_jNeighbors, vjReductions, false);
-                    }
-
-                    vector<vector<int>> vComponents;
-                    GraphTools::ComputeConnectedComponents(theIsolates, vComponents, m_AdjacencyArray.size());
-                    size_t biggest(0);
-                    for (vector<int> const &vComponent : vComponents) {
-                        biggest = max(vComponent.size(), biggest);
-                    }
-
-
-                    if (biggest < best) {
-                        best = biggest;
-////                    cout << "best so far: remove " << vVertices[i] << " " << vLeftOver1[j] << " " << vLeftOver2[k] << " for max component of size " << best << endl;
-////                    cout << "best so far: components=" << vComponents.size() << ", max-component-size=" << best << endl;
-                        savedi = vVertices[i];
-                        savedj = vLeftOver1[j];
-                    }
-                    theIsolates.ReplaceAllRemoved(vjReductions);
-                    ////            if (loops % 100 == 0) break;
-                }
-                v_iNeighbors.push_back(vVertices[i]);
-                theIsolates.ReplaceAllRemoved(viReductions);
-
-                ////        int const percentage((int((i*size*0.15 + j*0.10 + k)*100.0/((size*0.01)*(size*0.05)*(size*0.10)))));
-                ////        if (percentage > lastPercentage + 1) {
-                ////            cout << "finished evaluating " << i << "/" << size*0.10 << " first vertices" << endl;
-                ////            lastPercentage = percentage;
-                ////        }
-                ////        if (loops % 5000 == 0) { break; }
-                ////            cout << "Removing " << savedi << " " << savedj << " " << savedk << endl;
-                ////            vector<int> vRemovedNeighbors;
-                ////            theIsolates.RemoveVertexAndNeighbors(savedi, vRemovedNeighbors);
-                ////            theIsolates.RemoveVertexAndNeighbors(savedj, vRemovedNeighbors);
-                ////            theIsolates.RemoveVertexAndNeighbors(savedk, vRemovedNeighbors);
-                ////        }
-            }
-////            cout << "best: max-component-size=" << best << endl;
-            if (savedj == -1  || savedi == -1) bestVertex = -1;
-            else if (vNumEdgesInTwoNeighborhood[savedi] >= vNumEdgesInTwoNeighborhood[savedj]) {
-////            if (vNumEdgesInTwoNeighborhood[savedi] <= vNumEdgesInTwoNeighborhood[savedj]) {
-                bestVertex = savedi;
-            } else {
-                bestVertex = savedj;
-            }
-            } else if (depth == 2) {
-            for (size_t i = 0; i < size*0.50; i++) {
-                vector<int> v_iNeighbors;
-                vector<Reduction> viReductions;
-                int const firstVertex(vVertices[i]);
-                theIsolates.RemoveVertexAndNeighbors(firstVertex, v_iNeighbors, viReductions);
-                theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, viReductions, false);
-
-                    vector<vector<int>> vComponents;
-                    GraphTools::ComputeConnectedComponents(theIsolates, vComponents, m_AdjacencyArray.size());
-                    size_t biggest(0);
-                    for (vector<int> const &vComponent : vComponents) {
-                        biggest = max(vComponent.size(), biggest);
-                    }
-
-
-                    if (biggest < best) {
-                        best = biggest;
-////                    cout << "best so far: remove " << vVertices[i] << " " << vLeftOver1[j] << " " << vLeftOver2[k] << " for max component of size " << best << endl;
-////                    cout << "best so far: components=" << vComponents.size() << ", max-component-size=" << best << endl;
-                        savedi = vVertices[i];
-                    }
-                v_iNeighbors.push_back(vVertices[i]);
-                theIsolates.ReplaceAllRemoved(viReductions);
-
-            }
-////            cout << "best: max-component-size=" << best << endl;
-            if (savedj == -1  || savedi == -1) bestVertex = -1;
-            else bestVertex = savedi;
-            }
-
-////            for (int const vertex : theIsolates.GetInGraph()) {
-////                if (beforeSet.find(vertex) == beforeSet.end()) {
-////                    cout << "ERROR!: vertex " << vertex << " was added to isolates..." << endl;
-////                }
-////            }
-////
-////            if (beforeSize != theIsolates.GetInGraph().Size()) {
-////                cout << "ERROR!: size changed in ChooseSubProblemVertex " << beforeSize << "!=" << theIsolates.GetInGraph().Size() << endl << flush;
-////            }
-
-////            cout << " Returning " << bestVertex << endl << flush;
-////            cout << "best: max-component-size=" << best << endl;
-            return bestVertex;
-////            cout << " Returning " << -1<< endl << flush;
-////            return -1;
-        };
-
-#endif // MIN_SUBPROBLEM
-
-////
-////    auto NewChooseNextVertex = [this, &vAddedEdgesUnused](
-////            Isolates3<ArraySet> &theIsolates,
-////            vector<int> &vAdjunctOrdering,
-////            size_t const uCurrentCliqueSize,
-////            size_t const uMaximumCliqueSize,
-////            vector<int> const &activeSet,
-////            int const nextVertex)
-////    {
-////
-////////        cout << "Test:    Max clique size=" << uMaximumCliqueSize << endl;
-////        int vertexToChoose(-1);
-////        size_t minNumLeft(string::npos);
-////        vector<int> vNewAdjunctOrdering;
-////        vector<int> vNewOrdering;
-////        vector<int> vNewColoring;
-////        vector<int> vToConsider(activeSet); ////theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
-////        for (int const vertex : vToConsider) {
-////            vector<int> vCliqueVertices;
-////            vector<int> vRemoved;
-////////            theIsolates.RemoveVertex(vertex);
-////            theIsolates.RemoveVertexAndNeighbors(vertex, vRemoved);
-////////            vRemoved.push_back(vertex);
-////            vCliqueVertices.push_back(vertex);
-////            theIsolates.RemoveAllIsolates(0, vCliqueVertices, vRemoved, vAddedEdgesUnused, false);
-////
-////            size_t uNewSize(0);
-////            vNewAdjunctOrdering.resize(vAdjunctOrdering.size());
-////            for (size_t index = 0; index < vAdjunctOrdering.size(); ++index) {
-////                int const vertexInOrder(vAdjunctOrdering[index]);
-////                if (theIsolates.GetInGraph().Contains(vertexInOrder)) {
-////                    vNewAdjunctOrdering[uNewSize++] = vertexInOrder;
-////                }
-////            }
-////
-////            vNewAdjunctOrdering.resize(uNewSize);
-////            vNewOrdering.resize(vNewAdjunctOrdering.size());
-////            vNewColoring.resize(vNewAdjunctOrdering.size());
-////
-////////            if (vertex == nextVertex) {
-////////                cout << "Test   Ordering: ";
-////////                for (int const vertexInOrder : vNewAdjunctOrdering) {
-////////                    cout << vertexInOrder << " ";
-////////                }
-////////                cout << endl;
-////////            }
-////
-////
-////////            GetNewOrder(vNewAdjunctOrdering, vAdjunctOrdering, vNewOrdering, vertex);
-////////            vNewOrdering.resize(vNewAdjunctOrdering.size());
-////////            vNewColoring.resize(vNewAdjunctOrdering.size());
-////
-////            coloringStrategy.Recolor(m_AdjacencyMatrix, vNewAdjunctOrdering, vNewOrdering, vNewColoring, uMaximumCliqueSize, uCurrentCliqueSize + vCliqueVertices.size());
-////
-////            if (vertex == nextVertex) { ////5 || vertex == 802 || vertex == 45 || vertex == 33) {
-////////                cout << "Test:    Vertex " << vertex << " has " << uCurrentCliqueSize << " + " <<  vCliqueVertices.size() << " clique vertices " << endl;
-////                cout << "Test   : current clique size is: " << uCurrentCliqueSize << " + " <<  vCliqueVertices.size() << endl;
-////                cout << "Test   : max     clique size is: " << uMaximumCliqueSize << endl;
-////                cout << "Test   : New P is: ";
-////                for (int const pVertex : vNewOrdering) {
-////                    cout << pVertex << " ";
-////                }
-////                cout << endl;
-////                cout << "Test   : New Adjunct is: ";
-////                for (int const aVertex : vNewAdjunctOrdering) {
-////                    cout << aVertex << " ";
-////                }
-////                cout << endl;
-////            }
-////
-////            size_t numLeft = vNewColoring.size();
-////            for (; numLeft > 0; --numLeft) {
-////                if (uCurrentCliqueSize + vCliqueVertices.size() + vNewColoring[numLeft-1] <= uMaximumCliqueSize) { break; }
-////            }
-////            numLeft = vNewColoring.size() - numLeft;
-////            if (vertex == nextVertex) {
-////                cout << "vertex " << vertex << ": P.left = " << numLeft << endl;
-////            }
-////            if (numLeft < minNumLeft) {
-////                vertexToChoose = vertex;
-////                minNumLeft = numLeft;
-////////                cout << ", P.left = " << numLeft << endl;
-////////                cout << "vertex " << vertex << ": P.left = " << numLeft << endl;
-////            }
-////
-////            theIsolates.ReplaceAllRemoved(vCliqueVertices);
-////            theIsolates.ReplaceAllRemoved(vRemoved);
-////        }
-////
-////////        cout << "Choosing next vertex " << vertexToChoose << " will minimize the number of vertices for consideration to " << minNumLeft << endl;
-////
-////        return vertexToChoose;
-////    };
-////
-////    bool const selectMinNeighbors(false); ////depth <= 1);
     bool firstIteration(true);
     clock_t start(clock());
 
-#if (defined(MIN_COMPONENT) || defined(MAX_TWO_NEIGHBORHOOD))
-////    bool selectMinComponent(isolates.GetInGraph().Size() > 750); ////depth <= 3 && isolates.GetInGraph().Size() > 950 || firstIteration);
-    bool selectMinComponent(depth <= 3);
-////    bool const wasLarge(isolates.GetInGraph().Size() > 750); ////depth <= 3 && isolates.GetInGraph().Size() > 950 || firstIteration);
-    bool const wasLarge(depth <= 3);
-    size_t const originalSize(isolates.GetInGraph().Size());
-    bool checkTime(isolates.GetInGraph().Size() > 700);
-    int numEvaluated(0);
-#else
     bool selectMinComponent(false);
     bool checkTime(false); ////isolates.GetInGraph().Size() > 700);
-#endif // MIN_COMPONENT
 
 
     while (!P.empty() && !pivot && !m_bTimedOut) {
-        // if one criteria is slow, use the other one.
-
-#if defined(MIN_SUBPROBLEM)
-    bool selectMinSubproblem(depth < 3);//// && P.size() > 1000);
-#endif
-
-#if (defined(MIN_COMPONENT) || defined(MAX_TWO_NEIGHBORHOOD))
-        if (isolates.GetInGraph().Size()<=700) {
-            selectMinComponent = false;
-            checkTime = false;
-        }
-        if (wasLarge && isolates.GetInGraph().Size()<=(0.95*originalSize)) {////850) {
-            selectMinComponent = false;
-            checkTime = false;
-        }
-        if (selectMinComponent) {
-            numEvaluated++;
-        }
-////        if (checkTime) {
-////            if ((clock() - start)/CLOCKS_PER_SEC > 10 || firstIteration) {
-////            ////            selectMinComponent = !selectMinComponent;
-////                selectMinComponent = (isolates.GetInGraph().Size() > 750);
-////                selectMinComponent = true;
-////            } else {
-////                selectMinComponent = false;
-////            }
-////        }
-#else
-#endif // 0
-
-////        if (numEvaluated > numLeft) {
-////            selectMinComponent = false;
-////            checkTime = false;
-////        }
-
-////        start = clock();
-
         firstIteration = false;
         if (depth < 3) {
             if (!m_bQuiet) {
@@ -869,63 +197,6 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 ////            }
 ////        } else
 
-#if (defined(MIN_COMPONENT) || defined(MIN_SUBPROBLEM))
-        size_t numLeft = P.size();
-        for (; numLeft > 0; --numLeft) {
-            if (R.size() + vColors[numLeft-1] <= m_uMaximumCliqueSize) { break; }
-        }
-
-        numLeft = P.size() - numLeft;
-#endif
-
-#ifdef MIN_SUBPROBLEM
-        if (selectMinSubproblem) {
-            size_t const realNumLeft = P.size() - numLeft;
-            vector<int> const activeSet(P.begin() + realNumLeft, P.end());
-            int const proposedVertexToChoose = ChooseMinSubproblemVertex(isolates, activeSet);
-            if (proposedVertexToChoose != -1) {
-                vertexToChoose = proposedVertexToChoose;
-            }
-        }
-#endif // MIN_SUBPROBLEM
-
-#ifdef MIN_COMPONENT
-#ifdef MIN_SUBPROBLEM
-        else if (selectMinComponent) {
-#else
-        if (selectMinComponent) {
-#endif //MIN_SUBPROBLEM
-////            cout << __LINE__ << endl;
-////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
-////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-            size_t const realNumLeft = P.size() - numLeft;
-            vector<int> const activeSet(P.begin() + numLeft, P.end());
-            int const proposedVertexToChoose = ChooseMinComponentVertex(isolates, activeSet);
-////            int proposedVertexToChoose(-1);
-////            if (firstIteration) {
-////                firstIteration = false;
-////                proposedVertexToChoose = ChooseNextVertex(isolates, activeSet);
-////            } else {
-////                evenIteration = !evenIteration;
-////                if (evenIteration)
-////                    proposedVertexToChoose = NewChooseNextVertex(isolates, vVertexOrder, R.size(), m_uMaximumCliqueSize, activeSet, -1);
-////            }
-
-            if (proposedVertexToChoose != -1) {
-                vertexToChoose = proposedVertexToChoose;
-            }
-////            cout << __LINE__ << endl;
-////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
-////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-        }
-#endif // MIN_COMPONENT
-
-////        cout << "Before subtraction numleft=" << numLeft << endl;
-////        numLeft = P.size() - numLeft;
-////        if (depth <= 1)
-////            cout << depth << ": loop numleft=" << numLeft << endl;
-
-////        cout << __LINE__ << endl;
         if (m_iOnlyVertex != -1 && depth == 0) {
             if (isolates.GetInGraph().Contains(m_iOnlyVertex)) {
                 vertexToChoose = m_iOnlyVertex;
@@ -935,7 +206,6 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
         }
 
         int const nextVertex(vertexToChoose); 
-////        int const nextVertex(P.back()); 
 ////        cout << "Removing vertex: " << nextVertex << endl;
         bool const vertexAtEnd(nextVertex == P.back());
 ////        cout << __LINE__ << endl;
@@ -947,21 +217,9 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 ////        cout << depth << ": Isolates " << (isolates.GetInGraph().Contains(nextVertex) ? "contains " : "does not contain ") << nextVertex << endl;
         if (!vertexAtEnd) {
             vVertexOrder.erase(find(vVertexOrder.begin(), vVertexOrder.end(), nextVertex));
-#if 0 ////def COMPRESS_COLORS
-            size_t uNewSize(0);
-            for (size_t index = 0; index < P.size(); ++index) {
-                if (P[index] == nextVertex) continue;
-                P[uNewSize] = P[index];
-                vColors[uNewSize++] = vColors[index];
-
-            }
-            P.resize(uNewSize);
-            vColors.resize(uNewSize);
-#else
             P.resize(vVertexOrder.size());
             vColors.resize(vVertexOrder.size());
             Color(vVertexOrder, P, vColors);
-#endif // COMPRESS_COLORS
 ////        cout << __LINE__ << endl;
 ////        cout << depth << ": P        " << ((find(P.begin(), P.end(), 39) != P.end()) ? "contains " : "does not contain ") << 39 << endl;
 ////        cout << depth << ": VO       " << ((find(vVertexOrder.begin(), vVertexOrder.end(), 39) != vVertexOrder.end()) ? "contains " : "does not contain ") << 39 << endl;
@@ -1171,7 +429,7 @@ void ForwardSearchStaticOrderMISS::ProcessOrderAfterRecursion(std::vector<int> &
         std::vector<int> &vCliqueVertices(stackClique[depth+1]);
         std::vector<int> &vRemoved(stackOther[depth+1]);
         std::vector<Reduction> &vReductions(stackReductions[depth+1]);
-        std::vector<Reduction> &vPersistentReductions(stackPersistentReductions[depth+1]);
+////        std::vector<Reduction> &vPersistentReductions(stackPersistentReductions[depth+1]);
         // return R back to the state it was at the beginning of the loop.
         // remove reduction clique vertices from R
         for (int const vertex : vCliqueVertices)
@@ -1198,151 +456,34 @@ void ForwardSearchStaticOrderMISS::ProcessOrderAfterRecursion(std::vector<int> &
         vRemoved.clear();
         vReductions.clear();
 
-        if (chosenVertex != -1) isolates.RemoveVertex(chosenVertex, vPersistentReductions);
+////        if (chosenVertex != -1) isolates.RemoveVertex(chosenVertex, vPersistentReductions);
 
         // remove vertices
-        vector<int> vTempCliqueVertices;
-        vector<int> vTempRemovedVertices;
+////        vector<int> vTempCliqueVertices;
+////        vector<int> vTempRemovedVertices;
 ////        vector<pair<int,int>> vAddedEdgesUnused;
 
 ////        double const density(isolates.GetDensity());
 ////        size_t const maxDegree(isolates.GetMaxDegree());
-#ifndef REMOVE_ISOLATES_BEFORE_ONLY
-#ifdef ALWAYS_REMOVE_ISOLATES_AFTER
-        bool const bRemoveIsolates(true);
-#else
-        bool const bRemoveIsolates(depth <= 2); ////stackEvaluatedHalfVertices[depth+1]);
-#endif //ALWAYS_REMOVE_ISOLATES_AFTER
-////////        cout << "Size of clique before reduction: " << R.size() << endl;
-        if (bRemoveIsolates)
-            isolates.RemoveAllIsolates(0 /*unused*/,vTempCliqueVertices, vTempRemovedVertices, vPersistentReductions, chosenVertex == -1 /* either consider all (true) or consider only changed vertices (false) */);
-#endif //REMOVE_ISOLATES_BEFORE_ONLY
-////        cout << __LINE__ << ": Removed " << vTempCliqueVertices.size() + vTempRemovedVertices.size() << " vertices " << endl;
-////        cout << __LINE__ << ": density=" << density << ", max-degree=" << maxDegree << ", clique-vertices=" << vCliqueVertices.size() << ", other-removed=" << vRemoved.size()  << ", percent-total-removed=" << (vCliqueVertices.size() + vRemoved.size())/static_cast<double>(P.size())*100 << "%" << endl;
-////
-        R.insert(R.end(), vTempCliqueVertices.begin(), vTempCliqueVertices.end());
-
-////        Contains(vTempCliqueVertices, 5975, __LINE__);
-////        Contains(vTempCliqueVertices, 4202, __LINE__);
-
-////        // update folded vertex count
-////        vFoldedVertexCount[depth+1] = vFoldedVertexCount[depth];
-////        for (Reduction const &reduction : vPersistentReductions) {
-////            if (reduction.GetType() == FOLDED_VERTEX) {
-////                vFoldedVertexCount[depth+1]++;
-////        }
-
-        vector<int> &vCliqueVerticesToReplace(stackPersistentClique[depth+1]);
-        vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
-
-        vCliqueVerticesToReplace.insert(vCliqueVerticesToReplace.end(), vTempCliqueVertices.begin(), vTempCliqueVertices.end());
-        if (chosenVertex != -1) vRemovedVerticesToReplace.push_back(chosenVertex);
-        vRemovedVerticesToReplace.insert(vRemovedVerticesToReplace.end(), vTempRemovedVertices.begin(), vTempRemovedVertices.end());
-
-////        if (P.size() != isolates.GetInGraph().Size()) {
-////            cout << "Node " << recursionNode << ": Consistancy Error" << endl;
-////            cout << "P: " << endl;
-////            for (int const vertexInP : P) {
-////                cout << vertexInP << "(" << isolates.GetInGraph().Contains(vertexInP) << ") ";
-////            }
-////            cout << endl;
-////        }
-
-        if (true) { //P.size() != isolates.GetInGraph().Size()) { // if false?
-////            cout << __LINE__ << ": This should not be triggered!" << endl;
-            size_t uNewIndex(0);
-            // pull vertices out of P and vColors
-            for (size_t index = 0; index < P.size(); ++index) {
-                if (isolates.GetInGraph().Contains(P[index])) {
-                    P[uNewIndex] = P[index];
-                    vColors[uNewIndex] = vColors[index];
-                    uNewIndex++;
-                }
-            }
-            P.resize(uNewIndex);
-            vColors.resize(uNewIndex);
-
-            // pull vertices out of vVertexOrder
-            uNewIndex = 0;
-            for (size_t index = 0; index < vVertexOrder.size(); ++index) {
-                if (isolates.GetInGraph().Contains(vVertexOrder[index])) {
-                    vVertexOrder[uNewIndex++] = vVertexOrder[index];
-                }
-            }
-            vVertexOrder.resize(uNewIndex);
-////            P.resize(uNewIndex);
-////            vColors.resize(uNewIndex);
-////            Color(vVertexOrder/* evaluation order */, P /* color order */, vColors);
-
-            // TODO/DS verify that we don't need to recolor,
-            // removing unneeded colors should suffice
-#ifndef REMOVE_ISOLATES_BEFORE_ONLY
-#if 1 ////def COLOR
-            if (bRemoveIsolates) {
-#ifdef RECOLOR
-////                cout << __LINE__ << ": Recoloring..." << endl;
-                vector<int> proposedP(vVertexOrder.size());
-                vector<int> proposedColors(vVertexOrder.size());
-                ////            cout << __LINE__ << ": Recoloring..." << endl;
-                Color(vVertexOrder, proposedP, proposedColors);
-
-                size_t currentNumLeft = P.size();
-                for (; currentNumLeft > 0; --currentNumLeft) {
-                    if (R.size() + vColors[currentNumLeft-1] <= m_uMaximumCliqueSize) { break; }
-                }
-
-                currentNumLeft = P.size() - currentNumLeft;
-
-                size_t proposedNumLeft = proposedP.size();
-                for (; proposedNumLeft > 0; --proposedNumLeft) {
-                    if (R.size() + proposedColors[proposedNumLeft-1] <= m_uMaximumCliqueSize) { break; }
-                }
-
-                proposedNumLeft = P.size() - proposedNumLeft;
-
-                if (proposedNumLeft < currentNumLeft) {
-////                    cout << __LINE__ << ": Recoloring..." << endl;
-                    P = proposedP;
-                    vColors = proposedColors;
-                }
-#else
-////                if (depth != 0)
-////                    Color(vVertexOrder, P, vColors);
-////                    InitializeOrder(P, vVertexOrder, vColors);
-
-////                if (!vTempCliqueVertices.empty()) {
-////                if (depth == 0) {
-////                    size_t unused(0);
-////                    OrderingTools::InitialOrderingMISR(m_AdjacencyArray, isolates, P, vColors, unused);
-////                    P = vVertexOrder;
-////                } else {
-                    Color(vVertexOrder, P, vColors);
-////                }
-////                }
-#endif //RECOLOR
-            }
-#endif //COLOR
-#endif //REMOVE_ISOLATES_BEFORE_ONLY
-        }
 
 }
 
 void ForwardSearchStaticOrderMISS::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::vector<int> &P, std::vector<int> &vColors)
 {
-    vector<int> &vCliqueVerticesToReplace(stackPersistentClique[depth+1]);
-    vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
-    std::vector<Reduction> &vPersistentReductions(stackPersistentReductions[depth+1]);
-
-////    isolates.ReplaceAllRemoved(vCliqueVerticesToReplace);
-////    isolates.ReplaceAllRemoved(vRemovedVerticesToReplace);
-    isolates.ReplaceAllRemoved(vPersistentReductions);
-
-    for (int const cliqueVertex : vCliqueVerticesToReplace) {
-        R.pop_back();
-    }
-
-    vCliqueVerticesToReplace.clear();
-    vRemovedVerticesToReplace.clear();
-    vPersistentReductions.clear();
+////    vector<int> &vCliqueVerticesToReplace(stackPersistentClique[depth+1]);
+////    vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
+////    std::vector<Reduction> &vPersistentReductions(stackPersistentReductions[depth+1]);
+////
+////////    isolates.ReplaceAllRemoved(vCliqueVerticesToReplace);
+////////    isolates.ReplaceAllRemoved(vRemovedVerticesToReplace);
+////    isolates.ReplaceAllRemoved(vPersistentReductions);
+////
+////    for (int const cliqueVertex : vCliqueVerticesToReplace) {
+////        R.pop_back();
+////    }
+////
+////    vCliqueVerticesToReplace.clear();
+////    vRemovedVerticesToReplace.clear();
+////    vPersistentReductions.clear();
 ////    vFoldedVertexCounts[depth+1] = 0;
 }

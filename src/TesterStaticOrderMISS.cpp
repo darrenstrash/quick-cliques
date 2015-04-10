@@ -194,8 +194,8 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 
     size_t const uOriginalPSize(P.size());
 
-////    if (nodeCount%10000 == 0) {
-    if (nodeCount%100 == 0) {
+    if (nodeCount%10000 == 0) {
+////    if (nodeCount%100 == 0) {
         if (!m_bQuiet) {
             cout << "Evaluated " << nodeCount << " nodes. " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
             PrintState();
