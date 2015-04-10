@@ -13,7 +13,7 @@ ForwardSearchMISS::ForwardSearchMISS(vector<vector<char>> const &vAdjacencyMatri
 ////, sparseColoringStrategy(vAdjacencyArray)
 , isolatesColoringStrategy(isolates, vAdjacencyArray.size())
 {
-    SetName("tester-miss");
+    SetName("forward-search-miss");
 }
 
 void ForwardSearchMISS::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)
