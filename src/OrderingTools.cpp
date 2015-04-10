@@ -406,6 +406,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 #else
 void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArray, vector<int> &vOrderedVertices, vector<int> &vColoring, size_t &cliqueSize)
 {
+    clock_t const startTime(clock());
     vOrderedVertices.resize(adjacencyArray.size(), -1);
     vColoring.resize(adjacencyArray.size(), -1);
 
@@ -425,6 +426,8 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
     // then use that degree to populate the 
     // lists of vertices indexed by degree
 
+    size_t uSumOfCoDegrees(0);
+
     size_t maxDegree(0);
     size_t maxCoDegree(0);
     for(size_t i = 0; i < size; i++) {
@@ -435,6 +438,8 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 
         maxDegree = max(maxDegree, adjacencyArray[i].size());
         maxCoDegree = max(maxCoDegree, static_cast<size_t>(coDegree[i]));
+
+        uSumOfCoDegrees += coDegree[i];
     }
 
     // perform degeneracy ordering in complement graph.
@@ -513,7 +518,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
                         index++;
                     }
 #endif //0
-
+                    cout << "Time to perform ordering: " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
                     return;
                 } else {
                     // break ties by neighborhood-degree
@@ -522,6 +527,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
                     int    chosenVertex=verticesByDegree[currentDegree].front();
                     for (int const candidate : verticesByDegree[currentDegree]) {
                         size_t coNeighborhoodDegree(0);
+#if 0
                         for (int const neighbor : adjacencyArray[candidate]) {
                             vMarkedVertices[neighbor] = true;
                         }
@@ -536,7 +542,18 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
                         for (int const neighbor : adjacencyArray[candidate]) {
                             vMarkedVertices[neighbor] = false;
                         }
+#else
+                        size_t uSizeNeighborhoodCoDegrees(0);
+                        for (int const neighbor : adjacencyArray[candidate]) {
+                            if (coDegree[neighbor] != -1)
+                                uSizeNeighborhoodCoDegrees += coDegree[neighbor];
+                        }
 
+                        coNeighborhoodDegree = (uSumOfCoDegrees - uSizeNeighborhoodCoDegrees);
+////                        if (uVerify2CoNeighborhood != coNeighborhoodDegree) {
+////                            cout << "DEBUG: incremental 2-coNeighborhood " << uVerify2CoNeighborhood << " is not equal to the real value: " << coNeighborhoodDegree << endl << flush;
+////                        }
+#endif // 0
                         if (coNeighborhoodDegree < minNeighborhoodDegree || (coNeighborhoodDegree == minNeighborhoodDegree && candidate > chosenVertex)) {
                             minNeighborhoodDegree = coNeighborhoodDegree;
                             chosenVertex = candidate;
@@ -554,6 +571,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 
             vOrderedVertices[vOrderedVertices.size() - numVerticesRemoved - 1] = vertex;
 
+            uSumOfCoDegrees -= 2*coDegree[vertex];
             coDegree[vertex] = -1;
 
 #if 0
@@ -594,6 +612,19 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
        } else {
             currentDegree++;
         }
+// verify new sum: TODO/DS: remove for production...
+#if 0 
+            size_t verifySum(0);
+            for (int const value : coDegree) {
+                if (value != -1) {
+                    verifySum+=value;
+                }
+            }
+
+            if (uSumOfCoDegrees != verifySum) {
+                cout << "DEBUG: incremental sum " << uSumOfCoDegrees << " does not match real sum " << verifySum << endl << flush;
+            }
+#endif // 0
     }
 }
 #endif //0
@@ -622,6 +653,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 
     size_t maxDegree(0);
     size_t maxCoDegree(0);
+    size_t uSumOfCoDegrees(0);
     for(int const i : isolates.GetInGraph()) {
         coDegree[i] = size - isolates.Neighbors()[i].Size() - 1;
 ////        vertexLocator[i] = verticesByDegree[coDegree[i]].insert(verticesByDegree[coDegree[i]].end(), i);
@@ -630,6 +662,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 
         maxDegree = max(maxDegree, isolates.Neighbors()[i].Size());
         maxCoDegree = max(maxCoDegree, static_cast<size_t>(coDegree[i]));
+        uSumOfCoDegrees += coDegree[i];
     }
 
     // perform degeneracy ordering in complement graph.
@@ -742,6 +775,17 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
                                 coNeighborhoodDegree += (coDegree[nonNeighbor]);
                             }
                         }
+                        // verify coDegree by difference, TODO/DS: Remove for production
+#if 1
+                        size_t uSizeNeighborhoodCoDegrees(0);
+                        for (int const neighbor : isolates.Neighbors()[candidate]) {
+                            uSizeNeighborhoodCoDegrees += coDegree[neighbor];
+                        }
+                        size_t uVerify2CoNeighborhood(uSumOfCoDegrees - uSizeNeighborhoodCoDegrees);
+                        if (uVerify2CoNeighborhood != coNeighborhoodDegree) {
+                            cout << "DEBUG: incremental 2-coNeighborhood " << uVerify2CoNeighborhood << " is not equal to the real value: " << coNeighborhoodDegree << endl << flush;
+                        }
+#endif // 0
 
                         for (int const neighbor : isolates.Neighbors()[candidate]) {
                             vMarkedVertices[neighbor] = false;
@@ -764,6 +808,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 
             vOrderedVertices[vOrderedVertices.size() - numVerticesRemoved - 1] = vertex;
 
+            uSumOfCoDegrees -= 2*coDegree[vertex];
             coDegree[vertex] = -1;
 
 #if 0
@@ -804,6 +849,18 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
        } else {
             currentDegree++;
         }
+#if 1
+            size_t verifySum(0);
+            for (int const value : coDegree) {
+                if (value != -1) {
+                    verifySum+=value;
+                }
+            }
+
+            if (uSumOfCoDegrees != verifySum) {
+                cout << "DEBUG: incremental sum " << uSumOfCoDegrees << " does not match real sum " << verifySum << endl << flush;
+            }
+#endif // 0
     }
 }
 
