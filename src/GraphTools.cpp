@@ -15,7 +15,7 @@
 
 using namespace std;
 
-void GraphTools::ComputeInducedSubgraph(vector<vector<int>> &graph, set<int> const &vertices, vector<vector<int>> &subgraph, map<int,int> &remapping)
+void GraphTools::ComputeInducedSubgraph(vector<vector<int>> const &graph, set<int> const &vertices, vector<vector<int>> &subgraph, map<int,int> &remapping)
 {
     subgraph.clear();
     remapping.clear();
@@ -57,6 +57,50 @@ void GraphTools::ComputeInducedSubgraph(vector<vector<int>> &graph, set<int> con
 ////        cout << endl;
     }
 }
+
+template <typename IsolatesType>
+void GraphTools::ComputeInducedSubgraphIsolates(IsolatesType const &isolates, set<int> const &vertices, vector<vector<int>> &subgraph, map<int,int> &remapping)
+{
+    subgraph.clear();
+    remapping.clear();
+
+////    cout << "Forming induced subgraph on " << vertices.size() << " vertices." << endl;
+
+    map<int,int> forwardMapping;
+
+    int vertexIndex(0);
+    auto mappedVertex = [&vertexIndex, &remapping, &forwardMapping](int const vertex)
+    {
+        if (forwardMapping.find(vertex) == forwardMapping.end()) {
+            forwardMapping[vertex] = vertexIndex;
+            remapping[vertexIndex] = vertex;
+            vertexIndex++;
+        }
+        return forwardMapping[vertex];
+    };
+
+    for (int const vertex : vertices) {
+        mappedVertex(vertex);
+    }
+
+    subgraph.resize(vertices.size());
+
+    for (int const vertex : isolates.GetInGraph()) {
+        if (vertices.find(vertex) == vertices.end()) continue;
+
+        int const newVertex = mappedVertex(vertex);
+////        cout << newVertex << " : ";
+        for (int const neighbor : isolates.Neighbors()[vertex]) {
+            if (vertices.find(neighbor) == vertices.end()) continue;
+            int const newNeighbor = mappedVertex(neighbor);
+            subgraph[newVertex].push_back(newNeighbor);
+////            subgraph[newNeighbor].push_back(newVertex);
+////            cout << newNeighbor << " ";
+        }
+////        cout << endl;
+    }
+}
+
 
 vector<int> GraphTools::OrderVerticesByDegree(vector<vector<int>> const &adjacencyList, bool const ascending)
 {
@@ -487,14 +531,19 @@ void GraphTools::PrintGraphInEdgesFormat(vector<vector<int>> const &adjacencyArr
 }
 
 template
+void GraphTools::ComputeInducedSubgraphIsolates<Isolates4<SparseArraySet>>(Isolates4<SparseArraySet> const &isolates, set<int> const &vertices, vector<vector<int>> &subgraph, map<int,int> &remapping);
+
+template
 void GraphTools::ComputeConnectedComponents<Isolates2<ArraySet>>(Isolates2<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
 
 template
 void GraphTools::ComputeConnectedComponents<Isolates3<ArraySet>>(Isolates3<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
 
 template
-void GraphTools::ComputeConnectedComponents<IsolatesWithMatrix<ArraySet>>(IsolatesWithMatrix<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
+void GraphTools::ComputeConnectedComponents<Isolates4<SparseArraySet>>(Isolates4<SparseArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
+template
+void GraphTools::ComputeConnectedComponents<Isolates4<ArraySet>>(Isolates4<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
 
 template
-void GraphTools::ComputeConnectedComponents<Isolates4<SparseArraySet>>(Isolates4<SparseArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
+void GraphTools::ComputeConnectedComponents<IsolatesWithMatrix<ArraySet>>(IsolatesWithMatrix<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
 

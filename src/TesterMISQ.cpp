@@ -18,18 +18,24 @@ TesterMISQ::TesterMISQ(vector<vector<char>> const &vAdjacencyMatrix, vector<vect
 ////, stackColors(vAdjacencyMatrix.size())
 ////, stackOrder(vAdjacencyMatrix.size())
 ////, stackX(vAdjacencyMatrix.size() + 1)
-, stackClique(vAdjacencyMatrix.size() + 1)
-, stackOther(vAdjacencyMatrix.size() + 1)
-, stackPersistentClique(vAdjacencyMatrix.size() + 1)
-, stackPersistentOther(vAdjacencyMatrix.size() + 1)
+, stackClique(vAdjacencyArray.size() + 1)
+, stackOther(vAdjacencyArray.size() + 1)
+, stackReductions(vAdjacencyArray.size() + 1)
+, stackPersistentClique(vAdjacencyArray.size() + 1)
+, stackPersistentOther(vAdjacencyArray.size() + 1)
+, stackPersistentReductions(vAdjacencyArray.size() + 1)
 ////, nodeCount(0)
 ////, depth(-1)
-, isolates(vAdjacencyMatrix, vAdjacencyArray)
+, isolates(vAdjacencyArray)
+////, isolates(vAdjacencyMatrix, vAdjacencyArray)
 ////, startTime(clock())
 ////, m_bInvert(0)
+////, vFoldedVertexCount(vAdjacencyMatrix.size() + 1)
 {
     SetName("reduction-misq");
     stackEvaluatedHalfVertices.resize(vAdjacencyArray.size(), false);
+    isolates.SetAllowVertexFolds(false);
+////    vFoldedVertexCount[0] = 0;
 }
 
 ////void TesterMISQ::SetInvert(bool const invert)
@@ -116,7 +122,8 @@ void TesterMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexO
 {
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
-    vector<pair<int,int>> vAddedEdgesUnused;
+////    vector<pair<int,int>> vAddedEdgesUnused;
+    vector<Reduction> vReductions(stackReductions[depth+1]);
 
 ////    vector<int> const &vColors(stackColors[depth]);
 ////
@@ -128,7 +135,7 @@ void TesterMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexO
 ////    }
 
 ////    bool const &bRemoveIsolates(stackEvaluatedHalfVertices[depth+1]);
-    isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
+    isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved, vReductions);
 ////    cout << "Size of clique before reduction: " << R.size() << endl;
 
 ////    double const density(isolates.GetDensity());
@@ -136,7 +143,8 @@ void TesterMISQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVertexO
 
 ////    if (bRemoveIsolates)
 ////        isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */, onlyConsider);
-        isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+////        isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+        isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vReductions /* unused */, false /* only consider updated vertices */);
 
 ////    cout << __LINE__ << ": density=" << density << ", max-degree=" << maxDegree << ", clique-vertices=" << vCliqueVertices.size() << ", other-removed=" << vRemoved.size()  << ", percent-total-removed=" << (vCliqueVertices.size() + vRemoved.size())/static_cast<double>(P.size())*100 << "%" << endl;
 
@@ -167,6 +175,8 @@ void TesterMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std:
 ////        stackX[depth+1].push_back(chosenVertex);
         std::vector<int> &vCliqueVertices(stackClique[depth+1]);
         std::vector<int> &vRemoved(stackOther[depth+1]);
+        std::vector<Reduction> &vReductions(stackReductions[depth+1]);
+        std::vector<Reduction> &vPersistentReductions(stackPersistentReductions[depth+1]);
         // return R back to the state it was at the beginning of the loop.
         // remove reduction clique vertices from R
         for (int const vertex : vCliqueVertices)
@@ -185,18 +195,20 @@ void TesterMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std:
 ////            cout << otherVertex << " ";
 ////        }
 ////        cout << endl;
-        isolates.ReplaceAllRemoved(vCliqueVertices);
-        isolates.ReplaceAllRemoved(vRemoved);
+////        isolates.ReplaceAllRemoved(vCliqueVertices);
+////        isolates.ReplaceAllRemoved(vRemoved);
+        isolates.ReplaceAllRemoved(vReductions);
 
         vCliqueVertices.clear();
         vRemoved.clear();
+        vReductions.clear();
 
-        if (chosenVertex != -1) isolates.RemoveVertex(chosenVertex);
+        if (chosenVertex != -1) isolates.RemoveVertex(chosenVertex, vPersistentReductions);
 
         // remove vertices
         vector<int> vTempCliqueVertices;
         vector<int> vTempRemovedVertices;
-        vector<pair<int,int>> vAddedEdgesUnused;
+////        vector<pair<int,int>> vAddedEdgesUnused;
 
 ////        double const density(isolates.GetDensity());
 ////        size_t const maxDegree(isolates.GetMaxDegree());
@@ -208,7 +220,7 @@ void TesterMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std:
 #endif //ALWAYS_REMOVE_ISOLATES_AFTER
 ////////        cout << "Size of clique before reduction: " << R.size() << endl;
         if (bRemoveIsolates)
-            isolates.RemoveAllIsolates(0 /*unused*/,vTempCliqueVertices, vTempRemovedVertices, vAddedEdgesUnused, chosenVertex == -1 /* either consider all (true) or consider only changed vertices (false) */);
+            isolates.RemoveAllIsolates(0 /*unused*/,vTempCliqueVertices, vTempRemovedVertices, vPersistentReductions, chosenVertex == -1 /* either consider all (true) or consider only changed vertices (false) */);
 #endif //REMOVE_ISOLATES_BEFORE_ONLY
 ////        cout << __LINE__ << ": Removed " << vTempCliqueVertices.size() + vTempRemovedVertices.size() << " vertices " << endl;
 ////        cout << __LINE__ << ": density=" << density << ", max-degree=" << maxDegree << ", clique-vertices=" << vCliqueVertices.size() << ", other-removed=" << vRemoved.size()  << ", percent-total-removed=" << (vCliqueVertices.size() + vRemoved.size())/static_cast<double>(P.size())*100 << "%" << endl;
@@ -217,6 +229,13 @@ void TesterMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std:
 
 ////        Contains(vTempCliqueVertices, 5975, __LINE__);
 ////        Contains(vTempCliqueVertices, 4202, __LINE__);
+
+////        // update folded vertex count
+////        vFoldedVertexCount[depth+1] = vFoldedVertexCount[depth];
+////        for (Reduction const &reduction : vPersistentReductions) {
+////            if (reduction.GetType() == FOLDED_VERTEX) {
+////                vFoldedVertexCount[depth+1]++;
+////        }
 
         vector<int> &vCliqueVerticesToReplace(stackPersistentClique[depth+1]);
         vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
@@ -317,9 +336,11 @@ void TesterMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::v
 {
     vector<int> &vCliqueVerticesToReplace(stackPersistentClique[depth+1]);
     vector<int> &vRemovedVerticesToReplace(stackPersistentOther[depth+1]);
+    std::vector<Reduction> &vPersistentReductions(stackPersistentReductions[depth+1]);
 
-    isolates.ReplaceAllRemoved(vCliqueVerticesToReplace);
-    isolates.ReplaceAllRemoved(vRemovedVerticesToReplace);
+////    isolates.ReplaceAllRemoved(vCliqueVerticesToReplace);
+////    isolates.ReplaceAllRemoved(vRemovedVerticesToReplace);
+    isolates.ReplaceAllRemoved(vPersistentReductions);
 
     for (int const cliqueVertex : vCliqueVerticesToReplace) {
         R.pop_back();
@@ -327,6 +348,8 @@ void TesterMISQ::ProcessOrderBeforeReturn(std::vector<int> &vVertexOrder, std::v
 
     vCliqueVerticesToReplace.clear();
     vRemovedVerticesToReplace.clear();
+    vPersistentReductions.clear();
+////    vFoldedVertexCounts[depth+1] = 0;
 }
 
 ////void TesterMISQ::PrintState() const

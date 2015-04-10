@@ -17,15 +17,29 @@ using namespace std;
 
 TesterStaticOrderMISS::TesterStaticOrderMISS(vector<vector<char>> const &vAdjacencyMatrix, vector<vector<int>> const &vAdjacencyArray)
 : TesterMISQ(vAdjacencyMatrix, vAdjacencyArray)
-, onlyConsider(vAdjacencyMatrix.size())
-, vMarkedVertices(vAdjacencyMatrix.size(), false)
+, onlyConsider(vAdjacencyArray.size())
+, vMarkedVertices(vAdjacencyArray.size(), false)
 {
     SetName("tester-static-order-miss");
+    R.reserve(m_AdjacencyArray.size());
+
+    stackP.resize(m_AdjacencyArray.size() + 1);
+    stackColors.resize(m_AdjacencyArray.size() + 1);
+    stackOrder.resize(m_AdjacencyArray.size() + 1);
+    stackEvaluatedHalfVertices.resize(m_AdjacencyArray.size() + 1);
+
+    // don't reserve for 0-th vectors, they get std::move'd by InitialOrdering
+    for (int index = 0; index < stackP.size(); ++index) {
+        stackP[index].reserve(m_AdjacencyArray.size());
+        stackColors[index].reserve(m_AdjacencyArray.size());
+        stackOrder[index].reserve(m_AdjacencyArray.size());
+    }
 }
 
 void TesterStaticOrderMISS::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
-    OrderingTools::InitialOrderingMISR(m_AdjacencyMatrix, P, vColors, m_uMaximumCliqueSize);
+    OrderingTools::InitialOrderingMISR(m_AdjacencyArray, P, vColors, m_uMaximumCliqueSize);
+////    OrderingTools::InitialOrderingMISR(m_AdjacencyMatrix, P, vColors, m_uMaximumCliqueSize);
 
 ////    OrderingTools::InitialOrderingReduction(isolates, vVertexOrder);
     vVertexOrder = P; ////std::move(GraphTools::OrderVerticesByDegree(m_AdjacencyMatrix, true /* non-decreasing */)); //// = P; //?
@@ -35,12 +49,12 @@ void TesterStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int
 {
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
-    vector<pair<int,int>> vAddedEdgesUnused;
-    isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved);
+    vector<Reduction> &vReductions(stackReductions[depth+1]); vReductions.clear();
+    isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved, vReductions);
 
 #ifdef NO_ISOLATES_P_LEFT_10
     vector<int> const &vColors(stackColors[depth]);
-    bool bRemoveIsolates((vColors.size() < 10) || (vColors[vColors.size()-10] + R.size() <= m_uMaximumCliqueSize));
+    bool bRemoveIsolates((vColors.size() < 10) || (vColors[vColors.size()-10] + R.size() + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize));
 #else
     bool bRemoveIsolates(true);
 #endif //NO_ISOLATES_P_LEFT_10
@@ -55,7 +69,7 @@ void TesterStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vector<int
     if (bRemoveIsolates)
 ////        if (onlyConsider.Size() > 50) {
 ////        if (depth <= 5)
-            isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */);
+            isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vReductions /* unused */, false /* only consider updated vertices */);
 ////        } else {
 ////            isolates.RemoveAllIsolates(0/*unused*/, vCliqueVertices, vRemoved, vAddedEdgesUnused /* unused */, false /* only consider updated vertices */, onlyConsider);
 ////        }
@@ -186,6 +200,10 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
             cout << "Evaluated " << nodeCount << " nodes. " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
             PrintState();
         }
+        if (m_TimeOut > 0 && (clock() - m_StartTime > m_TimeOut)) {
+            m_bTimedOut = true;
+            return;
+        }
     }
 
 ////    if (depth <=1)
@@ -247,7 +265,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 
         size_t numLeft = P.size();
         for (; numLeft > 0; --numLeft) {
-            if (R.size() + vColors[numLeft-1] <= m_uMaximumCliqueSize) { break; }
+            if (R.size() + vColors[numLeft-1] + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize) { break; }
         }
 
         numLeft = P.size() - numLeft;
@@ -293,7 +311,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 ////        cout << __LINE__ << ": Recoloring..." << endl;
         size_t numLeft = P.size();
         for (; numLeft > 0; --numLeft) {
-            if (R.size() + vColors[numLeft-1] <= m_uMaximumCliqueSize) { break; }
+            if (R.size() + vColors[numLeft-1] + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize) { break; }
         }
         numLeft = P.size() - numLeft;
 ////        if (numLeft < 3.0*evaluateP.size()/4.0) {
@@ -363,29 +381,33 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
             vNewP.resize(vNewVertexOrder.size());
             vNewColors.resize(vNewVertexOrder.size());
             Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
-            bool const bSwitchToNoIsolatesAlgorithm((vNewColors.size() < 5) || (vNewColors[vNewColors.size()-5] + R.size() <= m_uMaximumCliqueSize));
+            bool const bSwitchToNoIsolatesAlgorithm((vNewColors.size() < 5) || (vNewColors[vNewColors.size()-5] + R.size() + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize));
             if (bSwitchToNoIsolatesAlgorithm) {
                 depth++;
                 RunRecursiveNoIsolates(vNewP, vNewVertexOrder, cliques, vNewColors);
                 depth--;
             } else {
 #ifdef PREPRUNE
-                if (R.size() + vNewColors.back() > m_uMaximumCliqueSize) {
+                if (R.size() + vNewColors.back() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
                     depth++;
                     RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
                     depth--;
                 }
 #else
                 depth++;
+                size_t const savedSize(isolates.GetInGraph().Size());
                 RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
+                if (savedSize != isolates.GetInGraph().Size()) {
+                    cout << "ERROR: Graph changed size!" << endl << flush;
+                }
                 depth--;
 #endif // PREPRUNE
             }
-        } else if (R.size() > m_uMaximumCliqueSize) {
+        } else if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
             cliques.back().clear();
             cliques.back().insert(cliques.back().end(), R.begin(), R.end());
             ExecuteCallBacks(cliques.back());
-            m_uMaximumCliqueSize = R.size();
+            m_uMaximumCliqueSize = R.size() + isolates.GetFoldedVertexCount();
             timeToLargestClique = clock() - startTime;
         }
 
@@ -399,11 +421,11 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         ////        }
 
         if (!bPIsEmpty && evaluateP.empty()) {
-            if (R.size() > m_uMaximumCliqueSize) {
+            if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
                 cliques.back().clear();
                 cliques.back().insert(cliques.back().end(), R.begin(), R.end());
                 ExecuteCallBacks(cliques.back());
-                m_uMaximumCliqueSize = R.size();
+                m_uMaximumCliqueSize = R.size() + isolates.GetFoldedVertexCount();
             timeToLargestClique = clock() - startTime;
             }
         }
@@ -471,7 +493,8 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 
 #ifdef MIN_SUBPROBLEM
 ////    auto ChooseMinSubproblemVertex = [this, &vAddedEdgesUnused](IsolatesWithMatrix<ArraySet> &theIsolates, vector<int> const &activeSet)
-    auto ChooseMinSubproblemVertex = [this, &vAddedEdgesUnused](Isolates3<ArraySet> &theIsolates, vector<int> const &activeSet)
+////    auto ChooseMinSubproblemVertex = [this, &vAddedEdgesUnused](Isolates3<ArraySet> &theIsolates, vector<int> const &activeSet)
+    auto ChooseMinSubproblemVertex = [this, &vAddedEdgesUnused](Isolates4<ArraySet> &theIsolates, vector<int> const &activeSet)
     {
 ////        cout << " Choosing vertex... " << endl << flush;
         size_t best(ULONG_MAX);
@@ -499,8 +522,9 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         for (size_t i = 0; i < size*0.02; i++) {
             int const firstVertex(vVertices[i]);
             vector<int> v_iNeighbors;
-            theIsolates.RemoveVertexAndNeighbors(firstVertex, v_iNeighbors);
-            theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, vAddedEdgesUnused, false);
+            vector<Reduction> viReductions;
+            theIsolates.RemoveVertexAndNeighbors(firstVertex, v_iNeighbors, viReductions);
+            theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, viReductions, false);
 
             vector<int> vLeftOver1(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
             vector<int> vTwoNeighborhood1(m_AdjacencyArray.size(), 0);
@@ -514,11 +538,12 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
             ////        for (size_t j = i+1; j < i + size*0.01; j++) {
             for (size_t j = 0; j < min(int(vLeftOver1.size()*0.01), 100); j++) {
                 vector<int> v_jNeighbors;
+                vector<Reduction> vjReductions;
                 int const secondVertex(vLeftOver1[j]);
                 if (theIsolates.GetInGraph().Contains(secondVertex)) {
                     v_jNeighbors.push_back(secondVertex);
-                    theIsolates.RemoveVertexAndNeighbors(secondVertex, v_jNeighbors);
-                    theIsolates.RemoveAllIsolates(0, v_jNeighbors, v_jNeighbors, vAddedEdgesUnused, false);
+                    theIsolates.RemoveVertexAndNeighbors(secondVertex, v_jNeighbors, vjReductions);
+                    theIsolates.RemoveAllIsolates(0, v_jNeighbors, v_jNeighbors, vjReductions, false);
                 }
 
                 vector<int> vLeftOver2(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
@@ -535,10 +560,11 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
                     ////                if (loops %10 == 0) { break; }
                     int const thirdVertex(vLeftOver2[k]);
                     vector<int> v_kNeighbors;
+                    vector<Reduction> vkReductions;
                     if (theIsolates.GetInGraph().Contains(thirdVertex)) {
                         v_kNeighbors.push_back(thirdVertex);
-                        theIsolates.RemoveVertexAndNeighbors(thirdVertex, v_kNeighbors);
-                        theIsolates.RemoveAllIsolates(0, v_kNeighbors, v_kNeighbors, vAddedEdgesUnused, false);
+                        theIsolates.RemoveVertexAndNeighbors(thirdVertex, v_kNeighbors, vkReductions);
+                        theIsolates.RemoveAllIsolates(0, v_kNeighbors, v_kNeighbors, vkReductions, false);
                     }
 
                     vector<vector<int>> vComponents;
@@ -557,14 +583,14 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
                         savedj = secondVertex;
                         savedk = thirdVertex;
                     }
-                    theIsolates.ReplaceAllRemoved(v_kNeighbors);
+                    theIsolates.ReplaceAllRemoved(vkReductions);
                 } // for k
-                theIsolates.ReplaceAllRemoved(v_jNeighbors);
+                theIsolates.ReplaceAllRemoved(vjReductions);
                 ////            if (loops % 100 == 0) break;
             } // for j
 
             v_iNeighbors.push_back(firstVertex);
-            theIsolates.ReplaceAllRemoved(v_iNeighbors);
+            theIsolates.ReplaceAllRemoved(viReductions);
         } // for i
 
 ////        cout << "best: max-component-size=" << best << endl;
@@ -581,8 +607,10 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         } else if (depth == 1) {
             for (size_t i = 0; i < size*0.30; i++) {
                 vector<int> v_iNeighbors;
-                theIsolates.RemoveVertexAndNeighbors(vVertices[i], v_iNeighbors);
-                theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, vAddedEdgesUnused, false);
+                vector<Reduction> viReductions;
+                int const firstVertex(vVertices[i]);
+                theIsolates.RemoveVertexAndNeighbors(firstVertex, v_iNeighbors, viReductions);
+                theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, viReductions, false);
 
                 vector<int> vLeftOver1(theIsolates.GetInGraph().begin(), theIsolates.GetInGraph().end());
                 vector<int> vTwoNeighborhood1(m_AdjacencyArray.size(), 0);
@@ -596,11 +624,12 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
                 ////        for (size_t j = i+1; j < i + size*0.01; j++) {
                 for (size_t j = 0; j < min(int(vLeftOver1.size()*0.01), 100); j++) {
                     vector<int> v_jNeighbors;
+                    vector<Reduction> vjReductions;
                     int const secondVertex(vLeftOver1[j]);
                     if (theIsolates.GetInGraph().Contains(secondVertex)) {
                         v_jNeighbors.push_back(secondVertex);
-                        theIsolates.RemoveVertexAndNeighbors(secondVertex, v_jNeighbors);
-                        theIsolates.RemoveAllIsolates(0, v_jNeighbors, v_jNeighbors, vAddedEdgesUnused, false);
+                        theIsolates.RemoveVertexAndNeighbors(secondVertex, v_jNeighbors, vjReductions);
+                        theIsolates.RemoveAllIsolates(0, v_jNeighbors, v_jNeighbors, vjReductions, false);
                     }
 
                     vector<vector<int>> vComponents;
@@ -618,11 +647,11 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
                         savedi = vVertices[i];
                         savedj = vLeftOver1[j];
                     }
-                    theIsolates.ReplaceAllRemoved(v_jNeighbors);
+                    theIsolates.ReplaceAllRemoved(vjReductions);
                     ////            if (loops % 100 == 0) break;
                 }
                 v_iNeighbors.push_back(vVertices[i]);
-                theIsolates.ReplaceAllRemoved(v_iNeighbors);
+                theIsolates.ReplaceAllRemoved(viReductions);
 
                 ////        int const percentage((int((i*size*0.15 + j*0.10 + k)*100.0/((size*0.01)*(size*0.05)*(size*0.10)))));
                 ////        if (percentage > lastPercentage + 1) {
@@ -648,8 +677,10 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
             } else if (depth == 2) {
             for (size_t i = 0; i < size*0.50; i++) {
                 vector<int> v_iNeighbors;
-                theIsolates.RemoveVertexAndNeighbors(vVertices[i], v_iNeighbors);
-                theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, vAddedEdgesUnused, false);
+                vector<Reduction> viReductions;
+                int const firstVertex(vVertices[i]);
+                theIsolates.RemoveVertexAndNeighbors(firstVertex, v_iNeighbors, viReductions);
+                theIsolates.RemoveAllIsolates(0, v_iNeighbors, v_iNeighbors, viReductions, false);
 
                     vector<vector<int>> vComponents;
                     GraphTools::ComputeConnectedComponents(theIsolates, vComponents, m_AdjacencyArray.size());
@@ -666,7 +697,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
                         savedi = vVertices[i];
                     }
                 v_iNeighbors.push_back(vVertices[i]);
-                theIsolates.ReplaceAllRemoved(v_iNeighbors);
+                theIsolates.ReplaceAllRemoved(viReductions);
 
             }
 ////            cout << "best: max-component-size=" << best << endl;
@@ -805,7 +836,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 #endif // MIN_COMPONENT
 
 
-    while (!P.empty() && !pivot) {
+    while (!P.empty() && !pivot && !m_bTimedOut) {
         // if one criteria is slow, use the other one.
 
 #if defined(MIN_SUBPROBLEM)
@@ -848,7 +879,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
             if (!m_bQuiet) {
                 size_t numLeft = P.size();
                 for (; numLeft > 0; --numLeft) {
-                    if (R.size() + vColors[numLeft-1] <= m_uMaximumCliqueSize) { break; }
+                    if (R.size() + vColors[numLeft-1] + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize) { break; }
                 }
 
                 numLeft = P.size() - numLeft;
@@ -858,7 +889,7 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
         }
 
         int const largestColor(vColors.back());
-        if (R.size() + largestColor <= m_uMaximumCliqueSize /*&& !selectMinNeighbors && !selectMinComponent*/) {
+        if (R.size() + largestColor + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize /*&& !selectMinNeighbors && !selectMinComponent*/) {
 ////            cout << __LINE__ << endl;
 ////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
 ////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
@@ -1149,11 +1180,11 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
                 depth--;
 #endif // PREPRUNE
             }
-        } else if (R.size() > m_uMaximumCliqueSize) {
+        } else if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
             cliques.back().clear();
             cliques.back().insert(cliques.back().end(), R.begin(), R.end());
             ExecuteCallBacks(cliques.back());
-            m_uMaximumCliqueSize = R.size();
+            m_uMaximumCliqueSize = R.size() + isolates.GetFoldedVertexCount();
             timeToLargestClique = clock() - startTime;
         }
 
@@ -1173,11 +1204,11 @@ void TesterStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrd
 ////        }
 
         if (!bPIsEmpty && P.empty()) {
-            if (R.size() > m_uMaximumCliqueSize) {
+            if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
                 cliques.back().clear();
                 cliques.back().insert(cliques.back().end(), R.begin(), R.end());
                 ExecuteCallBacks(cliques.back());
-                m_uMaximumCliqueSize = R.size();
+                m_uMaximumCliqueSize = R.size() + isolates.GetFoldedVertexCount();
                 timeToLargestClique = clock() - startTime;
             }
         }
@@ -1281,7 +1312,7 @@ void TesterStaticOrderMISS::RunRecursiveNoIsolates(vector<int> &P, vector<int> &
         }
 
         int const largestColor(vColors.back());
-        if (R.size() + largestColor <= m_uMaximumCliqueSize) {
+        if (R.size() + largestColor + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize) {
             LightWeightMISQ::ProcessOrderBeforeReturn(vVertexOrder, P, vColors);
             P.clear();
             return;
@@ -1309,11 +1340,11 @@ void TesterStaticOrderMISS::RunRecursiveNoIsolates(vector<int> &P, vector<int> &
             RunRecursiveNoIsolates(vNewP, vNewVertexOrder, cliques, vNewColors);
             depth--;
 #endif // PREPRUNE
-        } else if (R.size() > m_uMaximumCliqueSize) {
+        } else if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
             cliques.back().clear();
             cliques.back().insert(cliques.back().end(), R.begin(), R.end());
             ExecuteCallBacks(cliques.back());
-            m_uMaximumCliqueSize = R.size();
+            m_uMaximumCliqueSize = R.size() + isolates.GetFoldedVertexCount();
             timeToLargestClique = clock() - startTime;
         }
 
@@ -1325,11 +1356,11 @@ void TesterStaticOrderMISS::RunRecursiveNoIsolates(vector<int> &P, vector<int> &
 ////        }
 
         if (!bPIsEmpty && P.empty()) {
-            if (R.size() > m_uMaximumCliqueSize) {
+            if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
                 cliques.back().clear();
                 cliques.back().insert(cliques.back().end(), R.begin(), R.end());
                 ExecuteCallBacks(cliques.back());
-                m_uMaximumCliqueSize = R.size();
+                m_uMaximumCliqueSize = R.size() + isolates.GetFoldedVertexCount();
                 timeToLargestClique = clock() - startTime;
             }
         }

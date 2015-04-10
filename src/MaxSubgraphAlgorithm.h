@@ -43,6 +43,11 @@ public:
     void SetMaximumCliqueSize(size_t const newCliqueSize) { m_uMaximumCliqueSize = newCliqueSize; }
 
     void SetOnlyVertex(int const vertex) { m_iOnlyVertex = vertex; }
+
+    void SetTimeOutInSeconds(double const timeout) { m_TimeOut = timeout*CLOCKS_PER_SEC; }
+
+    bool GetTimedOut() const { return m_bTimedOut; }
+
 protected:
     size_t m_uMaximumCliqueSize;
     std::vector<int> R;
@@ -57,5 +62,8 @@ protected:
     std::vector<bool> stackEvaluatedHalfVertices;
 ////    bool m_bInvert;
     int m_iOnlyVertex;
+    clock_t m_TimeOut;
+    clock_t m_StartTime;
+    bool    m_bTimedOut;
 };
 #endif // MAX_SUBGRAPH_ALGORITHM_H

@@ -19,6 +19,9 @@ MaxSubgraphAlgorithm::MaxSubgraphAlgorithm(string const &name)
 , stackEvaluatedHalfVertices()
 ////, m_bInvert(0)
 , m_iOnlyVertex(-1)
+, m_TimeOut(0)
+, m_StartTime(clock())
+, m_bTimedOut(false)
 {
 }
 
@@ -93,6 +96,10 @@ void MaxSubgraphAlgorithm::RunRecursive(vector<int> &P, vector<int> &vVertexOrde
         if (!m_bQuiet) {
             cout << "Evaluated " << nodeCount << " nodes. " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
             PrintState();
+        }
+        if (m_TimeOut > 0 && (clock() - m_StartTime > m_TimeOut)) {
+            m_bTimedOut = true;
+            return;
         }
     }
 

@@ -28,7 +28,7 @@ IsolatesIndependentSetColoringStrategy<IsolatesType>::IsolatesIndependentSetColo
 template <typename IsolatesType>
 IsolatesIndependentSetColoringStrategy<IsolatesType>::~IsolatesIndependentSetColoringStrategy()
 {
-    cout << "Total time to perform coloring: " << Tools::GetTimeInSeconds(m_ColorTimer) << endl << flush;
+////    cout << "Total time to perform coloring: " << Tools::GetTimeInSeconds(m_ColorTimer) << endl << flush;
 }
 
 template <typename IsolatesType>
@@ -369,3 +369,4 @@ bool IsolatesIndependentSetColoringStrategy<IsolatesType>::Repair(int const vert
 template class IsolatesIndependentSetColoringStrategy<Isolates3<ArraySet>>;
 template class IsolatesIndependentSetColoringStrategy<IsolatesWithMatrix<ArraySet>>;
 template class IsolatesIndependentSetColoringStrategy<Isolates4<SparseArraySet>>;
+template class IsolatesIndependentSetColoringStrategy<Isolates4<ArraySet>>;

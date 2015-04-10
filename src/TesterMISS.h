@@ -4,7 +4,8 @@
 #include "TesterStaticOrderMISS.h"
 #include "CliqueColoringStrategy.h"
 #include "IsolatesIndependentSetColoringStrategy.h"
-////#include "Isolates3.h"
+#include "Isolates3.h"
+#include "Isolates4.h"
 #include "IsolatesWithMatrix.h"
 #include "ArraySet.h"
 
@@ -20,7 +21,9 @@ public:
 
 protected:
 ////    SparseIndependentSetColoringStrategy sparseColoringStrategy;
-    IsolatesIndependentSetColoringStrategy<IsolatesWithMatrix<ArraySet>> isolatesColoringStrategy;
+////    IsolatesIndependentSetColoringStrategy<IsolatesWithMatrix<ArraySet>> isolatesColoringStrategy;
+    IsolatesIndependentSetColoringStrategy<Isolates4<ArraySet>> isolatesColoringStrategy;
+////    IsolatesIndependentSetColoringStrategy<Isolates3<SparseArraySet>> isolatesColoringStrategy;
 };
 
 #endif //TESTER_MISS_H

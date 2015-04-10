@@ -67,6 +67,7 @@
 #include "PartialMatchDegeneracyVertexSets.h"
 #include "CliqueGraphAlgorithm.h"
 #include "CliqueTools.h"
+#include "Experiments.h"
 
 #include "Staging.h"
 
@@ -151,26 +152,81 @@ void RunUnitTests()
     GraphTools::TestMatchingCount();
 }
 
+
+string basename(string const &fileName)
+{
+    string sBaseName(fileName);
+
+    size_t const lastSlash(sBaseName.find_last_of("/\\"));
+    if (lastSlash != string::npos) {
+        sBaseName = sBaseName.substr(lastSlash+1);
+    }
+
+    size_t const lastDot(sBaseName.find_last_of("."));
+    if (lastDot != string::npos) {
+        sBaseName = sBaseName.substr(0, lastDot);
+    }
+
+    return sBaseName;
+}
+
+void RunExperiment(string const &sInputFile, string const &sExperimentName, bool const bOutputLatex, bool const bPrintHeader, vector<vector<int>> const &adjacencyArray, vector<vector<char>> const &vAdjacencyMatrix, double const dTimeout)
+{
+    string const dataSetName(basename(sInputFile));
+    Experiments experiments(dataSetName, dTimeout, bOutputLatex, bPrintHeader, adjacencyArray, vAdjacencyMatrix);
+
+    if (sExperimentName=="kernel-size") {
+        experiments.RunKernelSize();
+    } else if (sExperimentName=="exact-search") {
+        experiments.RunExactSearch();
+    } else if (sExperimentName=="standard-search") {
+        experiments.RunStandardSearch();
+    } else if (sExperimentName=="components-miss") {
+        experiments.RunComponentsMISS();
+    } else if (sExperimentName=="components-standard-search") {
+        experiments.RunComponentsStandardSearch();
+    } else if (sExperimentName=="components-forward-search") {
+        experiments.RunComponentsForwardSearch();
+    } else {
+        cout << "ERROR!: Invalid experiment name: " << sExperimentName << endl << flush;
+    }
+}
+
 int main(int argc, char** argv)
 {
-    PrintExperimentalWarning();
-#ifdef DEBUG_MESSAGE
-    PrintDebugWarning();
-#endif //DEBUG_MESSAGE
-    RunUnitTests();
-
     int failureCode(0);
 
     map<string,string> mapCommandLineArgs;
 
     ProcessCommandLineArgs(argc, argv, mapCommandLineArgs);
 
-    bool   const outputLatex(mapCommandLineArgs.find("--latex") != mapCommandLineArgs.end());
+    bool   const bOutputLatex(mapCommandLineArgs.find("--latex") != mapCommandLineArgs.end());
     string const inputFile((mapCommandLineArgs.find("--input-file") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--input-file"] : "");
     string const algorithm((mapCommandLineArgs.find("--algorithm") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--algorithm"] : "");
     bool   const computeCliqueGraph(mapCommandLineArgs.find("--compute-clique-graph") != mapCommandLineArgs.end());
     bool   const staging(mapCommandLineArgs.find("--staging") != mapCommandLineArgs.end());
     bool   const findMaximumOnly(mapCommandLineArgs.find("--maximum") != mapCommandLineArgs.end());
+    string const sExperimentName((mapCommandLineArgs.find("--experiment") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--experiment"] : "");
+    bool   const bPrintHeader(mapCommandLineArgs.find("--header") != mapCommandLineArgs.end());
+    string const sTimeout(mapCommandLineArgs.find("--timeout") != mapCommandLineArgs.end() ? mapCommandLineArgs["--timeout"] : "");
+    double dTimeout(0.0);
+    if (!sTimeout.empty()) {
+        try {
+            dTimeout = stod(sTimeout);
+        } catch(...) {
+            cout << "ERROR!: Invalid --timeout argument, please enter valid double value." << endl << flush;
+        }
+    }
+    bool   const bRunExperiment(!sExperimentName.empty());
+
+    if (!bOutputLatex) {
+        PrintExperimentalWarning();
+#ifdef DEBUG_MESSAGE
+        PrintDebugWarning();
+#endif //DEBUG_MESSAGE
+        RunUnitTests();
+    }
+
 
     if (inputFile.empty()) {
         cout << "ERROR: Missing input file " << endl;
@@ -178,14 +234,14 @@ int main(int argc, char** argv)
         // return 1; // TODO/DS
     }
 
-    if (!(staging || computeCliqueGraph) && algorithm.empty()) {
+    if (!(staging || computeCliqueGraph || bRunExperiment) && algorithm.empty()) {
         cout << "ERROR: Missing algorithm" << endl;
         // ShowUsageMessage();
         // return 1; // TODO/DS
     }
 
-    if (argc <= 1 || (!(computeCliqueGraph || staging) && !isValidAlgorithm(algorithm))) {
-        cout << "usage: " << argv[0] << "--input-file=<filename> --algorithm=<tomita|adjlist|hybrid|degeneracy|*> [--latex]" << endl;
+    if (argc <= 1 || (!(computeCliqueGraph || staging || bRunExperiment) && !isValidAlgorithm(algorithm))) {
+        cout << "usage: " << argv[0] << " --input-file=<filename> --algorithm=<algorithm-name> [--latex] [--experiment=<experiment-name>] [--header]" << endl;
     }
 
     string const name(algorithm);
@@ -196,16 +252,22 @@ int main(int argc, char** argv)
 
     vector<list<int>> adjacencyList;
     if (inputFile.find(".graph") != string::npos) {
-        cout << "Reading .graph file format. " << endl << flush;
+        if (!bOutputLatex) cout << "Reading .graph file format. " << endl << flush;
         adjacencyList = readInGraphAdjListEdgesPerLine(n, m, inputFile);
     } else {
-        cout << "Reading .edges file format. " << endl << flush;
+        if (!bOutputLatex) cout << "Reading .edges file format. " << endl << flush;
         adjacencyList = readInGraphAdjList(n, m, inputFile);
     }
 
-    bool const bComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "reduction-sparse-miss" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "connected-component-miss" || name == "connected-component-miss2" /* || name == "comparison-miss"*/ || name == "tester-miss");
+    bool const bComputeAdjacencyMatrix(adjacencyList.size() < 20000);
+    bool const bShouldComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "reduction-sparse-miss" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "connected-component-miss" || name == "connected-component-miss2" /* || name == "comparison-miss"*/ || name == "tester-miss");
 
-    bool const addDiagonals(name == "misq" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "connected-component-miss" || name == "connected-component-miss2" || name == "comparison-miss" || name == "tester-miss");
+    bool const addDiagonals(bRunExperiment || name == "misq" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "connected-component-miss" || name == "connected-component-miss2" || name == "comparison-miss" || name == "tester-miss");
+
+    if (bShouldComputeAdjacencyMatrix && !bComputeAdjacencyMatrix) {
+        cout << "ERROR!: unable to compute adjacencyMatrix, since the graph is too large: " << adjacencyList.size() << endl << flush;
+        exit(1);
+    }
 
     char** adjacencyMatrix(nullptr);
 
@@ -229,7 +291,7 @@ int main(int argc, char** argv)
         }
     }
 
-    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "reduction-sparse-misq" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "reduction-sparse-miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "sparse-mcq" || name == "connected-component-miss" || name == "connected-component-miss2"/* || name == "comparison-miss"*/ || name == "tester-miss");
+    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || bRunExperiment || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "reduction-sparse-misq" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "reduction-sparse-miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "sparse-mcq" || name == "connected-component-miss" || name == "connected-component-miss2"/* || name == "comparison-miss"*/ || name == "tester-miss");
 
     vector<vector<int>> adjacencyArray;
 
@@ -243,6 +305,11 @@ int main(int argc, char** argv)
             }
         }
         adjacencyList.clear(); // does this free up memory? probably some...
+    }
+
+    if (bRunExperiment) {
+        RunExperiment(inputFile, sExperimentName, bOutputLatex, bPrintHeader, adjacencyArray, vAdjacencyMatrix, dTimeout);
+        return 0;
     }
 
     VertexSets *pSets(nullptr);
@@ -343,7 +410,7 @@ int main(int argc, char** argv)
         pAlgorithm = new TimeDelayDegeneracyAlgorithm(adjacencyList);
     } else if (name == "partial-match-degeneracy") {
         pSets = new PartialMatchDegeneracyVertexSets(adjacencyArray);
-    } else if (!computeCliqueGraph && !staging){
+    } else if (!computeCliqueGraph && !staging && !bRunExperiment){
         cout << "ERROR: unrecognized algorithm name " << name << endl;
         return 1;
     }
@@ -409,7 +476,7 @@ int main(int argc, char** argv)
 
     // Run algorithm
     list<list<int>> cliques;
-    RunAndPrintStats(pAlgorithm, cliques, outputLatex);
+    RunAndPrintStats(pAlgorithm, cliques, bOutputLatex);
 
     cliques.clear();
 

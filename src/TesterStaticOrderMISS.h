@@ -3,10 +3,11 @@
 
 #include "TesterMISQ.h"
 #include "CliqueColoringStrategy.h"
+#include "ArraySet.h"
 
 #include <vector>
 #include <list>
-#include "ArraySet.h"
+#include <ctime>
 
 class TesterStaticOrderMISS : public TesterMISQ
 {

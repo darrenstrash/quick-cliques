@@ -640,7 +640,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
     vector<NeighborListArray> vOrderingArray(size);
 
     while (numVerticesRemoved < numVertices) {
-////        cout << "Ordered " << numVerticesRemoved << "/" << size << " vertices" << endl;
+        cout << "Ordered " << numVerticesRemoved << "/" << size << " vertices" << endl;
         if (!verticesByDegree[currentDegree].empty()) {
 
             int vertex(-1);

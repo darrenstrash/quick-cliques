@@ -10,7 +10,9 @@
 
 namespace GraphTools
 {
-    void ComputeInducedSubgraph(std::vector<std::vector<int>> &adjacencyList, std::set<int> const &vertices, std::vector<std::vector<int>> &subraph, std::map<int,int> &remapping);
+    void ComputeInducedSubgraph(std::vector<std::vector<int>> const &adjacencyList, std::set<int> const &vertices, std::vector<std::vector<int>> &subraph, std::map<int,int> &remapping);
+    template<typename IsolatesType>
+    void ComputeInducedSubgraphIsolates(IsolatesType const &isolates, std::set<int> const &vertices, std::vector<std::vector<int>> &subraph, std::map<int,int> &remapping);
     std::vector<int> OrderVerticesByDegree(std::vector<std::vector<int>> const &adjacencyList, bool const ascending);
     std::vector<int> OrderVerticesByDegree(ArraySet const &inGraph, std::vector<SparseArraySet> const &neighborSets, bool const ascending);
     std::vector<int> OrderVerticesByDegree(ArraySet const &inGraph, std::vector<ArraySet> const &neighborSets, bool const ascending);

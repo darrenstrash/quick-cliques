@@ -6,6 +6,7 @@
 #include "ArraySet.h"
 #include "Isolates2.h"
 #include "Isolates3.h"
+#include "Isolates4.h"
 #include "IsolatesWithMatrix.h"
 
 #include <ctime>
@@ -39,11 +40,14 @@ protected:
 ////    std::vector<std::vector<int>> stackX;
     std::vector<std::vector<int>> stackClique;
     std::vector<std::vector<int>> stackOther;
+    std::vector<std::vector<Reduction>> stackReductions;
     std::vector<std::vector<int>> stackPersistentClique;
     std::vector<std::vector<int>> stackPersistentOther;
-////    Isolates3<ArraySet> isolates;
-    IsolatesWithMatrix<ArraySet> isolates;
+    std::vector<std::vector<Reduction>> stackPersistentReductions;
+    Isolates4<ArraySet> isolates;
+////    IsolatesWithMatrix<ArraySet> isolates;
     std::vector<bool> vRemoveIsolates;
+////    std::vector<int>  vFoldedVertexCount;
 ////    bool m_bInvert;
 };
 #endif //TESTER_MISQ_H
