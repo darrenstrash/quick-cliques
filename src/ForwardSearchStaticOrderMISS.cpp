@@ -38,7 +38,13 @@ ForwardSearchStaticOrderMISS::ForwardSearchStaticOrderMISS(vector<vector<char>> 
 
 void ForwardSearchStaticOrderMISS::InitializeOrder(std::vector<int> &P, std::vector<int> &vVertexOrder, std::vector<int> &vColors)
 {
-    OrderingTools::InitialOrderingMISR(m_AdjacencyArray, P, vColors, m_uMaximumCliqueSize);
+////    OrderingTools::InitialOrderingMISR(m_AdjacencyArray, P, vColors, m_uMaximumCliqueSize);
+    OrderingTools::InitialOrderingMISR(m_AdjacencyArray, isolates, P, vColors, m_uMaximumCliqueSize);
+    cout << "Initial Order: P: ";
+    for (int const p : P) {
+        cout << p << " ";
+    }
+    cout << endl << flush;
 ////    OrderingTools::InitialOrderingMISR(m_AdjacencyMatrix, P, vColors, m_uMaximumCliqueSize);
 
 ////    OrderingTools::InitialOrderingReduction(isolates, vVertexOrder);
@@ -50,7 +56,8 @@ void ForwardSearchStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vec
     vector<int> &vCliqueVertices(stackClique[depth+1]); vCliqueVertices.clear(); vCliqueVertices.push_back(chosenVertex);
     vector<int> &vRemoved(stackOther[depth+1]); vRemoved.clear();
     vector<Reduction> &vReductions(stackReductions[depth+1]); vReductions.clear();
-    isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved, vReductions);
+    if (chosenVertex != -1)
+        isolates.RemoveVertexAndNeighbors(chosenVertex, vRemoved, vReductions);
 ////    cout << "Removed " << chosenVertex << " and its neighbors:";
 ////    for (int const neighbor : vReductions.back().GetNeighbors()) {
 ////        cout << neighbor << " ";
@@ -139,11 +146,15 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
     bool selectMinComponent(false);
     bool checkTime(false); ////isolates.GetInGraph().Size() > 700);
 
-    size_t uIndexIntoP(0);
 
     vector<Reduction> vRemovedVerticesFromP;
-////    for (int const p : P) {
-    for (size_t pIndex = P.size(); pIndex > 0; pIndex--) {
+
+    size_t startIndex = P.size();
+    for (; startIndex > 0; --startIndex) {
+        if (R.size() + vColors[startIndex-1] + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize) { break; }
+    }
+
+    for (size_t pIndex = P.size(); pIndex > startIndex; pIndex--) {
         int const p(P[pIndex-1]);
         isolates.RemoveVertex(p, vRemovedVerticesFromP);
 ////        cout << "Removed Vertex " << p << endl;
@@ -162,11 +173,13 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 
     size_t sizeOfOriginalP(P.size());
 
-    P.clear();
+////    P.clear();
+    size_t uIndexIntoP(startIndex);
+    P.resize(startIndex);
 
     vector<int> const vOriginalVertexOrder(vVertexOrder);
 
-    while (P.size() != sizeOfOriginalP) {//// && !m_bTimedOut) {
+    while (P.size() != sizeOfOriginalP) { //// && !m_bTimedOut) {
         cout << "Evaluating vertex " << P.size()+1 << "/" << sizeOfOriginalP << endl;
 ////        cout << "P:";
 ////        for (int const p : P) {
@@ -174,10 +187,10 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 ////        }
 ////        cout << endl << flush;
 
-        int const nextVertex(vRemovedVerticesFromP[uIndexIntoP].GetVertex());
+        int const nextVertex(vRemovedVerticesFromP[uIndexIntoP-startIndex].GetVertex());
         P.push_back(nextVertex);
         vector<Reduction> vVertexReduction;
-        vVertexReduction.push_back(vRemovedVerticesFromP[uIndexIntoP]);
+        vVertexReduction.push_back(vRemovedVerticesFromP[uIndexIntoP - startIndex]);
 ////        cout << "Before replacing " << nextVertex << ": isolates=" << isolates.GetInGraph().Size(); 
         isolates.ReplaceAllRemoved(vVertexReduction);
 ////        cout << ", after isolates=" << isolates.GetInGraph().Size() << endl << flush;
@@ -199,7 +212,6 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
                 vVertexOrder[vertexOrderIndex++] = orderedVertex;
             }
         }
-
 
         firstIteration = false;
         if (depth < 3) {
@@ -237,20 +249,50 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 ////            cout << __LINE__ << endl;
 ////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
 ////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-        GetNewOrder(vNewVertexOrder, vVertexOrder, P, nextVertex);
+
+#if 1
+        size_t cliqueSize(0);
+        OrderingTools::InitialOrderingMISR(m_AdjacencyArray, isolates, vNewP, vNewColors, cliqueSize);
+        vNewVertexOrder = vNewP;
+////        if (cliqueSize > m_uMaximumCliqueSize) {
+////            if (m_uMaximumCliqueSize < cliqueSize) {
+////                cliques.back().clear();
+////                cliques.back().insert(cliques.back().end(), vNewP.begin(), vNewP.begin() + cliqueSize);
+////                ExecuteCallBacks(cliques.back());
+////                m_uMaximumCliqueSize = cliqueSize;
+////            }
+////        }
+#else
+        GetNewOrder(vNewVertexOrder, vVertexOrder, P, -1);
+#endif // 0
+
+////        vNewVertexOrder = vVertexOrder;
 ////            cout << __LINE__ << endl;
 ////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
 ////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
 
         if (!vNewVertexOrder.empty()) {
+#if 0
             vNewP.resize(vNewVertexOrder.size());
             vNewColors.resize(vNewVertexOrder.size());
-            Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
+////            Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
+            size_t uIndex(0);
+            for (int index=0; index < vVertexOrder.size(); ++index) {
+                int const p(vVertexOrder[index]);
+                if (isolates.GetInGraph().Contains(p)) {
+                    vNewP[uIndex] = p;
+                    vNewColors[uIndex] = vColors[uIndex];
+                    uIndex++;
+                }
+            }
+#endif // 0
 
             depth++;
 ////            RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
             m_StartTime=clock();
             RunRecursiveStandard(vNewP, vNewVertexOrder, cliques, vNewColors);
+            if (m_bTimedOut) { cout << "    Timed out." << endl << flush; }
+            m_bTimedOut = false;
             depth--;
         } else if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
             cliques.back().clear();
@@ -264,7 +306,7 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 ////            cout << __LINE__ << endl;
 ////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
 ////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-        ProcessOrderAfterRecursion(vVertexOrder, P, vColors, nextVertex);
+        ProcessOrderAfterRecursion(vVertexOrder, P, vColors, -1);
 ////        cout << __LINE__ << endl;
 ////        cout << depth << ": P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
 ////        cout << depth << ": Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;

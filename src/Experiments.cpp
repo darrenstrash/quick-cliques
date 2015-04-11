@@ -319,7 +319,7 @@ void Experiments::RunComponentsForwardSearch() const
             ////    for (size_t splitPoint = startVertex/*vOrdering.size()/2*/; splitPoint > 0; splitPoint--) {
 ////            setVertices.insert(vOrdering[splitPoint]);
             size_t const currentIndex((minIndex + maxIndex)/2);
-////            cout << "Evaluating index: " << currentIndex << " in [" << minIndex << "," << maxIndex << "]" << endl << flush;
+            cout << "Evaluating index: " << currentIndex << " in [" << minIndex << "," << maxIndex << "]" << endl << flush;
             set<int> const setVertices(vOrdering.begin(), vOrdering.begin() + currentIndex);
             vector<vector<int>> subgraphAdjacencyList;
 
@@ -337,7 +337,7 @@ void Experiments::RunComponentsForwardSearch() const
             list<int> realClique;
             size_t cliqueDelta(0);
             bool timedOut(false);
-#if 0
+#if 1
             vector<vector<char>> subgraphAdjacencyMatrix; ////(subgraphAdjacencyList.size());
 ////            for (size_t index = 0; index < subgraphAdjacencyList.size(); ++index) {
 ////                subgraphAdjacencyMatrix[index].resize(subgraphAdjacencyList.size(), 0);
@@ -487,11 +487,24 @@ void Experiments::RunForwardSearch() const
 
     vector<vector<char>> subgraphAdjacencyMatrix;
 
+    auto printCliqueSize = [](list<int> const &clique) {
+        cout << "Found clique of size " << clique.size() << endl << flush;
+    };
+
+////    auto printClique = [](list<int> const &clique) {
+////        cout << "Clique: ";
+////        for (int const vertex : clique) {
+////            cout << vertex << " ";
+////        }
+////        cout << endl;
+////    };
+
     list<list<int>> cliques;
     ForwardSearchMISS algorithm(subgraphAdjacencyMatrix, subgraphAdjacencyList);
     algorithm.SetQuiet(true); 
 ////    algorithm.SetOnlyVertex(vOrdering[splitPoint]);
     algorithm.SetTimeOutInSeconds(m_dTimeout);
+    algorithm.AddCallBack(printCliqueSize);
     algorithm.Run(cliques);
 
     clock_t const endTime(clock());
