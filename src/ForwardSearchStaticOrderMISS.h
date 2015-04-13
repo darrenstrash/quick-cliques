@@ -29,6 +29,9 @@ public:
 protected:
     ArraySet onlyConsider;
     std::vector<bool> vMarkedVertices;
+    size_t standardNodeCount;
+    int nodeCountModulus;
+    bool runRecursiveBinarySearch;
 };
 
 #endif //FORWARD_SEARCH_STATIC_ORDER_MISS_H

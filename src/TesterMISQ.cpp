@@ -216,7 +216,9 @@ void TesterMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std:
 #ifdef ALWAYS_REMOVE_ISOLATES_AFTER
         bool const bRemoveIsolates(true);
 #else
+////        bool const bRemoveIsolates(depth > 0 && depth <= 3); ////stackEvaluatedHalfVertices[depth+1]);
         bool const bRemoveIsolates(depth <= 2); ////stackEvaluatedHalfVertices[depth+1]);
+////        bool const bRemoveIsolates(false); ////stackEvaluatedHalfVertices[depth+1]);
 #endif //ALWAYS_REMOVE_ISOLATES_AFTER
 ////////        cout << "Size of clique before reduction: " << R.size() << endl;
         if (bRemoveIsolates)
@@ -282,7 +284,7 @@ void TesterMISQ::ProcessOrderAfterRecursion(std::vector<int> &vVertexOrder, std:
             // TODO/DS verify that we don't need to recolor,
             // removing unneeded colors should suffice
 #ifndef REMOVE_ISOLATES_BEFORE_ONLY
-#if 1 ////def COLOR
+#if 0 ////def COLOR
             if (bRemoveIsolates) {
 #ifdef RECOLOR
 ////                cout << __LINE__ << ": Recoloring..." << endl;

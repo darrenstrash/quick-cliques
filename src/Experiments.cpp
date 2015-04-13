@@ -337,7 +337,7 @@ void Experiments::RunComponentsForwardSearch() const
             list<int> realClique;
             size_t cliqueDelta(0);
             bool timedOut(false);
-#if 1
+#if 0
             vector<vector<char>> subgraphAdjacencyMatrix; ////(subgraphAdjacencyList.size());
 ////            for (size_t index = 0; index < subgraphAdjacencyList.size(); ++index) {
 ////                subgraphAdjacencyMatrix[index].resize(subgraphAdjacencyList.size(), 0);

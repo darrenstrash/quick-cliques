@@ -19,7 +19,12 @@ ForwardSearchStaticOrderMISS::ForwardSearchStaticOrderMISS(vector<vector<char>> 
 : TesterMISQ(vAdjacencyMatrix, vAdjacencyArray)
 , onlyConsider(vAdjacencyArray.size())
 , vMarkedVertices(vAdjacencyArray.size(), false)
+, standardNodeCount(0)
+, nodeCountModulus(10)
+, runRecursiveBinarySearch(false)
 {
+    cout << "initial modulus=" << nodeCountModulus << endl << flush;
+    cout << "initial runbs=" << runRecursiveBinarySearch << endl << flush;
     SetName("forward-search-static-order-miss");
     R.reserve(m_AdjacencyArray.size());
 
@@ -40,11 +45,11 @@ void ForwardSearchStaticOrderMISS::InitializeOrder(std::vector<int> &P, std::vec
 {
 ////    OrderingTools::InitialOrderingMISR(m_AdjacencyArray, P, vColors, m_uMaximumCliqueSize);
     OrderingTools::InitialOrderingMISR(m_AdjacencyArray, isolates, P, vColors, m_uMaximumCliqueSize);
-    cout << "Initial Order: P: ";
-    for (int const p : P) {
-        cout << p << " ";
-    }
-    cout << endl << flush;
+////    cout << "Initial Order: P: ";
+////    for (int const p : P) {
+////        cout << p << " ";
+////    }
+////    cout << endl << flush;
 ////    OrderingTools::InitialOrderingMISR(m_AdjacencyMatrix, P, vColors, m_uMaximumCliqueSize);
 
 ////    OrderingTools::InitialOrderingReduction(isolates, vVertexOrder);
@@ -119,6 +124,18 @@ void ForwardSearchStaticOrderMISS::GetNewOrder(vector<int> &vNewVertexOrder, vec
 
 void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
 {
+////    bool bUseExactSearch(depth==0);
+    bool bUseExactSearch(false);
+
+    if (depth==0) {
+        cout << "modulus was " << nodeCountModulus << endl << flush;
+        cout << "rrbs was    " << runRecursiveBinarySearch << endl << flush;
+        nodeCountModulus = 10;
+        runRecursiveBinarySearch = false;
+    }
+
+    if (bUseExactSearch) { RunRecursiveStandard(P, vVertexOrder, cliques, vColors); return; }
+
     nodeCount++;
     vector<int> &vNewP(stackP[R.size()+1]);
     vector<int> &vNewColors(stackColors[R.size()+1]);
@@ -149,10 +166,14 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 
     vector<Reduction> vRemovedVerticesFromP;
 
+#if 0
     size_t startIndex = P.size();
     for (; startIndex > 0; --startIndex) {
         if (R.size() + vColors[startIndex-1] + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize) { break; }
     }
+#else
+    size_t startIndex(0);
+#endif // 0
 
     for (size_t pIndex = P.size(); pIndex > startIndex; pIndex--) {
         int const p(P[pIndex-1]);
@@ -179,14 +200,28 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 
     vector<int> const vOriginalVertexOrder(vVertexOrder);
 
-    while (P.size() != sizeOfOriginalP) { //// && !m_bTimedOut) {
-        cout << "Evaluating vertex " << P.size()+1 << "/" << sizeOfOriginalP << endl;
+    size_t minIndex(0), maxIndex(sizeOfOriginalP-1);
+
+    bool binarySearchPhase(true);
+////    while (P.size() != sizeOfOriginalP) { //// && !m_bTimedOut) {
+////        cout << "Evaluating vertex " << P.size()+1 << "/" << sizeOfOriginalP << endl;
+    size_t currentIndex(0);
+    while (true) { //// && !m_bTimedOut) {
 ////        cout << "P:";
 ////        for (int const p : P) {
 ////            cout << p << " ";
 ////        }
 ////        cout << endl << flush;
 
+        if (binarySearchPhase) {
+            currentIndex = (minIndex + maxIndex)/2;
+        }
+////        else {
+////            currentIndex++;
+////        }
+        /*if (depth == 0)*/ cout << depth << ": Evaluating index: " << currentIndex << " in [" << minIndex << "," << maxIndex << "]" << endl << flush;
+
+#if 0
         int const nextVertex(vRemovedVerticesFromP[uIndexIntoP-startIndex].GetVertex());
         P.push_back(nextVertex);
         vector<Reduction> vVertexReduction;
@@ -200,6 +235,23 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 ////            cout << neighbor << " ";
 ////        }
 ////        cout << endl << flush;
+#else
+        size_t const pSize(P.size());
+        if (currentIndex + 1 < pSize) { // need to shrink
+            vector<Reduction> const vReductionsForShrink(vRemovedVerticesFromP.begin() + currentIndex + 1, vRemovedVerticesFromP.begin() + pSize);
+            vector<Reduction> vReductionsUnused;
+            P.resize(currentIndex+1);
+            for (Reduction const &reduction : vReductionsForShrink) {
+                isolates.RemoveVertex(reduction.GetVertex(), vReductionsUnused);
+            }
+        } else if (currentIndex + 1 > pSize) { // need to grow
+            vector<Reduction> const vReductionsForGrow(vRemovedVerticesFromP.begin() + pSize, vRemovedVerticesFromP.begin() + currentIndex + 1);
+            isolates.ReplaceAllRemoved(vReductionsForGrow);
+            for (Reduction const &reduction : vReductionsForGrow) {
+                P.push_back(reduction.GetVertex());
+            }
+        }
+#endif // 0
 
         if (P.size() != isolates.GetInGraph().Size()) {
             cout << "ERROR: isolates is inconsistent with P. p-size=" << P.size() << ", isolates=" << isolates.GetInGraph().Size() << endl;
@@ -250,7 +302,7 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 ////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
 ////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
 
-#if 1
+#if 0
         size_t cliqueSize(0);
         OrderingTools::InitialOrderingMISR(m_AdjacencyArray, isolates, vNewP, vNewColors, cliqueSize);
         vNewVertexOrder = vNewP;
@@ -263,7 +315,9 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 ////            }
 ////        }
 #else
+////        isolates.SetAllowVertexFolds(true);
         GetNewOrder(vNewVertexOrder, vVertexOrder, P, -1);
+////        isolates.SetAllowVertexFolds(false);
 #endif // 0
 
 ////        vNewVertexOrder = vVertexOrder;
@@ -272,7 +326,7 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
 ////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
 
         if (!vNewVertexOrder.empty()) {
-#if 0
+#if 1
             vNewP.resize(vNewVertexOrder.size());
             vNewColors.resize(vNewVertexOrder.size());
 ////            Color(vNewVertexOrder/* evaluation order */, vNewP /* color order */, vNewColors);
@@ -290,9 +344,14 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
             depth++;
 ////            RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
             m_StartTime=clock();
+            standardNodeCount = 0;
+////            if (depth==0) {
+                nodeCountModulus = 10;
+////            }
             RunRecursiveStandard(vNewP, vNewVertexOrder, cliques, vNewColors);
-            if (m_bTimedOut) { cout << "    Timed out." << endl << flush; }
-            m_bTimedOut = false;
+            nodeCount+=standardNodeCount;
+////            if (m_bTimedOut) { cout << "    Timed out." << endl << flush; }
+////            m_bTimedOut = false;
             depth--;
         } else if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
             cliques.back().clear();
@@ -326,6 +385,36 @@ void ForwardSearchStaticOrderMISS::RunRecursive(vector<int> &P, vector<int> &vVe
                 timeToLargestClique = clock() - startTime;
             }
         }
+
+        if (binarySearchPhase) {
+            if (minIndex == maxIndex) {
+                ////            break;
+                binarySearchPhase = false;
+            }
+
+            if (currentIndex == minIndex) {
+                minIndex = maxIndex;
+                if (m_bTimedOut) {
+                    binarySearchPhase = false;
+                    ////                break;
+                }
+            } else if (m_bTimedOut) {
+                maxIndex = currentIndex;
+            } else {
+                minIndex = currentIndex;
+            }
+        }
+        
+        if (!binarySearchPhase) {
+////            if (currentIndex == uOriginalPSize-1) break;
+            break;
+////            if (currentIndex == uOriginalPSize-1 && runRecursiveBinarySearch) break;
+////            currentIndex = uOriginalPSize-1;
+////            runRecursiveBinarySearch=true;
+////            cout << "Setting run recursive BS to true" << endl;
+        }
+
+        m_bTimedOut = false;
     }
 
 ////            cout << __LINE__ << endl;
@@ -366,7 +455,14 @@ void ForwardSearchStaticOrderMISS::ProcessOrderAfterRecursion(std::vector<int> &
 
 void ForwardSearchStaticOrderMISS::RunRecursiveStandard(vector<int> &P, vector<int> &vVertexOrder, list<list<int>> &cliques, vector<int> &vColors)
 {
-    nodeCount++;
+
+////    bool const bUseExactSearch(depth <= 1); // evaluate all candidates at this level...
+////    bool const bUseExactSearch(depth == 1); // evaluate all candidates at this level...
+    bool const bUseExactSearch(runRecursiveBinarySearch && depth==1); // evaluate all candidates at this level...
+////    if (runRecursiveBinarySearch )
+////        cout << "run recursive BS is true" << endl;
+
+    standardNodeCount++;
     vector<int> &vNewP(stackP[R.size()+1]);
     vector<int> &vNewColors(stackColors[R.size()+1]);
     vector<int> &vNewVertexOrder(stackOrder[R.size()+1]);
@@ -393,16 +489,26 @@ void ForwardSearchStaticOrderMISS::RunRecursiveStandard(vector<int> &P, vector<i
 
     size_t const uOriginalPSize(P.size());
 
-    if (nodeCount%10000 == 0) {
+////    if (standardNodeCount%10 == 0) {
+
+////    cout << "standardNodeCount=" << standardNodeCount << " nodeCountModulus=" << nodeCountModulus << endl << flush;
+    if (standardNodeCount%nodeCountModulus == 0) {
+        if (nodeCountModulus < 10000) {
+            nodeCountModulus <<= 1;
+            if (nodeCountModulus > 10000) nodeCountModulus = 10000;
+////            cout << "Update modulus to " << nodeCountModulus << endl << flush;
+        }
 ////    if (nodeCount%100 == 0) {
         if (!m_bQuiet) {
-            cout << "Evaluated " << nodeCount << " nodes. " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
+            cout << "Evaluated " << standardNodeCount << " nodes. " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
             PrintState();
         }
-        if (m_TimeOut > 0 && (clock() - m_StartTime > m_TimeOut)) {
+        if (!bUseExactSearch && m_TimeOut > 0 && (clock() - m_StartTime > m_TimeOut)) {
             m_bTimedOut = true;
+////            cout << __LINE__ << ": Timed out" << endl;
             return;
         }
+
     }
 
 ////    if (depth <=1)
@@ -586,21 +692,20 @@ void ForwardSearchStaticOrderMISS::RunRecursiveStandard(vector<int> &P, vector<i
 ////                RunRecursiveNoIsolates(vNewP, vNewVertexOrder, cliques, vNewColors);
 ////                depth--;
 ////            } else {
-#ifdef PREPRUNE
-                if (R.size() + vNewColors.back() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
-                    depth++;
-                    RunRecursiveStandard(vNewP, vNewVertexOrder, cliques, vNewColors);
-                    depth--;
-                }
-#else
                 depth++;
                 size_t const savedSize(isolates.GetInGraph().Size());
-                RunRecursiveStandard(vNewP, vNewVertexOrder, cliques, vNewColors);
+                if (m_bTimedOut && bUseExactSearch) m_bTimedOut = false;
+                if (bUseExactSearch) {
+                    cout << __LINE__ << ": running binary search..." << endl << flush;
+                    RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
+                }
+                else RunRecursiveStandard(vNewP, vNewVertexOrder, cliques, vNewColors);
+////                if (m_bTimedOut)
+////                    cout << __LINE__ << ": Timed Out" << endl;
                 if (savedSize != isolates.GetInGraph().Size()) {
                     cout << "ERROR: Graph changed size!" << endl << flush;
                 }
                 depth--;
-#endif // PREPRUNE
 ////            }
         } else if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
             cliques.back().clear();
@@ -1035,8 +1140,11 @@ void ForwardSearchStaticOrderMISS::RunRecursiveStandard(vector<int> &P, vector<i
 #endif // MIN_COMPONENT
 
 
-    while (!P.empty() && !pivot && !m_bTimedOut) {
+    while (!P.empty() && !pivot && (bUseExactSearch || (!m_bTimedOut && !bUseExactSearch))) {
         // if one criteria is slow, use the other one.
+
+        if (bUseExactSearch) {cout << "Evaluating vertex " << P.size() << "/" << uOriginalPSize << " in reverse order..." << endl << flush; }
+////        if (depth <= 0) { cout << "Evaluating vertex " << P.size() << "/" << uOriginalPSize << " in reverse order..." << endl << flush; }
 
 #if defined(MIN_SUBPROBLEM)
     bool selectMinSubproblem(depth < 3);//// && P.size() > 1000);
@@ -1088,7 +1196,9 @@ void ForwardSearchStaticOrderMISS::RunRecursiveStandard(vector<int> &P, vector<i
         }
 
         int const largestColor(vColors.back());
-        if (R.size() + largestColor + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize /*&& !selectMinNeighbors && !selectMinComponent*/) {
+
+        // only prune if the level below us didn't timed out, otherwise we haven't fully evaluated some subgraph...
+        if (/*(!bUseExactSearch || (bUseExactSearch && !m_bTimedOut)) &&*/  R.size() + largestColor + isolates.GetFoldedVertexCount() <= m_uMaximumCliqueSize /*&& !selectMinNeighbors && !selectMinComponent*/) {
 ////            cout << __LINE__ << endl;
 ////            cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
 ////            cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
@@ -1364,22 +1474,21 @@ void ForwardSearchStaticOrderMISS::RunRecursiveStandard(vector<int> &P, vector<i
 ////                RunRecursiveNoIsolates(vNewP, vNewVertexOrder, cliques, vNewColors);
 ////                depth--;
 ////            } else {
-#ifdef PREPRUNE
-                if (R.size() + vNewColors.back() > m_uMaximumCliqueSize) {
-                    depth++;
-                    RunRecursiveStandard(vNewP, vNewVertexOrder, cliques, vNewColors);
-////                    cout << __LINE__ << endl;
-////                    cout << "P        " << ((find(P.begin(), P.end(), 201) != P.end()) ? "contains " : "does not contain ") << 201 << endl;
-////                    cout << "Isolates " << (isolates.GetInGraph().Contains(201) ? "contains " : "does not contain ") << 201 << endl;
-                    depth--;
-                }
-#else
                 depth++;
-                RunRecursiveStandard(vNewP, vNewVertexOrder, cliques, vNewColors);
+////                RunRecursiveStandard(vNewP, vNewVertexOrder, cliques, vNewColors);
+                if (m_bTimedOut && bUseExactSearch) m_bTimedOut = false;
+                if (bUseExactSearch) {
+                    cout << __LINE__ << ": running binary search..." << endl << flush;
+                    RunRecursive(vNewP, vNewVertexOrder, cliques, vNewColors);
+                }
+                else RunRecursiveStandard(vNewP, vNewVertexOrder, cliques, vNewColors);
+////                if (m_bTimedOut)
+////                    cout << __LINE__ << ": Timed Out" << endl;
                 depth--;
-#endif // PREPRUNE
 ////            }
-        } else if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
+        }
+
+        if (R.size() + isolates.GetFoldedVertexCount() > m_uMaximumCliqueSize) {
             cliques.back().clear();
             cliques.back().insert(cliques.back().end(), R.begin(), R.end());
             ExecuteCallBacks(cliques.back());
@@ -1411,6 +1520,7 @@ void ForwardSearchStaticOrderMISS::RunRecursiveStandard(vector<int> &P, vector<i
                 timeToLargestClique = clock() - startTime;
             }
         }
+
     }
 
 ////            cout << __LINE__ << endl;
