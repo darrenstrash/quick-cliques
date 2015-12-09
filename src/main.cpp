@@ -457,7 +457,7 @@ int main(int argc, char** argv)
     auto verifyIndependentSetMatrix = [&vAdjacencyMatrix](list<int> const &clique) {
         bool const isIS = CliqueTools::IsIndependentSet(vAdjacencyMatrix, clique, true /* verbose */);
         if (!isIS) {
-            cout << "ERROR: Set " << (isIS ? "is" : "is not" ) << " a clique!" << endl;
+            cout << "ERROR: Set " << (isIS ? "is" : "is not" ) << " an independent set!" << endl;
         }
     };
 
@@ -465,7 +465,7 @@ int main(int argc, char** argv)
         cout << "Found clique of size " << clique.size() << endl << flush;
     };
 
-    pAlgorithm->AddCallBack(printCliqueSize);
+////    pAlgorithm->AddCallBack(printCliqueSize);
 ////    pAlgorithm->AddCallBack(printClique);
 
     if (!bComputeAdjacencyMatrix) {
@@ -473,7 +473,7 @@ int main(int argc, char** argv)
 ////        pAlgorithm->AddCallBack(verifyMaximalCliqueArray);
     } else {
 ////        pAlgorithm->AddCallBack(verifyCliqueMatrix);
-        pAlgorithm->AddCallBack(verifyIndependentSetMatrix);
+////        pAlgorithm->AddCallBack(verifyIndependentSetMatrix);
     }
 
     // Run algorithm
