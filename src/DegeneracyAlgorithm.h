@@ -58,23 +58,16 @@ public:
     DegeneracyAlgorithm           (DegeneracyAlgorithm const &) = delete;
     DegeneracyAlgorithm& operator=(DegeneracyAlgorithm const &) = delete;
 
-private:
-    std::vector<std::list<int>> const &m_AdjacencyList;
-};
-
-void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
-                                               #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                               std::list<std::list<int> &cliques,
-                                               #endif
+    void listAllMaximalCliquesDegeneracyRecursive(long* cliqueCount,
                                                std::list<int> &partialClique, 
                                                int* vertexSets, int* vertexLookup,
                                                int** neighborsInP, int* numNeighbors,
                                                int beginX, int beginP, int beginR);
 
-long listAllMaximalCliquesDegeneracy( std::vector<std::list<int>> const &adjList,
-                                      #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                      std::list<std::list<int>> &cliques,
-                                      #endif
-                                      int size );
+    long listAllMaximalCliquesDegeneracy(std::vector<std::list<int>> const &adjList, int size);
+
+private:
+    std::vector<std::list<int>> const &m_AdjacencyList;
+};
 
 #endif

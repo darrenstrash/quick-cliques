@@ -84,9 +84,6 @@ long TomitaAlgorithm::Run(list<list<int>> &cliques)
 {
     return listAllMaximalCliquesMatrix(
                 m_ppAdjacencyMatrix,
-#ifdef RETURN_CLIQUES_ONE_BY_ONE
-                cliques,
-#endif
                 m_iNumVertices);
 }
 
@@ -94,9 +91,6 @@ long TomitaAlgorithm::Run(list<list<int>> &cliques)
            by Tomita et al. (TCS 2006). 
  
     \param adjacencyMatrix An input graph in the adjacency matrix format.
-
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
 
     \param numVertices The number of vertices in the graph.
 
@@ -106,10 +100,7 @@ long TomitaAlgorithm::Run(list<list<int>> &cliques)
 ////static unsigned long largestDifference(0);
 ////static unsigned long numLargeJumps(0);
 
-long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
-                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                  list<list<int>> &cliques,
-                                  #endif
+long TomitaAlgorithm::listAllMaximalCliquesMatrix( char** adjacencyMatrix,
                                   int    numVertices )
 {
 
@@ -141,9 +132,6 @@ long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
     long stepsSinceLastReportedClique = 0;
 
     listAllMaximalCliquesMatrixRecursive( &cliqueCount,
-                                          #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                          cliques,
-                                          #endif
                                           partialClique, 
                                           adjacencyMatrix,
                                           vertexSets, vertexLookup, numVertices,
@@ -188,7 +176,7 @@ long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
 
 */
 
-int findBestPivotNonNeighborsMatrix( int** pivotNonNeighbors, int* numNonNeighbors,
+int TomitaAlgorithm::findBestPivotNonNeighborsMatrix( int** pivotNonNeighbors, int* numNonNeighbors,
                                      char** adjacencyMatrix, 
                                      int* vertexSets, int* vertexLookup, int size,
                                      int beginX, int beginP, int beginR )
@@ -381,9 +369,6 @@ inline void moveFromRToXMatrix( int vertex,
     \param cliqueCount A pointer to the number of maximal cliques computed 
                        thus far.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param partialClique A linked list storing R, the partial clique for this
                          recursive call. 
 
@@ -404,10 +389,7 @@ inline void moveFromRToXMatrix( int vertex,
 
 */
 
-void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
-                                           #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                           list<list<int>> &cliques,
-                                           #endif
+void TomitaAlgorithm::listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
                                            list<int> &partialClique, 
                                            char** adjacencyMatrix,
                                            int* vertexSets, int* vertexLookup, int size,
@@ -428,11 +410,8 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
 ////        }
 ////
 ////        stepsSinceLastReportedClique = 0;
-        processClique( 
-                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                       cliques,
-                       #endif
-                       partialClique );
+        ExecuteCallBacks(partialClique);
+        processClique(partialClique);
 
         return;
     }
@@ -481,9 +460,6 @@ void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
 
         // recursively compute maximal cliques with new sets R, P and X
         listAllMaximalCliquesMatrixRecursive( cliqueCount, 
-                                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                              cliques,
-                                              #endif
                                               partialClique,
                                               adjacencyMatrix,
                                               vertexSets, vertexLookup, size,

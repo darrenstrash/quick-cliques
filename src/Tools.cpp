@@ -138,7 +138,7 @@ void printArrayOfLinkedLists(vector<list<int>> const &arrayOfLists, int size)
         if (!arrayOfLists[i].empty())
         {
             printf("%d:", i);
-            printListAbbv(arrayOfLists[i], &printInt);
+            printListAbbv(arrayOfLists[i], &Tools::printInt);
         }
         i++;
     }
@@ -168,7 +168,7 @@ void printClique(int* clique)
     \param integer an integer cast to a void*
 */
 
-void printInt(int integer)
+void Tools::printInt(int integer)
 {
     printf("%d", integer);
 }
@@ -442,23 +442,14 @@ vector<list<int>> readInGraphAdjListDimacs(int &n, int &m, string const &fileNam
 
     \param adjMatrix the input graph in the adjacency matrix format.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param n the number of vertices in the input graph
 
 */
 
 void runAndPrintStatsMatrix(long (*function)(char**,
-                                             #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                             list<list<int>> &,
-                                             #endif
                                              int),
                             const char* algName,
                             char** adjMatrix,
-                            #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                            list<list<int>> const &cliques,
-                            #endif
                             int n )
 {
     fprintf(stderr, "%s: ", algName);
@@ -466,11 +457,7 @@ void runAndPrintStatsMatrix(long (*function)(char**,
 
     clock_t start = clock();
 
-    long cliqueCount = function(adjMatrix,
-                                #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                cliques,
-                                #endif
-                                n);
+    long cliqueCount = function(adjMatrix, n);
 
     clock_t end = clock();
 
@@ -499,68 +486,6 @@ void RunAndPrintStats(Algorithm *pAlgorithm, list<list<int>> &cliques, bool cons
     fflush(stderr);
 }
 
-
-/*! \brief execute an maximal clique listing algorithm
-           that takes an adjacency list as input, time it,
-           and print the number of maximal cliques found
-           along with time information.
-
-    \param function a function that computes all maximal cliques
-                    and returns the number of maximal cliques found
-
-    \param algName a zero-terminated character string that will
-                   be printed with the statistics of the algorithm
-                   run.
-
-    \param adjListLinked the input graph in the array of linked lists
-                         (adjacency list) format.
-
-    \param adjListArray the input graph in the array of arrays
-                         (adjacency list) format.
-
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
-    \param degree An array, indexed by vertex, containing the degree of that vertex.
-
-    \param n the number of vertices in the input graph
-
-*/
-
-void runAndPrintStatsListList( long (*function)(vector<list<int>> const &, 
-                                                int**, 
-                                                #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                list<list<int>> &,
-                                                #endif
-                                                int*, int),
-                               const char* algName,
-                               vector<list<int>> const &adjListLinked,
-                               int** adjListArray,
-                               #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                               list<list<int>> &cliques,
-                               #endif
-                               int* degree,
-                               int n )
-{
-    fprintf(stderr, "%s: ", algName);
-    fflush(stderr);
-
-    clock_t const start = clock();
-
-    long const cliqueCount = function(adjListLinked, 
-                                      adjListArray, 
-                                      #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                      cliques,
-                                      #endif
-                                      degree, n);
-
-    clock_t const end = clock();
-
-    fprintf(stderr, "%ld maximal cliques, ", cliqueCount);
-    fprintf(stderr, "in %f seconds\n", (double)(end-start)/(double)(CLOCKS_PER_SEC));
-    fflush(stderr);
-}
-
 /*! \brief Print the items in the linked list.
 
     \param linkedList A linked list.
@@ -569,17 +494,15 @@ void runAndPrintStatsListList( long (*function)(vector<list<int>> const &,
                      the linked list.
 */
 
-void printList(list<int> const &linkedList, void (*printFunc)(int))
+void Tools::printList(list<int> const &linkedList, void (*printFunc)(int))
 {
 #ifdef DEBUG
     printf("printList...\n");
 #endif
     int count = 0;
-    for (int const value : linkedList)
-    {
+    for (int const value : linkedList) {
         printFunc(value);
-        if(count != linkedList.size())
-        {
+        if (count != linkedList.size()) {
             printf(" ");
         }
     }

@@ -52,8 +52,6 @@ void printArrayWithIndexArrows(int* array, int size, int index1, int index2, int
 
 void printArrayOfLinkedLists(std::vector<std::list<int>> const &listOfLists, int size);
 
-void printInt(int integer);
-
 void destroyCliqueResults(std::list<std::list<int>> &cliques);
 
 std::vector<std::list<int>> readInGraphAdjList(int* n, int* m);
@@ -62,36 +60,12 @@ std::vector<std::list<int>> readInGraphAdjList(int &n, int &m, std::string const
 std::vector<std::list<int>> readInGraphAdjListEdgesPerLine(int &n, int &m, std::string const &fileName);
 
 void runAndPrintStatsMatrix(long (*function)(char**,
-                                             #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                             std::list<std::list<int>> &,
-                                             #endif
                                              int),
                             const char* algName,
                             char** adjMatrix,
-                            #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                            std::list<std::list<int>> &cliques,
-                            #endif
                             int n );
 
 void RunAndPrintStats(Algorithm* pAlgorithm, std::list<std::list<int>> &cliques, bool const outputLatex);
-
-void runAndPrintStatsListList( long (*function)(std::vector<std::list<int>> const &, 
-                                                int**, 
-                                                #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                std::list<std::list> &,
-                                                #endif
-                                                int*, int),
-                               const char* algName,
-                               std::vector<std::list<int>> const &adjListLinked,
-                               int** adjListArray,
-                               #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                               std::list<std::list<int>> &cliques,
-                               #endif
-                               int* degree,
-                               int n );
-
-
-void printList(std::list<int> const &linkedList, void (*printFunc)(int));
 
 void printListAbbv(std::list<int> const &linkedList, void (*printFunc)(int));
 
@@ -99,29 +73,14 @@ void printListAbbv(std::list<int> const &linkedList, void (*printFunc)(int));
            one of several formats and/or adding the 
            clique to a linked list.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param clique the clique to add to the linked list
 
 */
 
-inline void processClique(
-                          #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                          std::list<std::list<int>> &cliques,
-                          #endif
-                          std::list<int> const &clique)
+inline void processClique(std::list<int> const &clique)
 {
     #ifdef PRINT_CLIQUES_TOMITA_STYLE
     printf("c ");
-    #endif
-
-    #ifdef PRINT_CLIQUES_ONE_BY_ONE
-    printList(clique, &printInt);
-    #endif
-
-    #ifdef RETURN_CLIQUES_ONE_BY_ONE
-    cliques.push_back(clique);
     #endif
 }
 
@@ -139,6 +98,8 @@ bool IsMaximalClique(std::list<int> const &clique, std::vector<std::vector<int>>
 
 namespace Tools
 {
+    void printList(std::list<int> const &linkedList, void (*printFunc)(int));
+    void printInt(int integer);
     std::vector<int> ReadMetisOrdering(std::string const &filename);
     std::string GetTimeInSeconds(clock_t delta, bool brackets=true);
 };

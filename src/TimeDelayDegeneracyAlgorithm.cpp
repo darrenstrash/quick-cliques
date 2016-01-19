@@ -104,9 +104,6 @@ long TimeDelayDegeneracyAlgorithm::Run(list<list<int>> &cliques)
 {
     return listAllMaximalCliquesTimeDelayDegeneracy(
                 m_AdjacencyList,
-#ifdef RETURN_CLIQUES_ONE_BY_ONE
-                cliques,
-#endif
                 m_AdjacencyList.size());
 }
 
@@ -401,9 +398,6 @@ inline void fillInPandXForRecursiveCallTimeDelayDegeneracy( int vertex, int orde
     \param adjList An array of linked lists, representing the input graph in the
                    "typical" adjacency list format.
  
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param degree An array, indexed by vertex, containing the degree of that vertex. (not currently used)
 
     \param size The number of vertices in the graph.
@@ -417,10 +411,7 @@ static unsigned long stepsSinceLastReportedClique(0);
 static vector<bool> vMarkedNeighbors;
 static clock_t       timeTestingDominancy(0);
 
-long listAllMaximalCliquesTimeDelayDegeneracy( vector<list<int>> const &adjList, 
-                                      #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                      list<list<int>> &cliques,
-                                      #endif
+long TimeDelayDegeneracyAlgorithm::listAllMaximalCliquesTimeDelayDegeneracy( vector<list<int>> const &adjList, 
                                       int size)
 {
     // vertex sets are stored in an array like this:
@@ -482,9 +473,6 @@ long listAllMaximalCliquesTimeDelayDegeneracy( vector<list<int>> const &adjList,
         // recursively compute maximal cliques containing vertex, some of its
         // later neighbors, and avoiding earlier neighbors
         listAllMaximalCliquesTimeDelayDegeneracyRecursive( &cliqueCount,
-                                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  cliques,
-                                                  #endif
                                                   partialClique, 
                                                   vertexSets, vertexLookup,
                                                   neighborsInP, numNeighbors,
@@ -816,9 +804,6 @@ void SwapVertexWithLargestDegreeInP(vector<int> &myCandidatesToIterateThrough, i
     \param cliqueCount A pointer to the number of maximal cliques computed 
                        thus far.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param partialClique A linked list storing R, the partial clique for this
                          recursive call. 
 
@@ -842,10 +827,7 @@ void SwapVertexWithLargestDegreeInP(vector<int> &myCandidatesToIterateThrough, i
 
 */
 
-void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
-                                               #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                               list<list<int>> &cliques,
-                                               #endif
+void TimeDelayDegeneracyAlgorithm::listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
                                                list<int> &partialClique, 
                                                int* vertexSets, int* vertexLookup,
                                                int** neighborsInP, int* numNeighbors,
@@ -867,11 +849,8 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
 
         stepsSinceLastReportedClique = 0;
 
-        processClique( 
-                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                       cliques,
-                       #endif
-                       partialClique );
+        ExecuteCallBacks(partialClique);
+        processClique(partialClique);
 
         return;
     }
@@ -948,9 +927,6 @@ void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
 
         // recursively compute maximal cliques with new sets R, P and X
         listAllMaximalCliquesTimeDelayDegeneracyRecursive( cliqueCount,
-                                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  cliques,
-                                                  #endif
                                                   partialClique, 
                                                   vertexSets, vertexLookup,
                                                   neighborsInP, numNeighbors,

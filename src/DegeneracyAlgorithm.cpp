@@ -106,12 +106,7 @@ DegeneracyAlgorithm::~DegeneracyAlgorithm()
 
 long DegeneracyAlgorithm::Run(list<list<int>> &cliques)
 {
-    return listAllMaximalCliquesDegeneracy(
-                m_AdjacencyList,
-#ifdef RETURN_CLIQUES_ONE_BY_ONE
-                cliques,
-#endif
-                m_AdjacencyList.size());
+    return listAllMaximalCliquesDegeneracy(m_AdjacencyList, m_AdjacencyList.size());
 }
 
 
@@ -416,9 +411,6 @@ inline void fillInPandXForRecursiveCallDegeneracy( int vertex, int orderNumber,
     \param adjList An array of linked lists, representing the input graph in the
                    "typical" adjacency list format.
  
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param degree An array, indexed by vertex, containing the degree of that vertex. (not currently used)
 
     \param size The number of vertices in the graph.
@@ -430,11 +422,7 @@ static unsigned long largestDifference(0);
 static unsigned long numLargeJumps;
 static unsigned long stepsSinceLastReportedClique(0);
 
-long listAllMaximalCliquesDegeneracy( vector<list<int>> const &adjList, 
-                                      #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                      list<list<int>> &cliques,
-                                      #endif
-                                      int size)
+long DegeneracyAlgorithm::listAllMaximalCliquesDegeneracy(vector<list<int>> const &adjList, int size)
 {
     // vertex sets are stored in an array like this:
     // |--X--|--P--|
@@ -496,10 +484,7 @@ long listAllMaximalCliquesDegeneracy( vector<list<int>> const &adjList,
 
         // recursively compute maximal cliques containing vertex, some of its
         // later neighbors, and avoiding earlier neighbors
-        listAllMaximalCliquesDegeneracyRecursive( &cliqueCount,
-                                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  cliques,
-                                                  #endif
+        listAllMaximalCliquesDegeneracyRecursive(&cliqueCount,
                                                   partialClique, 
                                                   vertexSets, vertexLookup,
                                                   neighborsInP, numNeighbors,
@@ -730,9 +715,6 @@ inline void moveFromRToXDegeneracy( int vertex,
     \param cliqueCount A pointer to the number of maximal cliques computed 
                        thus far.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param partialClique A linked list storing R, the partial clique for this
                          recursive call. 
 
@@ -756,10 +738,7 @@ inline void moveFromRToXDegeneracy( int vertex,
 
 */
 
-void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
-                                               #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                               list<list<int>> &cliques,
-                                               #endif
+void DegeneracyAlgorithm::listAllMaximalCliquesDegeneracyRecursive(long* cliqueCount,
                                                list<int> &partialClique, 
                                                int* vertexSets, int* vertexLookup,
                                                int** neighborsInP, int* numNeighbors,
@@ -783,11 +762,8 @@ void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
 
         stepsSinceLastReportedClique = 0;
 
-        processClique( 
-                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                       cliques,
-                       #endif
-                       partialClique );
+        ExecuteCallBacks(partialClique);
+        processClique(partialClique);
 
         return;
     }
@@ -833,14 +809,11 @@ void listAllMaximalCliquesDegeneracyRecursive( long* cliqueCount,
                            &newBeginX, &newBeginP, &newBeginR);
 
         // recursively compute maximal cliques with new sets R, P and X
-        listAllMaximalCliquesDegeneracyRecursive( cliqueCount,
-                                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  cliques,
-                                                  #endif
-                                                  partialClique, 
-                                                  vertexSets, vertexLookup,
-                                                  neighborsInP, numNeighbors,
-                                                  newBeginX, newBeginP, newBeginR);
+        listAllMaximalCliquesDegeneracyRecursive(cliqueCount,
+                                                 partialClique, 
+                                                 vertexSets, vertexLookup,
+                                                 neighborsInP, numNeighbors,
+                                                 newBeginX, newBeginP, newBeginR);
 
         #ifdef PRINT_CLIQUES_TOMITA_STYLE
         printf("b ");

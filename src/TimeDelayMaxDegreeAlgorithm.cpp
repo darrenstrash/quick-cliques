@@ -84,9 +84,6 @@ long TimeDelayMaxDegreeAlgorithm::Run(list<list<int>> &cliques)
 {
     return listAllMaximalCliquesTimeDelayMaxDegree(
                 m_AdjacencyList,
-#ifdef RETURN_CLIQUES_ONE_BY_ONE
-                cliques,
-#endif
                 m_AdjacencyList.size());
 }
 
@@ -99,9 +96,6 @@ long TimeDelayMaxDegreeAlgorithm::Run(list<list<int>> &cliques)
 
     \param adjacencyList an array of arrays, representing the input graph in a more
                          compact and cache-friendly adjacency list format.
-
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
 
     \param size The number of vertices in the graph.
 
@@ -180,10 +174,7 @@ void FillInSetsAndLookupTables(vector<vector<int>> const &subgraphInducedByVerte
     }
 }
 
-long listAllMaximalCliquesTimeDelayMaxDegree( vector<vector<int>> const &adjacencyList, 
-                                         #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                         list<list<int> &cliques,
-                                         #endif
+long TimeDelayMaxDegreeAlgorithm::listAllMaximalCliquesTimeDelayMaxDegree( vector<vector<int>> const &adjacencyList, 
                                          int size)
 {
 
@@ -224,9 +215,6 @@ long listAllMaximalCliquesTimeDelayMaxDegree( vector<vector<int>> const &adjacen
         partialClique.push_back(vertex);
 
         listAllMaximalCliquesTimeDelayMaxDegreeRecursive(&cliqueCount,
-                                                     #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                     cliques,
-                                                     #endif
                                                      partialClique, 
                                                      subgraphInducedByVertex,
                                                      vertexSets, vertexLookup, inducedSubgraphSize,
@@ -369,7 +357,7 @@ void moveDominatedVerticesFromNonNeighborstoDMaxDegree(std::vector<std::vector<i
 
  */
 
-int findBestPivotNonNeighborsTimeDelayMaxDegree( int** pivotNonNeighbors, int* numNonNeighbors,
+int TimeDelayMaxDegreeAlgorithm::findBestPivotNonNeighborsTimeDelayMaxDegree( int** pivotNonNeighbors, int* numNonNeighbors,
                                             vector<vector<int>> const &adjacencyList,
                                             int* vertexSets, int* vertexLookup, int size,
                                             int beginX, int beginD, int beginP, int beginR )
@@ -470,9 +458,6 @@ int findBestPivotNonNeighborsTimeDelayMaxDegree( int** pivotNonNeighbors, int* n
     \param cliqueCount A pointer to the number of maximal cliques computed 
                        thus far.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param partialClique A linked list storing R, the partial clique for this
                          recursive call. 
 
@@ -500,10 +485,7 @@ static bool printDebug(false);
 static unsigned long recursionNode(1);
 static unsigned long recursionId(0);
 
-void listAllMaximalCliquesTimeDelayMaxDegreeRecursive( long* cliqueCount,
-                                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  list<list<int>> &cliques,
-                                                  #endif
+void TimeDelayMaxDegreeAlgorithm::listAllMaximalCliquesTimeDelayMaxDegreeRecursive( long* cliqueCount,
                                                   list<int> &partialClique, 
                                                   vector<vector<int>> const &adjacencyList,
                                                   int* vertexSets, int* vertexLookup, int size,
@@ -529,11 +511,8 @@ void listAllMaximalCliquesTimeDelayMaxDegreeRecursive( long* cliqueCount,
 
         stepsSinceLastReportedClique = 0;
 
-        processClique( 
-                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                       cliques,
-                       #endif
-                       partialClique );
+        ExecuteCallBacks(partialClique);
+        processClique(partialClique);
 
 ////        cout << __LINE__  << ": Done in node " << currentRecursionNode << endl;
         return;
@@ -632,9 +611,6 @@ void listAllMaximalCliquesTimeDelayMaxDegreeRecursive( long* cliqueCount,
 
         // recursively compute maximal cliques with new sets R, P and X
         listAllMaximalCliquesTimeDelayMaxDegreeRecursive( cliqueCount,
-                                                     #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                     cliques,
-                                                     #endif
                                                      partialClique,
                                                      adjacencyList,
                                                      vertexSets, vertexLookup, size,

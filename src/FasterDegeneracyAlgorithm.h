@@ -58,23 +58,17 @@ public:
     FasterDegeneracyAlgorithm           (FasterDegeneracyAlgorithm const &) = delete;
     FasterDegeneracyAlgorithm& operator=(FasterDegeneracyAlgorithm const &) = delete;
 
-private:
-    std::vector<std::vector<int>> &m_AdjacencyArray;
-};
-
-void listAllMaximalCliquesFasterDegeneracyRecursive( long* cliqueCount,
-                                               #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                               std::list<std::list<int> &cliques,
-                                               #endif
+    void listAllMaximalCliquesFasterDegeneracyRecursive(long* cliqueCount,
                                                std::list<int> &partialClique, 
                                                int* vertexSets, int* vertexLookup,
                                                std::vector<std::vector<int>> &neighborsInP, int* numNeighbors,
                                                int beginX, int beginP, int beginR);
 
-long listAllMaximalCliquesFasterDegeneracy( std::vector<std::vector<int>> &adjArray,
-                                      #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                      std::list<std::list<int>> &cliques,
-                                      #endif
-                                      int size );
+    long listAllMaximalCliquesFasterDegeneracy(std::vector<std::vector<int>> &adjArray, int size);
+
+
+private:
+    std::vector<std::vector<int>> &m_AdjacencyArray;
+};
 
 #endif //_DJS_FASTER_DEGENERACY_ALGORITHM_H_

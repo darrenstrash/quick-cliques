@@ -431,13 +431,14 @@ int main(int argc, char** argv)
         pAlgorithm = new BronKerboschAlgorithm(pSets);
     }
 
+
+#ifdef PRINT_CLIQUES_ONE_BY_ONE
     auto printClique = [](list<int> const &clique) {
-        cout << "Clique: ";
-        for (int const vertex : clique) {
-            cout << vertex << " ";
-        }
-        cout << endl;
+        Tools::printList(clique, &Tools::printInt);
     };
+
+    pAlgorithm->AddCallBack(printClique);
+#endif //PRINT_CLIQUES_ONE_BY_ONE
 
     auto verifyMaximalCliqueArray = [&adjacencyArray](list<int> const &clique) {
 ////        bool const isIS = CliqueTools::IsIndependentSet(adjacencyArray, clique, true /* verbose */);
@@ -478,6 +479,14 @@ int main(int argc, char** argv)
 
     // Run algorithm
     list<list<int>> cliques;
+
+#ifdef RETURN_CLIQUES_ONE_BY_ONE
+    auto storeCliqueInList = [&cliques](list<int> const &clique) {
+        cliques.push_back(clique);
+    };
+    pAlgorithm->AddCallBack(storeCliqueInList);
+#endif //RETURN_CLIQUES_ONE_BY_ONE
+
     RunAndPrintStats(pAlgorithm, cliques, bOutputLatex);
 
     cliques.clear();

@@ -105,9 +105,6 @@ long HybridAlgorithm::Run(list<list<int>> &cliques)
 {
     return listAllMaximalCliquesHybrid(
                 m_AdjacencyList,
-#ifdef RETURN_CLIQUES_ONE_BY_ONE
-                cliques,
-#endif
                 m_pDegree,
                 m_AdjacencyList.size());
 }
@@ -392,9 +389,6 @@ inline void fillInPandXForRecursiveCallHybrid( int vertex, int orderNumber,
     \param adjList An array of linked lists, representing the input graph in the
                    "typical" adjacency list format.
  
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param degree An array, indexed by vertex, containing the degree of that vertex. (not currently used)
 
     \param size The number of vertices in the graph.
@@ -403,10 +397,7 @@ inline void fillInPandXForRecursiveCallHybrid( int vertex, int orderNumber,
 
 */
 
-long listAllMaximalCliquesHybrid( vector<list<int>> const &adjList, 
-                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                  list<list<int>> &cliques,
-                                  #endif
+long HybridAlgorithm::listAllMaximalCliquesHybrid( vector<list<int>> const &adjList, 
                                   int* degree, 
                                   int size)
 {
@@ -465,9 +456,6 @@ long listAllMaximalCliquesHybrid( vector<list<int>> const &adjList,
         // recursively compute maximal cliques containing vertex, some of its
         // later neighbors, and avoiding earlier neighbors
         listAllMaximalCliquesHybridRecursive( &cliqueCount,
-                                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                              cliques,
-                                              #endif
                                               partialClique, 
                                               orderingArray,
                                               vertexSets, vertexLookup,
@@ -676,9 +664,6 @@ inline void moveFromRToXHybrid( int vertex,
     \param cliqueCount A pointer to the number of maximal cliques computed 
                        thus far.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param partialClique A linked list storing R, the partial clique for this
                          recursive call. 
 
@@ -702,10 +687,7 @@ inline void moveFromRToXHybrid( int vertex,
 
  */
 
-void listAllMaximalCliquesHybridRecursive( long* cliqueCount,
-                                           #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                           list<list<int>> &cliques,
-                                           #endif
+void HybridAlgorithm::listAllMaximalCliquesHybridRecursive( long* cliqueCount,
                                            list<int> &partialClique, 
                                            NeighborListArray** orderingArray,
                                            int* vertexSets, int* vertexLookup,
@@ -718,11 +700,8 @@ void listAllMaximalCliquesHybridRecursive( long* cliqueCount,
     {
         (*cliqueCount)++;
 
-        processClique( 
-                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                       cliques,
-                       #endif
-                       partialClique );
+        ExecuteCallBacks(partialClique);
+        processClique(partialClique);
 
         return;
     }
@@ -771,15 +750,12 @@ void listAllMaximalCliquesHybridRecursive( long* cliqueCount,
                        &newBeginX, &newBeginP, &newBeginR);
 
         // recursively compute maximal cliques with new sets R, P and X
-        listAllMaximalCliquesHybridRecursive( cliqueCount,
-                                              #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                              cliques,
-                                              #endif
+        listAllMaximalCliquesHybridRecursive(cliqueCount,
                                               partialClique, 
                                               orderingArray,
                                               vertexSets, vertexLookup,
                                               newBeginX, newBeginP, newBeginR,
-                                              scratch );
+                                              scratch);
 
         #ifdef PRINT_CLIQUES_TOMITA_STYLE
         printf("b ");

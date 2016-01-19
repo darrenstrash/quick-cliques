@@ -88,9 +88,6 @@ BronKerboschAlgorithm::~BronKerboschAlgorithm()
            by Tomita et al. (TCS 2006), modified to use an adjacency list
            representation of the graph instead of an adjacency matrix. 
  
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \return The number of maximal cliques of the input graph.
 */
 
@@ -103,7 +100,7 @@ long BronKerboschAlgorithm::Run(list<list<int>> &cliques)
 
     while (m_pSets->GetNextTopLevelPartition()) {
         m_pSets->GetTopLevelPartialClique(partialClique);
-        RunRecursive(cliqueCount, cliques, partialClique);
+        RunRecursive(cliqueCount, partialClique);
         partialClique.clear();
     }
 
@@ -119,16 +116,13 @@ long BronKerboschAlgorithm::Run(list<list<int>> &cliques)
     \param cliqueCount A pointer to the number of maximal cliques computed 
                        thus far.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param partialClique A linked list storing R, the partial clique for this
                          recursive call. 
 */
 
 static unsigned long recursionNode(0);
 
-void BronKerboschAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cliques, list<int> &partialClique)
+void BronKerboschAlgorithm::RunRecursive(long &cliqueCount, list<int> &partialClique)
 {
     int const currentRecursionNode(recursionNode++);
 
@@ -161,11 +155,8 @@ void BronKerboschAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cli
 
         stepsSinceLastReportedClique = 0;
 
-        processClique( 
-                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                       cliques,
-                       #endif
-                       partialClique );
+        ExecuteCallBacks(partialClique);
+        processClique(partialClique);
 
         m_pSets->ReturnDominatedVertices(dominatedVertices);
         return;
@@ -195,7 +186,7 @@ void BronKerboschAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cli
 #endif
 
             // recursively compute maximal cliques with new sets R, P and X
-            RunRecursive(cliqueCount, cliques, partialClique);
+            RunRecursive(cliqueCount, partialClique);
 
 #ifdef PRINT_CLIQUES_TOMITA_STYLE
             printf("b ");

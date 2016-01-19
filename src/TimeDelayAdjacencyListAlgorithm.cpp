@@ -90,9 +90,6 @@ long TimeDelayAdjacencyListAlgorithm::Run(list<list<int>> &cliques)
 {
     return listAllMaximalCliquesTimeDelayAdjacencyList(
                 m_AdjacencyList,
-#ifdef RETURN_CLIQUES_ONE_BY_ONE
-                cliques,
-#endif
                 m_pDegree,
                 m_AdjacencyList.size());
 }
@@ -107,9 +104,6 @@ long TimeDelayAdjacencyListAlgorithm::Run(list<list<int>> &cliques)
     \param adjacencyList an array of arrays, representing the input graph in a more
                          compact and cache-friendly adjacency list format.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param degree An array, indexed by vertex, containing the degree of that vertex.
 
     \param size The number of vertices in the graph.
@@ -121,10 +115,7 @@ static unsigned long largestDifference(0);
 static unsigned long numLargeJumps;
 static unsigned long stepsSinceLastReportedClique(0);
 
-long listAllMaximalCliquesTimeDelayAdjacencyList( vector<vector<int>> const &adjacencyList, 
-                                         #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                         list<list<int> &cliques,
-                                         #endif
+long TimeDelayAdjacencyListAlgorithm::listAllMaximalCliquesTimeDelayAdjacencyList(vector<vector<int>> const &adjacencyList, 
                                          int* degree, 
                                          int size)
 {
@@ -155,14 +146,11 @@ long listAllMaximalCliquesTimeDelayAdjacencyList( vector<vector<int>> const &adj
 
     long cliqueCount = 0;
 
-    listAllMaximalCliquesTimeDelayAdjacencyListRecursive( &cliqueCount,
-                                                 #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                 cliques,
-                                                 #endif
+    listAllMaximalCliquesTimeDelayAdjacencyListRecursive(&cliqueCount,
                                                  partialClique, 
                                                  adjacencyList, degree,
                                                  vertexSets, vertexLookup, size,
-                                                 beginX, beginD, beginP, beginR );
+                                                 beginX, beginD, beginP, beginR);
 
     cout << "Largest Difference : " << largestDifference << endl;
     cout << "Num     Differences: " << numLargeJumps << endl;
@@ -298,7 +286,7 @@ void moveDominatedVerticesFromNonNeighborsToD(std::vector<std::vector<int>> cons
 
  */
 
-int findBestPivotNonNeighborsTimeDelayAdjacencyList( int** pivotNonNeighbors, int* numNonNeighbors,
+int TimeDelayAdjacencyListAlgorithm::findBestPivotNonNeighborsTimeDelayAdjacencyList( int** pivotNonNeighbors, int* numNonNeighbors,
                                             vector<vector<int>> const &adjacencyList, int* degree,
                                             int* vertexSets, int* vertexLookup, int size,
                                             int beginX, int beginD, int beginP, int beginR )
@@ -397,9 +385,6 @@ int findBestPivotNonNeighborsTimeDelayAdjacencyList( int** pivotNonNeighbors, in
     \param cliqueCount A pointer to the number of maximal cliques computed 
                        thus far.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param partialClique A linked list storing R, the partial clique for this
                          recursive call. 
 
@@ -429,10 +414,7 @@ static bool printDebug(false);
 static unsigned long recursionNode(1);
 static unsigned long recursionId(0);
 
-void listAllMaximalCliquesTimeDelayAdjacencyListRecursive( long* cliqueCount,
-                                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  list<list<int>> &cliques,
-                                                  #endif
+void TimeDelayAdjacencyListAlgorithm::listAllMaximalCliquesTimeDelayAdjacencyListRecursive( long* cliqueCount,
                                                   list<int> &partialClique, 
                                                   vector<vector<int>> const &adjacencyList, int* degree,
                                                   int* vertexSets, int* vertexLookup, int size,
@@ -458,11 +440,8 @@ void listAllMaximalCliquesTimeDelayAdjacencyListRecursive( long* cliqueCount,
 
         stepsSinceLastReportedClique = 0;
 
-        processClique( 
-                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                       cliques,
-                       #endif
-                       partialClique );
+        ExecuteCallBacks(partialClique);
+        processClique(partialClique);
 
 ////        CheckConsistency(__LINE__, currentRecursionNode, vertexSets, vertexLookup, size);
 
@@ -678,14 +657,11 @@ void listAllMaximalCliquesTimeDelayAdjacencyListRecursive( long* cliqueCount,
 ////        CheckConsistency(__LINE__, currentRecursionNode, vertexSets, vertexLookup, size);
 
         // recursively compute maximal cliques with new sets R, P and X
-        listAllMaximalCliquesTimeDelayAdjacencyListRecursive( cliqueCount,
-                                                     #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                     cliques,
-                                                     #endif
+        listAllMaximalCliquesTimeDelayAdjacencyListRecursive(cliqueCount,
                                                      partialClique,
                                                      adjacencyList, degree,
                                                      vertexSets, vertexLookup, size,
-                                                     newBeginX, beginD, beginP, newBeginR );
+                                                     newBeginX, beginD, beginP, newBeginR);
 
 
 ////        CheckConsistency(__LINE__, currentRecursionNode, vertexSets, vertexLookup, size);

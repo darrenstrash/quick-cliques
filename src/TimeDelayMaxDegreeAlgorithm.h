@@ -53,31 +53,24 @@ public:
     TimeDelayMaxDegreeAlgorithm           (TimeDelayMaxDegreeAlgorithm const &) = delete;
     TimeDelayMaxDegreeAlgorithm& operator=(TimeDelayMaxDegreeAlgorithm const &) = delete;
 
-private:
-    std::vector<std::vector<int>> const &m_AdjacencyList;
-    int *m_pDegree;
-};
+    long listAllMaximalCliquesTimeDelayMaxDegree(std::vector<std::vector<int>> const &adjacencyList, int size);
 
-long listAllMaximalCliquesTimeDelayMaxDegree( std::vector<std::vector<int>> const &adjacencyList, 
-                                         #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                         std::list<std::list<int>> cliques,
-                                         #endif
-                                         int size);
-
-int findBestPivotNonNeighborsTimeDelayMaxDegree( int** pivotNonNeighbors, int* numNonNeighbors,
+    int findBestPivotNonNeighborsTimeDelayMaxDegree(int** pivotNonNeighbors, int* numNonNeighbors,
                                             std::vector<std::vector<int>> const &adjacencyList,
                                             int* vertexSets, int* vertexLookup, int size,
                                             int beginX, int beginD, int beginP, int beginR);
 
-void listAllMaximalCliquesTimeDelayMaxDegreeRecursive( long* cliqueCount,
-                                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  std::list<std::list<int>> &cliques,
-                                                  #endif
+    void listAllMaximalCliquesTimeDelayMaxDegreeRecursive(long* cliqueCount,
                                                   std::list<int> &partialClique, 
                                                   std::vector<std::vector<int>> const &adjacencyList,
                                                   int* vertexSets, int* vertexLookup, int size,
                                                   int beginX, int beginD, int beginR, int beginP);
 
-void moveDominatedVerticesFromPtoD(std::vector<std::vector<int>> const &adjacencyList, int* vertexSets, int* vertexLookup, int size, int &beginX, int &beginD, int &beginP, int &beginR);
+    void moveDominatedVerticesFromPtoD(std::vector<std::vector<int>> const &adjacencyList, int* vertexSets, int* vertexLookup, int size, int &beginX, int &beginD, int &beginP, int &beginR);
+
+private:
+    std::vector<std::vector<int>> const &m_AdjacencyList;
+    int *m_pDegree;
+};
 
 #endif  //_DJS_TDMAXDEGREE_ALGORITHM_H_

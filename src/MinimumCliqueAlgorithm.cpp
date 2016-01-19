@@ -89,8 +89,7 @@ MinimumCliqueAlgorithm::~MinimumCliqueAlgorithm()
            by Tomita et al. (TCS 2006), modified to use an adjacency list
            representation of the graph instead of an adjacency matrix. 
  
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
+    \param cliques A linked list, to contain a minimum clique after execution
 
     \return The number of maximal cliques of the input graph.
 */
@@ -121,8 +120,7 @@ long MinimumCliqueAlgorithm::Run(list<list<int>> &cliques)
     \param cliqueCount A pointer to the number of maximal cliques computed 
                        thus far.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
+    \param cliques A linked list, to contain a minimum clique after execution 
 
     \param partialClique A linked list storing R, the partial clique for this
                          recursive call. 
@@ -164,11 +162,8 @@ void MinimumCliqueAlgorithm::RunRecursive(long &cliqueCount, list<list<int>> &cl
 
         stepsSinceLastReportedClique = 0;
 
-        processClique( 
-                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                       cliques,
-                       #endif
-                       partialClique );
+        ExecuteCallBacks(partialClique);
+        processClique(partialClique);
 
         return;
     }

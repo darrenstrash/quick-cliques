@@ -85,13 +85,10 @@ AdjacencyListAlgorithm::~AdjacencyListAlgorithm()
     delete[] m_pDegree;
 }
 
-long AdjacencyListAlgorithm::Run(list<list<int>> &cliques)
+long AdjacencyListAlgorithm::Run(std::list<std::list<int>> &cliques)
 {
     return listAllMaximalCliquesAdjacencyList(
                 m_AdjacencyList,
-#ifdef RETURN_CLIQUES_ONE_BY_ONE
-                cliques,
-#endif
                 m_pDegree,
                 m_AdjacencyList.size());
 }
@@ -106,9 +103,6 @@ long AdjacencyListAlgorithm::Run(list<list<int>> &cliques)
     \param adjacencyList an array of arrays, representing the input graph in a more
                          compact and cache-friendly adjacency list format.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param degree An array, indexed by vertex, containing the degree of that vertex.
 
     \param size The number of vertices in the graph.
@@ -120,10 +114,7 @@ long AdjacencyListAlgorithm::Run(list<list<int>> &cliques)
 ////static unsigned long numLargeJumps;
 ////static unsigned long stepsSinceLastReportedClique(0);
 
-long listAllMaximalCliquesAdjacencyList( vector<vector<int>> const &adjacencyList, 
-                                         #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                         list<list<int> &cliques,
-                                         #endif
+long AdjacencyListAlgorithm::listAllMaximalCliquesAdjacencyList(vector<vector<int>> const &adjacencyList, 
                                          int* degree, 
                                          int size)
 {
@@ -153,14 +144,11 @@ long listAllMaximalCliquesAdjacencyList( vector<vector<int>> const &adjacencyLis
 
     long cliqueCount = 0;
 
-    listAllMaximalCliquesAdjacencyListRecursive( &cliqueCount,
-                                                 #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                 cliques,
-                                                 #endif
-                                                 partialClique, 
-                                                 adjacencyList, degree,
-                                                 vertexSets, vertexLookup, size,
-                                                 beginX, beginP, beginR );
+    listAllMaximalCliquesAdjacencyListRecursive(&cliqueCount,
+                                                partialClique, 
+                                                adjacencyList, degree,
+                                                vertexSets, vertexLookup, size,
+                                                beginX, beginP, beginR);
 
 ////    cerr << "Largest Difference : " << largestDifference << endl;
 ////    cerr << "Num     Differences: " << numLargeJumps << endl;
@@ -202,11 +190,10 @@ long listAllMaximalCliquesAdjacencyList( vector<vector<int>> const &adjacencyLis
 
  */
 
-
-int findBestPivotNonNeighborsAdjacencyList( int** pivotNonNeighbors, int* numNonNeighbors,
+int AdjacencyListAlgorithm::findBestPivotNonNeighborsAdjacencyList(int** pivotNonNeighbors, int* numNonNeighbors,
                                             vector<vector<int>> const &adjacencyList, int* degree,
                                             int* vertexSets, int* vertexLookup, int size,
-                                            int beginX, int beginP, int beginR )
+                                            int beginX, int beginP, int beginR)
 {
 
     int pivot = -1;
@@ -306,9 +293,6 @@ int findBestPivotNonNeighborsAdjacencyList( int** pivotNonNeighbors, int* numNon
     \param cliqueCount A pointer to the number of maximal cliques computed 
                        thus far.
 
-    \param cliques A linked list of cliques to return. <b>(only available when compiled 
-                   with RETURN_CLIQUES_ONE_BY_ONE defined)</b>
-
     \param partialClique A linked list storing R, the partial clique for this
                          recursive call. 
 
@@ -332,14 +316,11 @@ int findBestPivotNonNeighborsAdjacencyList( int** pivotNonNeighbors, int* numNon
 
 */
 
-void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
-                                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  list<list<int>> &cliques,
-                                                  #endif
+void AdjacencyListAlgorithm::listAllMaximalCliquesAdjacencyListRecursive(long* cliqueCount,
                                                   list<int> &partialClique, 
                                                   vector<vector<int>> const &adjacencyList, int* degree,
                                                   int* vertexSets, int* vertexLookup, int size,
-                                                  int beginX, int beginP, int beginR )
+                                                  int beginX, int beginP, int beginR)
 {
 ////    stepsSinceLastReportedClique++;
 
@@ -358,11 +339,8 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
 ////
 ////        stepsSinceLastReportedClique = 0;
 
-        processClique( 
-                       #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                       cliques,
-                       #endif
-                       partialClique );
+        ExecuteCallBacks(partialClique);
+        processClique(partialClique);
 
         return;
     }
@@ -448,14 +426,11 @@ void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
         }
 
         // recursively compute maximal cliques with new sets R, P and X
-        listAllMaximalCliquesAdjacencyListRecursive( cliqueCount,
-                                                     #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                     cliques,
-                                                     #endif
-                                                     partialClique,
-                                                     adjacencyList, degree,
-                                                     vertexSets, vertexLookup, size,
-                                                     newBeginX, newBeginP, newBeginR );
+        listAllMaximalCliquesAdjacencyListRecursive(cliqueCount,
+                                                    partialClique,
+                                                    adjacencyList, degree,
+                                                    vertexSets, vertexLookup, size,
+                                                    newBeginX, newBeginP, newBeginR);
 
 
         #ifdef PRINT_CLIQUES_TOMITA_STYLE

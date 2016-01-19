@@ -53,30 +53,25 @@ public:
     AdjacencyListAlgorithm           (AdjacencyListAlgorithm const &) = delete;
     AdjacencyListAlgorithm& operator=(AdjacencyListAlgorithm const &) = delete;
 
-private:
-    std::vector<std::vector<int>> const &m_AdjacencyList;
-    int *m_pDegree;
-};
 
-long listAllMaximalCliquesAdjacencyList( std::vector<std::vector<int>> const &adjacencyList, 
-                                         #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                         std::list<std::list<int>> cliques,
-                                         #endif
+    long listAllMaximalCliquesAdjacencyList(std::vector<std::vector<int>> const &adjacencyList, 
                                          int* degree, 
                                          int size);
 
-int findBestPivotNonNeighborsAdjacencyList( int** pivotNonNeighbors, int* numNonNeighbors,
+    int findBestPivotNonNeighborsAdjacencyList(int** pivotNonNeighbors, int* numNonNeighbors,
                                             std::vector<std::vector<int>> const &adjacencyList, int* degree,
                                             int* vertexSets, int* vertexLookup, int size,
                                             int beginX, int beginP, int beginR);
 
-void listAllMaximalCliquesAdjacencyListRecursive( long* cliqueCount,
-                                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                                  std::list<std::list<int>> &cliques,
-                                                  #endif
+    void listAllMaximalCliquesAdjacencyListRecursive(long* cliqueCount,
                                                   std::list<int> &partialClique, 
                                                   std::vector<std::vector<int>> const &adjacencyList, int* degree,
                                                   int* vertexSets, int* vertexLookup, int size,
                                                   int beginX, int beginR, int beginP);
+
+private:
+    std::vector<std::vector<int>> const &m_AdjacencyList;
+    int *m_pDegree;
+};
 
 #endif

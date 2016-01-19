@@ -53,7 +53,7 @@ public:
 
     virtual long Run(std::list<std::list<int>> &cliques);
 
-    virtual void RunRecursive(long &cliqueCount, std::list<std::list<int>> &cliques, std::list<int> &partialClique);
+    virtual void RunRecursive(long &cliqueCount, std::list<int> &partialClique);
 
     BronKerboschAlgorithm           (BronKerboschAlgorithm const &) = delete;
     BronKerboschAlgorithm& operator=(BronKerboschAlgorithm const &) = delete;

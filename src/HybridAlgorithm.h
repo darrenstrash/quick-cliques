@@ -55,26 +55,20 @@ public:
     HybridAlgorithm           (HybridAlgorithm const &) = delete;
     HybridAlgorithm& operator=(HybridAlgorithm const &) = delete;
 
-private:
-    std::vector<std::list<int>>   const &m_AdjacencyList;
-    int *m_pDegree;
-};
-
-void listAllMaximalCliquesHybridRecursive( long* cliqueCount,
-                                           #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                           std::list<std::list<int>> &cliques,
-                                           #endif
+    void listAllMaximalCliquesHybridRecursive(long* cliqueCount,
                                            std::list<int> &partialClique, 
                                            NeighborListArray** orderingArray,
                                            int* vertexSets, int* vertexLookup,
                                            int beginX, int beginP, int beginR,
                                            int* scratch);
 
-long listAllMaximalCliquesHybrid( std::vector<std::list<int>> const &adjList, 
-                                  #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                  std::list<std::list<int>> &cliques,
-                                  #endif
+    long listAllMaximalCliquesHybrid(std::vector<std::list<int>> const &adjList, 
                                   int* degree, 
                                   int size);
+
+private:
+    std::vector<std::list<int>>   const &m_AdjacencyList;
+    int *m_pDegree;
+};
 
 #endif

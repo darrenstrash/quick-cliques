@@ -54,30 +54,23 @@ public:
 
     virtual long Run(std::list<std::list<int>> &cliques);
 
-private:
-    char **m_ppAdjacencyMatrix;
-    int  m_iNumVertices;
-};
-
-long listAllMaximalCliquesMatrix( char** adjacencyMatrix,
-                                 #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                 std::list<std::list<int>> &cliques,
-                                 #endif
-                                 int    numVertices );
+    long listAllMaximalCliquesMatrix(char** adjacencyMatrix, int numVertices);
 
 
-int findBestPivotNonNeighborsMatrix( int** pivotNonNeighbors, int* numNonNeighbors,
+    int findBestPivotNonNeighborsMatrix(int** pivotNonNeighbors, int* numNonNeighbors,
                                      char** adjacencyMatrix,
                                      int* vertexSets, int* vertexLookup, int size,
                                      int beginX, int beginP, int beginR);
 
-void listAllMaximalCliquesMatrixRecursive( long* cliqueCount,
-                                           #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                           std::list<std::list<int>> &cliques,
-                                           #endif
+    void listAllMaximalCliquesMatrixRecursive(long* cliqueCount,
                                            std::list<int> &partialClique, 
                                            char** adjacencyMatrix,
                                            int* vertexSets, int* vertexLookup, int size,
                                            int beginX, int beginP, int beginR, long& stepsSinceLastReportedClique);
+
+private:
+    char **m_ppAdjacencyMatrix;
+    int  m_iNumVertices;
+};
 
 #endif

@@ -58,23 +58,17 @@ public:
     TimeDelayDegeneracyAlgorithm           (TimeDelayDegeneracyAlgorithm const &) = delete;
     TimeDelayDegeneracyAlgorithm& operator=(TimeDelayDegeneracyAlgorithm const &) = delete;
 
-private:
-    std::vector<std::list<int>> const &m_AdjacencyList;
-};
-
-void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
-                                               #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                               std::list<std::list<int> &cliques,
-                                               #endif
+    void listAllMaximalCliquesTimeDelayDegeneracyRecursive( long* cliqueCount,
                                                std::list<int> &partialClique, 
                                                int* vertexSets, int* vertexLookup,
                                                int** neighborsInP, int* numNeighbors,
                                                int beginX, int beginD, int beginP, int beginR);
 
-long listAllMaximalCliquesTimeDelayDegeneracy( std::vector<std::list<int>> const &adjList,
-                                      #ifdef RETURN_CLIQUES_ONE_BY_ONE
-                                      std::list<std::list<int>> &cliques,
-                                      #endif
+    long listAllMaximalCliquesTimeDelayDegeneracy( std::vector<std::list<int>> const &adjList,
                                       int size );
 
+
+private:
+    std::vector<std::list<int>> const &m_AdjacencyList;
+};
 #endif
