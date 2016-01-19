@@ -122,19 +122,19 @@ clean:
 	rm -rf $(EXECS) $(BUILD_DIR) $(BIN_DIR)
 
 $(BIN_DIR)/printnm: printnm.cpp ${OBJECTS} | ${BIN_DIR}
-	g++-5 ${DEFINE} ${OBJECTS} $(SRC_DIR)/printnm.cpp -o $@
+	g++ ${DEFINE} ${OBJECTS} $(SRC_DIR)/printnm.cpp -o $@
 
 $(BIN_DIR)/compdegen: compdegen.cpp ${OBJECTS} | ${BIN_DIR}
-	g++-5 $(CFLAGS) ${DEFINE} ${OBJECTS} $(SRC_DIR)/compdegen.cpp -o $@
+	g++ $(CFLAGS) ${DEFINE} ${OBJECTS} $(SRC_DIR)/compdegen.cpp -o $@
 
 $(BIN_DIR)/qc: main.cpp ${OBJECTS} | ${BIN_DIR}
-	g++-5 $(CFLAGS) ${DEFINE} ${OBJECTS} $(SRC_DIR)/main.cpp -o $@
+	g++ $(CFLAGS) ${DEFINE} ${OBJECTS} $(SRC_DIR)/main.cpp -o $@
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp $(SRC_DIR)/%.h $(BUILD_DIR)/%.d | $(BUILD_DIR)
-	g++-5 $(CFLAGS) ${DEFINE} -c $< -o $@
+	g++ $(CFLAGS) ${DEFINE} -c $< -o $@
 
 $(BUILD_DIR)/%.d: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
-	g++-5 $(CFLAGS) -MM -MT '$(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$<)' $< -MF $@
+	g++ $(CFLAGS) -MM -MT '$(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$<)' $< -MF $@
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
