@@ -1,4 +1,4 @@
-[![quick-cliques](/images/quick-cliques.png)](https://github.com/darrenstrash/quick-cliques)
+-> [![quick-cliques](/images/quick-cliques.png)](https://github.com/darrenstrash/quick-cliques) <-
 ============================================================================================
 
 # **Quick Cliques**: Quickly compute all maximal cliques in sparse graphs
