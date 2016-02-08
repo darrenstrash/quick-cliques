@@ -17,7 +17,6 @@ do
     echo " "
     echo "Clique counts and runtimes:"
     echo " "
-#    bin/qc --staging --input-file=$i
     bin/qc --algorithm=tomita     --input-file=$i > /dev/null
     bin/qc --algorithm=adjlist    --input-file=$i > /dev/null
     bin/qc --algorithm=hybrid     --input-file=$i > /dev/null

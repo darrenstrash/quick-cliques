@@ -1,10 +1,10 @@
-# **Quick Cliques:** Quickly compute all maximal cliques in sparse graphs
+# **Quick Cliques**: Quickly compute all maximal cliques in sparse graphs
 
-Copyright (c) 2011-2016 Darren Strash. This code is released under the GNU Public License (GPL) 3.0.
+[![license](https://img.shields.io/badge/license-GPL%20v3.0-blue.svg)](http://www.gnu.org/licenses/)
 
 The original intent of this software was to provide exact reproducibility of experimental results from two papers:
 
-*Listing All Maximal Cliques in Large Sparse Real-World Graphs in Near-Optimal* Time,
+*Listing All Maximal Cliques in Large Sparse Real-World Graphs in Near-Optimal Time*,
 **D. Eppstein, M. Löffler, and D. Strash**,
 Journal of Experimental Algorithmics, 18 (3): 3.1, 2013, 
 [doi:10.1145/2543629](https://doi.org/10.1145/2543629)
@@ -19,17 +19,15 @@ Proceedings of the 10th International Conference on Experimental Algorithms (SEA
 
 However, in the original implementation (written in C) was not designed to be integrated with other code. It has since been upgraded to C++11, is becoming more hardened, and has better support for integration into other software packages.
 
-If you are interested in the exact code from the original experiments, see release v1.0.
+Want the exact code from the original experiments? See release v1.0.
 
-This package includes:
+###This package includes:
 
  - C++ code for four implementations for enumerating all maximal cliques of a graph
  - A small set of data used for testing (see ./data) [ For a larger set of data (too large for GitHub), you can download the following: http://www.ics.uci.edu/~dstrash/data.tar.gz ]
  - The test script used to build and run all algorithms on all data sets (./test.sh)
 
 Please feel free to contact me with any questions!
-
-Darren Strash (e-mail: first name DOT last name AT gmail DOT com)
 
 ### Version
 2.0beta
@@ -54,6 +52,11 @@ $ ./test.sh
 ```
 
 to run all algorithms on all data sets in data directory
+
+Copyright
+----
+
+Copyright (c) 2011-2016 Darren Strash.
 
 
 License
