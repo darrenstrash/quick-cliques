@@ -12,6 +12,7 @@
 using namespace std;
 
 #define NEW_ISOLATE_CHECKS
+////#define DOMINATION_CHECKS
 #define NON_PATH
 
 template <typename NeighborSet>
@@ -788,9 +789,11 @@ void Isolates4<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vec
             reduction = FoldVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
         }
 #endif // 0
+#ifdef DOMINATION_CHECKS
         if (!reduction) {
             reduction = RemoveDominatedVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
         }
+#endif //DOMINATION_CHECKS
 
 #endif // NEW_ISOLATE_CHECKS
 

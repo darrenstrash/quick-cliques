@@ -177,6 +177,10 @@ void RunExperiment(string const &sInputFile, string const &sExperimentName, bool
 
     if (sExperimentName=="kernel-size") {
         experiments.RunKernelSize();
+    } else if (sExperimentName=="kernel-sparse-miss") {
+        experiments.KernelizeAndRunReductionSparseMISS();
+    } else if (sExperimentName=="kernel-component-sparse-miss") {
+        experiments.KernelizeAndRunComponentWiseReductionSparseMISS();
     } else if (sExperimentName=="exact-search") {
         experiments.RunExactSearch();
     } else if (sExperimentName=="standard-search") {
@@ -202,6 +206,7 @@ int main(int argc, char** argv)
 
     ProcessCommandLineArgs(argc, argv, mapCommandLineArgs);
 
+    bool   const bQuiet(mapCommandLineArgs.find("--verbose") == mapCommandLineArgs.end());
     bool   const bOutputLatex(mapCommandLineArgs.find("--latex") != mapCommandLineArgs.end());
     string const inputFile((mapCommandLineArgs.find("--input-file") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--input-file"] : "");
     string const algorithm((mapCommandLineArgs.find("--algorithm") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--algorithm"] : "");
@@ -262,7 +267,7 @@ int main(int argc, char** argv)
     }
 
     bool const bComputeAdjacencyMatrix(adjacencyList.size() < 20000);
-    bool const bShouldComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "reduction-sparse-miss" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "connected-component-miss" || name == "connected-component-miss2" /* || name == "comparison-miss"*/ || name == "tester-miss");
+    bool const bShouldComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "connected-component-miss" || name == "connected-component-miss2" /* || name == "comparison-miss"*/ || name == "tester-miss");
 
     bool const addDiagonals(bRunExperiment || name == "misq" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "connected-component-miss" || name == "connected-component-miss2" || name == "comparison-miss" || name == "tester-miss");
 
@@ -486,6 +491,8 @@ int main(int argc, char** argv)
     };
     pAlgorithm->AddCallBack(storeCliqueInList);
 #endif //RETURN_CLIQUES_ONE_BY_ONE
+
+    pAlgorithm->SetQuiet(bQuiet);
 
     RunAndPrintStats(pAlgorithm, cliques, bOutputLatex);
 
