@@ -406,6 +406,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
 #else
 void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArray, vector<int> &vOrderedVertices, vector<int> &vColoring, size_t &cliqueSize)
 {
+////    cout << "Start ordering..." << endl << flush;
 ////    clock_t const startTime(clock());
     vOrderedVertices.resize(adjacencyArray.size(), -1);
     vColoring.resize(adjacencyArray.size(), -1);
@@ -626,6 +627,7 @@ void OrderingTools::InitialOrderingMISR(vector<vector<int>> const &adjacencyArra
             }
 #endif // 0
     }
+////    cout << "Time to perform ordering: " << Tools::GetTimeInSeconds(clock() - startTime) << endl;
 }
 #endif //0
 

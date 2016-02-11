@@ -11,6 +11,7 @@
 #include "OrderingTools.h"
 
 #include <list>
+#include <cstdlib>
 
 using namespace std;
 
@@ -119,6 +120,7 @@ void Experiments::KernelizeAndRunReductionSparseMISS() const
     }
 
     LightWeightReductionSparseFullMISS algorithm(vAdjacencyArray);
+    algorithm.SetQuiet(true);
 
     list<list<int>> indsets;
     algorithm.Run(indsets);
@@ -132,6 +134,109 @@ void Experiments::KernelizeAndRunReductionSparseMISS() const
     } else {
         cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << kernelSize << "\t" << solutionSize << endl << flush;
     }
+}
+
+void Experiments::KernelizeAndRunComponentWiseMISS() const
+{
+    if (m_bPrintHeader) {
+        if (m_bOutputLatex) {
+            cout << "Graph Name & $n$ & $m$ & $t$ & $k$ & c & l & OPT \\\\ \\hline" << endl << flush;
+        } else {
+            cout << "Graph Name\tn\tm\tt\tk\tc\tl\tOPT" << endl << flush;
+        }
+    }
+
+    clock_t startTime(clock());
+
+    size_t const numVertices(m_AdjacencyArray.size());
+    size_t numEdges(0);
+    for (vector<int> const &neighbors : m_AdjacencyArray) {
+        numEdges+= neighbors.size();
+    }
+    numEdges >>=1;
+
+    Isolates4<SparseArraySet> isolates(m_AdjacencyArray);
+    vector<int> vIsolates;
+    vector<int> vRemoved;
+    vector<Reduction> vReductions;
+    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for removal */);
+
+    size_t const kernelSize(isolates.GetInGraph().Size());
+
+    vector<vector<int>> vComponents;
+    GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
+
+    size_t const numComponents(vComponents.size());
+    size_t largestComponentSize(0);
+    for (vector<int> const &vComponent : vComponents) {
+        largestComponentSize = max(vComponent.size(), largestComponentSize);
+    }
+
+    size_t solutionDelta(0);
+
+    for (vector<int> const &vComponent : vComponents) {
+
+        if (vComponent.size() > 20000) {
+            cerr << "ERROR!: unable to compute adjacencyMatrix, since the graph is too large: " << vComponent.size() << endl << flush;
+            exit(1);
+        }
+
+        vector<vector<char>> vAdjacencyMatrix;
+        vAdjacencyMatrix.resize(vComponent.size());
+
+        map<int,int> vertexRemap;
+////        map<int,int> reverseMap;
+        size_t uNewIndex = 0;
+
+        for (int const vertex : vComponent) {
+            vertexRemap[vertex] = uNewIndex++;
+////            reverseMap[uNewIndex-1] = vertex;
+        }
+
+        for (pair<int,int> const &mapPair : vertexRemap) {
+            int const oldVertex(mapPair.first);
+            int const newVertex(mapPair.second);
+
+            vAdjacencyMatrix[newVertex].resize(vComponent.size(), 0);
+            for (int const neighbor : isolates.Neighbors()[oldVertex]) {
+                if (vertexRemap.find(neighbor) != vertexRemap.end()) {
+                    //cout << "newVertex           =" << newVertex << endl; 
+                    vAdjacencyMatrix[newVertex][vertexRemap[neighbor]] = 1;
+                }
+            }
+        }
+
+        ////cout << "vAdjacencyArray.size=" << vAdjacencyArray.size() << endl;
+        LightWeightFullMISS algorithm(vAdjacencyMatrix);
+        algorithm.SetQuiet(true);
+
+        list<list<int>> indsets;
+        algorithm.Run(indsets);
+
+#ifdef VERIFY
+        cout << "Verifying independent set:" << endl;
+        set<int> const indepset(indsets.back().begin(), indsets.back().end());
+        for (int const vertex : indepset) {
+            for (int const otherVertex : indepset) {
+                if (vAdjacencyMatrix[vertex][otherVertex])
+                    cout << "    ERROR: " << vertex << " and " << otherVertex << " are neighbors" << endl << flush;
+            }
+        }
+#endif // VERIFY
+
+        solutionDelta += indsets.back().size();
+    }
+
+    clock_t endTime(clock());
+
+    int const solutionSize(solutionDelta + vReductions.size());
+
+    if (m_bOutputLatex) {
+        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << "&" << kernelSize << " & " << numComponents << " & " << largestComponentSize << " & " << solutionSize << " \\\\ " << endl << flush;
+    } else {
+        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << kernelSize << "\t" << numComponents << "\t" << largestComponentSize << "\t" << solutionSize << endl << flush;
+    }
+
 }
 
 void Experiments::KernelizeAndRunComponentWiseReductionSparseMISS() const

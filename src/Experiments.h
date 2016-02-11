@@ -11,6 +11,7 @@ public:
 
     void RunKernelSize() const;
     void KernelizeAndRunReductionSparseMISS() const;
+    void KernelizeAndRunComponentWiseMISS() const;
     void KernelizeAndRunComponentWiseReductionSparseMISS() const;
     void RunExactSearch() const;
     void RunStandardSearch() const;

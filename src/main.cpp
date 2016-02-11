@@ -181,6 +181,8 @@ void RunExperiment(string const &sInputFile, string const &sExperimentName, bool
         experiments.KernelizeAndRunReductionSparseMISS();
     } else if (sExperimentName=="kernel-component-sparse-miss") {
         experiments.KernelizeAndRunComponentWiseReductionSparseMISS();
+    } else if (sExperimentName=="kernel-component-no-reduction-miss") {
+        experiments.KernelizeAndRunComponentWiseMISS();
     } else if (sExperimentName=="exact-search") {
         experiments.RunExactSearch();
     } else if (sExperimentName=="standard-search") {
