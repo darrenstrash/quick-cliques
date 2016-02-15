@@ -13,6 +13,7 @@ public:
     void KernelizeAndRunReductionSparseMISS() const;
     void KernelizeAndRunComponentWiseMISS() const;
     void KernelizeAndRunComponentWiseReductionSparseMISS() const;
+    void ComputeCriticalIndependentSetKernel() const;
     void RunExactSearch() const;
     void RunStandardSearch() const;
     void RunComponentsMISS() const;

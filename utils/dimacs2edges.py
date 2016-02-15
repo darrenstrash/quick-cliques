@@ -27,7 +27,7 @@ for line in sys.stdin:
         break; 
 
 if invert == 1:
-    edges = (vertices-1)*vertices - 2*edges
+    edges = ((vertices-1)*vertices/2 - edges - vertices)*2
 else:
     edges = 2*edges
 

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <list>
+#include <set>
 
 namespace CliqueTools
 {
@@ -19,6 +20,7 @@ namespace CliqueTools
     bool IsIndependentSet(std::vector<std::vector<int>> &adjacencyArray, std::list<int> const &vertexSet, bool const verbose);
 
     std::vector<int> ComputeMaximumCriticalIndependentSet(std::vector<std::vector<int>> adjacencyList);
+    std::set<int> ComputeCriticalIndependentSet(std::vector<std::vector<int>> const &adjacencyList);
 
 ////    std::vector<int> ComputeBipartiteMaximumIndependentSet(std::vector<std::vector<int>> const &biDoubleGraph);
 };

@@ -307,6 +307,7 @@ bool CliqueTools::IsIndependentSet(vector<vector<int>> &adjacencyArray, list<int
 }
 
 // the algorithm by Larson (A NOTE ON CRITICAL INDEPENDENCE REDUCTIONS)
+// TODO: Fix, doesn't work; Seems to be buggy, does not compute ciritical independent set?
 vector<int> CliqueTools::ComputeMaximumCriticalIndependentSet(vector<vector<int>> adjacencyList)
 {
     vector<int> criticalSet;
@@ -620,3 +621,49 @@ vector<int> CliqueTools::ComputeBipartiteMaximumIndependentSet(vector<vector<int
     return independentSet;
 }
 #endif
+
+// Ageev's algorithm (See Butenko and Trukhanov)
+set<int> CliqueTools::ComputeCriticalIndependentSet(vector<vector<int>> const &adjacencyList)
+{
+    clock_t start_time(clock());
+    vector<vector<int>> const biDoubleGraph(std::move(GraphTools::ComputeBiDoubleGraph(adjacencyList)));
+
+    int const graphSize(biDoubleGraph.size());
+    cout << "bi-double graph size=" << biDoubleGraph.size() << endl;
+    set<int> setRemovedVertices;
+    set<int> setRemainingVertices;
+    set<int> setVerticesToEvaluate;
+    for (int vertex = 0; vertex < biDoubleGraph.size(); ++vertex) {
+        setRemainingVertices.insert(vertex);
+        setVerticesToEvaluate.insert(vertex);
+    }
+
+////    GraphTools::PrintGraphInSNAPFormat(biDoubleGraph);
+
+    set<int> criticalSet(std::move(GraphTools::ComputeBiDoubleMIS(biDoubleGraph)));
+    cout << "Critical             set found: " << criticalSet.size() << endl << flush;
+
+    set<int> toRemove;
+    for (int const vertex : criticalSet) {
+        for (int const neighbor : adjacencyList[vertex]) {
+            set<int>::iterator const it(criticalSet.find(neighbor));
+            if (it != criticalSet.end()) {
+                toRemove.insert(neighbor);
+            }
+        }
+    }
+
+    set<int> criticalIndependentSet(std::move(criticalSet));
+    for (int const vertexToRemove: toRemove) {
+        criticalIndependentSet.erase(criticalIndependentSet.find(vertexToRemove));
+    }
+
+    clock_t end_time(clock());
+
+    cout << "Critical independent set found: " << criticalIndependentSet.size() << endl << flush;
+////    size_t const independenceNumber(graphSize - maximumMatching.size());
+    cout << "Time to compute  with matching: " << Tools::GetTimeInSeconds(end_time - start_time) << endl << flush;
+
+    return criticalIndependentSet;
+}
+
