@@ -675,10 +675,10 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
     vector<vector<int>> biDoubleGraph(std::move(GraphTools::ComputeBiDoubleGraph(adjacencyList)));
 
     int const biDoubleGraphSize(biDoubleGraph.size());
-    cout << "bi-double graph size=" << biDoubleGraph.size() << endl;
+////    cout << "bi-double graph size=" << biDoubleGraph.size() << endl;
     set<int> setRemainingBiDoubleVertices;
     vector<bool> vInBiDoubleGraph(biDoubleGraph.size(), true);
-////#ifdef DEBUG
+#ifdef DEBUG
     size_t numberOfSingletons(0);
     cout << "Singletons: ";
     for (int vertex=0; vertex < adjacencyList.size(); ++vertex) {
@@ -690,7 +690,7 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
     }
     cout << endl << flush;
     cout << "Number of Singletons: " << numberOfSingletons << endl << flush;
-////#endif //DEBUG
+#endif //DEBUG
     for (int vertex = 0; vertex < biDoubleGraph.size(); ++vertex) {
         setRemainingBiDoubleVertices.insert(vertex);
     }
@@ -732,7 +732,7 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
         
         previousGraphSize = newGraphSize;
         set<int> criticalSet(std::move(GraphTools::ComputeBiDoubleMIS(biDoubleGraph, vInBiDoubleGraph, setRemainingBiDoubleVertices)));
-        cout << "Critical          set found: " << criticalSet.size() << endl << flush;
+////        cout << "Critical          set found: " << criticalSet.size() << endl << flush;
 
         set<int> toRemove;
         for (int const vertex : criticalSet) {
@@ -749,7 +749,7 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
             criticalIndependentSet.erase(criticalIndependentSet.find(vertexToRemove));
         }
 
-        cout << "Num critical indepset nodes: " << criticalIndependentSet.size() << endl << flush;
+////        cout << "Num critical indepset nodes: " << criticalIndependentSet.size() << endl << flush;
 
         independentSetNodes.insert(criticalIndependentSet.begin(), criticalIndependentSet.end());
 
@@ -768,22 +768,22 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
             }
         }
 
-        cout << "Num vertices removed        : " << removedFromBiDoubleCount << endl << flush;
-        cout << "Sum of neighbors            : " << sumOfNeighbors << endl << flush;
+////        cout << "Num vertices removed        : " << removedFromBiDoubleCount << endl << flush;
+////        cout << "Sum of neighbors            : " << sumOfNeighbors << endl << flush;
 
         newGraphSize = setRemainingBiDoubleVertices.size();
         if (newGraphSize == 0) {
-            cout << "Kernel is empty, breaking..." << endl << flush;
+////            cout << "Kernel is empty, breaking..." << endl << flush;
             break;
         }
     }
 
     clock_t end_time(clock());
 
-    cout << "Critical set kernel size: " << setRemainingBiDoubleVertices.size()/2 << endl << flush;
-    cout << "Independent set    nodes: " << independentSetNodes.size() << endl << flush;
-    ////    size_t const independenceNumber(graphSize - maximumMatching.size());
-    cout << "Time to compute         : " << Tools::GetTimeInSeconds(end_time - start_time) << endl << flush;
+////    cout << "Critical set kernel size: " << setRemainingBiDoubleVertices.size()/2 << endl << flush;
+////    cout << "Independent set    nodes: " << independentSetNodes.size() << endl << flush;
+////    size_t const independenceNumber(graphSize - maximumMatching.size());
+////    cout << "Time to compute         : " << Tools::GetTimeInSeconds(end_time - start_time) << endl << flush;
 
     return setRemainingBiDoubleVertices;
 }

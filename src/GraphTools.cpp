@@ -851,7 +851,7 @@ set<int> GraphTools::ComputeBiDoubleMIS(vector<vector<int>> const &biDoubleGraph
     // to find residual paths.
 ////    vector<int> residualGraph(matching);
 
-    cout << "Computing BiDoubleMIS..." << endl << flush;
+////    cout << "Computing BiDoubleMIS..." << endl << flush;
 
     auto inLeftSide = [&biDoubleGraph] (int const vertex) {
         return (vertex < biDoubleGraph.size()/2);
@@ -1030,8 +1030,8 @@ set<int> GraphTools::ComputeBiDoubleMIS(vector<vector<int>> const &biDoubleGraph
         }
     }
 
-    cout << "Matching       has " << matchedVertices.size() << " vertices" << endl << flush;
-    cout << "Cover count     is " << coverVertexCount                      << endl << flush;
+////    cout << "Matching       has " << matchedVertices.size() << " vertices" << endl << flush;
+////    cout << "Cover count     is " << coverVertexCount                      << endl << flush;
 
 
     int iteration(0);
@@ -1079,9 +1079,9 @@ set<int> GraphTools::ComputeBiDoubleMIS(vector<vector<int>> const &biDoubleGraph
             }
         }
 
-        if (savedCoverCount != coverVertexCount) {
-            cout << "Cover increased to " << coverVertexCount << endl << flush;
-        }
+////        if (savedCoverCount != coverVertexCount) {
+////            cout << "Cover increased to " << coverVertexCount << endl << flush;
+////        }
         // TODO/DS: doesn't work, I'm not sure why...
 ////        else {
 ////            break;
@@ -1163,9 +1163,9 @@ set<int> GraphTools::ComputeBiDoubleMIS(vector<vector<int>> const &biDoubleGraph
 ////#endif // VERIFY
 
 
-    cout << "Graph Vertices: " << setInGraph.size() << endl << flush;          
-    cout << "MVC   Vertices: " << numMVCVertices << endl << flush;
-    cout << "MIS   Vertices: " << misToReturn.size() << endl << flush;
+////    cout << "Graph Vertices: " << setInGraph.size() << endl << flush;          
+////    cout << "MVC   Vertices: " << numMVCVertices << endl << flush;
+////    cout << "MIS   Vertices: " << misToReturn.size() << endl << flush;
 
     if (numMVCVertices + numTotalMISVertices != setInGraph.size()) {
         cout << "ERROR! MVC + MIS != Graph" << endl << flush;
