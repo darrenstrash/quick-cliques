@@ -788,7 +788,7 @@ void Experiments::RunForwardSearch() const
     }
 }
 
-void Experiments::ComputeCriticalIndependentSetKernel() const
+void Experiments::ComputeCriticalIndependentSet() const
 {
     if (m_bPrintHeader) {
         if (m_bOutputLatex) {
@@ -812,6 +812,51 @@ void Experiments::ComputeCriticalIndependentSetKernel() const
 
     set<int> const criticalSet(CliqueTools::ComputeCriticalIndependentSet(m_AdjacencyArray));
     cout << "Critical set (" << criticalSet.size() << " elements):" << endl;
+
+#if 0
+    size_t const kernelSize(isolates.GetInGraph().Size());
+
+    vector<vector<int>> vComponents;
+    GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
+
+    size_t const numComponents(vComponents.size());
+    size_t largestComponentSize(0);
+    for (vector<int> const &vComponent : vComponents) {
+        largestComponentSize = max(vComponent.size(), largestComponentSize);
+    }
+
+    if (m_bOutputLatex) {
+        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << "&" << kernelSize << " & " << numComponents << " & " << largestComponentSize << " \\\\ " << endl << flush;
+    } else {
+        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << kernelSize << "\t" << numComponents << "\t" << largestComponentSize << endl << flush;
+    }
+#endif
+}
+
+void Experiments::ComputeCriticalIndependentSetKernel() const
+{
+    if (m_bPrintHeader) {
+        if (m_bOutputLatex) {
+            cout << "Graph Name & $n$ & $m$ & $t$ & $k$ & c & l \\\\ \\hline" << endl << flush;
+        } else {
+            cout << "Graph Name\tn\tm\tt\tk\tc\tl" << endl << flush;
+        }
+    }
+
+
+    size_t const numVertices(m_AdjacencyArray.size());
+    size_t numEdges(0);
+    for (vector<int> const &neighbors : m_AdjacencyArray) {
+        numEdges+= neighbors.size();
+    }
+    numEdges >>=1;
+
+    Isolates4<SparseArraySet> isolates(m_AdjacencyArray);
+
+    clock_t startTime(clock());
+
+    set<int> const remainingVertices(CliqueTools::IterativelyRemoveCriticalIndependentSets(m_AdjacencyArray));
+    cout << "Remaining graph (" << remainingVertices.size() << " elements):" << endl;
 
 #if 0
     size_t const kernelSize(isolates.GetInGraph().Size());

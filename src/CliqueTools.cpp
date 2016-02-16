@@ -667,3 +667,124 @@ set<int> CliqueTools::ComputeCriticalIndependentSet(vector<vector<int>> const &a
     return criticalIndependentSet;
 }
 
+// Iterate critical independent set computation (this is a critical set reduction)
+// returns vertices in kernel.
+set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int>> const &adjacencyList)
+{
+    clock_t start_time(clock());
+    vector<vector<int>> biDoubleGraph(std::move(GraphTools::ComputeBiDoubleGraph(adjacencyList)));
+
+    int const biDoubleGraphSize(biDoubleGraph.size());
+    cout << "bi-double graph size=" << biDoubleGraph.size() << endl;
+    set<int> setRemainingBiDoubleVertices;
+    vector<bool> vInBiDoubleGraph(biDoubleGraph.size(), true);
+////#ifdef DEBUG
+    size_t numberOfSingletons(0);
+    cout << "Singletons: ";
+    for (int vertex=0; vertex < adjacencyList.size(); ++vertex) {
+        vector<int> const & neighbors(adjacencyList[vertex]);
+        if (neighbors.empty()) {
+            cout << vertex << " ";
+            numberOfSingletons++;
+        }
+    }
+    cout << endl << flush;
+    cout << "Number of Singletons: " << numberOfSingletons << endl << flush;
+////#endif //DEBUG
+    for (int vertex = 0; vertex < biDoubleGraph.size(); ++vertex) {
+        setRemainingBiDoubleVertices.insert(vertex);
+    }
+
+////    GraphTools::PrintGraphInSNAPFormat(biDoubleGraph);
+
+    // remove a vertex and its twin, if they exist
+    auto removeFromBiDouble = [&biDoubleGraph, &setRemainingBiDoubleVertices, &vInBiDoubleGraph, &biDoubleGraphSize] (int const vertex) {
+        set<int>::iterator it = setRemainingBiDoubleVertices.find(vertex);
+        if (it != setRemainingBiDoubleVertices.end()) {
+            biDoubleGraph[vertex].clear();
+            biDoubleGraph[vertex + biDoubleGraphSize/2].clear();
+
+            vInBiDoubleGraph[vertex] = false;
+            vInBiDoubleGraph[vertex + biDoubleGraphSize/2] = false;
+
+            setRemainingBiDoubleVertices.erase(it);
+            it = setRemainingBiDoubleVertices.find(vertex + biDoubleGraphSize/2);
+            setRemainingBiDoubleVertices.erase(it);
+            return true;
+        }
+        return false;
+    };
+
+    int previousGraphSize(adjacencyList.size());
+    int newGraphSize(-1);
+
+    set<int> independentSetNodes;
+
+    while (previousGraphSize != newGraphSize) {
+#ifdef DEBUG
+        vector<vector<int>> biDoubleSubgraph;
+        map<int,int> unusedRemapping;
+        GraphTools::ComputeInducedSubgraph(biDoubleGraph, setRemainingBiDoubleVertices, biDoubleSubgraph, unusedRemapping);
+        cout << "---Start BiDouble Subgraph---" << endl << flush;
+        GraphTools::PrintGraphInSNAPFormat(biDoubleSubgraph);
+        cout << "---End   BiDouble Subgraph---" << endl << flush;
+#endif // DEBUG
+        
+        previousGraphSize = newGraphSize;
+        set<int> criticalSet(std::move(GraphTools::ComputeBiDoubleMIS(biDoubleGraph, vInBiDoubleGraph, setRemainingBiDoubleVertices)));
+        cout << "Critical          set found: " << criticalSet.size() << endl << flush;
+
+        set<int> toRemove;
+        for (int const vertex : criticalSet) {
+            for (int const neighbor : adjacencyList[vertex]) {
+                set<int>::iterator const it(criticalSet.find(neighbor));
+                if (it != criticalSet.end()) {
+                    toRemove.insert(neighbor);
+                }
+            }
+        }
+
+        set<int> criticalIndependentSet(std::move(criticalSet));
+        for (int const vertexToRemove: toRemove) {
+            criticalIndependentSet.erase(criticalIndependentSet.find(vertexToRemove));
+        }
+
+        cout << "Num critical indepset nodes: " << criticalIndependentSet.size() << endl << flush;
+
+        independentSetNodes.insert(criticalIndependentSet.begin(), criticalIndependentSet.end());
+
+        size_t removedFromBiDoubleCount(0);
+        size_t sumOfNeighbors(0);
+
+        for (int const vertex : criticalIndependentSet) {
+            if (removeFromBiDouble(vertex)) {
+                removedFromBiDoubleCount++;
+            }
+            for (int const neighbor : adjacencyList[vertex]) {
+                sumOfNeighbors++;
+                if (removeFromBiDouble(neighbor)) {
+                    removedFromBiDoubleCount++;
+                }
+            }
+        }
+
+        cout << "Num vertices removed        : " << removedFromBiDoubleCount << endl << flush;
+        cout << "Sum of neighbors            : " << sumOfNeighbors << endl << flush;
+
+        newGraphSize = setRemainingBiDoubleVertices.size();
+        if (newGraphSize == 0) {
+            cout << "Kernel is empty, breaking..." << endl << flush;
+            break;
+        }
+    }
+
+    clock_t end_time(clock());
+
+    cout << "Critical set kernel size: " << setRemainingBiDoubleVertices.size()/2 << endl << flush;
+    cout << "Independent set    nodes: " << independentSetNodes.size() << endl << flush;
+    ////    size_t const independenceNumber(graphSize - maximumMatching.size());
+    cout << "Time to compute         : " << Tools::GetTimeInSeconds(end_time - start_time) << endl << flush;
+
+    return setRemainingBiDoubleVertices;
+}
+
