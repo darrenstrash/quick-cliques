@@ -23,8 +23,9 @@ namespace GraphTools
     std::vector<std::vector<int>> ComputeBiDoubleGraph(std::vector<std::vector<int>> const &adjacencyArray);
 
     int ComputeMaximumMatchingSize(std::vector<std::vector<int>> const &biDoubleGraph);
-    std::set<int> ComputeBiDoubleMIS(std::vector<std::vector<int>> const &biDoubleGraph);
+    std::set<int> ComputeLeftMIS(std::vector<std::vector<int>> const &biDoubleGraph);
     std::set<int> ComputeBiDoubleMIS(std::vector<std::vector<int>> const &biDoubleGraph, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
+    std::set<int> ComputeLeftMIS(std::vector<std::vector<int>> const &biDoubleGraph, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
 
     bool TestMatchingCount();
 

@@ -516,7 +516,7 @@ bool GraphTools::TestMatchingCount()
     return true;
 }
 
-set<int> GraphTools::ComputeBiDoubleMIS(vector<vector<int>> const &biDoubleGraph)
+set<int> GraphTools::ComputeLeftMIS(vector<vector<int>> const &biDoubleGraph)
 {
     // each edge in matching is indexed by first vertex, and contains the second vertex
     // initially there are no edges in matching (thus invalid second vertex in matching).
@@ -1000,8 +1000,6 @@ set<int> GraphTools::ComputeBiDoubleMIS(vector<vector<int>> const &biDoubleGraph
 
     vector<int> previousVertex(matching.size(), -1);
 
-
-    // TODO/DS: Check that lambda works 
     auto isMatchedEdge = [&matching] (int const vertex, int const neighbor) {
         return matching[neighbor] == vertex; 
     };
@@ -1103,53 +1101,49 @@ set<int> GraphTools::ComputeBiDoubleMIS(vector<vector<int>> const &biDoubleGraph
     size_t numMVCVertices(0);
     size_t numTotalMISVertices(0);
 
-////    if (coverVertexCount == 0) {
-    if (false) {
-        for (int const vertex : setInGraph) {
-            if (!inLeftSide(vertex) && matching[vertex] != UNMATCHED_VERTEX) {
-                mvc[vertex] = true;
-                numMVCVertices++;
-            } else {
-                numTotalMISVertices++;
-                if (inLeftSide(vertex))
-                    misToReturn.insert(vertex);
+    // put vertices in mvc
+    for (int const vertex : setInGraph) {
+        if ((inLeftSide(vertex) && (marked[vertex] == LastEdge::NO_LAST_EDGE)) ||
+                (!inLeftSide(vertex) && (marked[vertex] != LastEdge::NO_LAST_EDGE))) {
+#ifdef VERIFY
+            if (matching[vertex] == UNMATCHED_VERTEX) {
+                cout << "ERROR! vertex " << vertex << " is not in matching!" << endl << flush;
+            }
+#endif //VERIFY
+            mvc[vertex] = true;
+            numMVCVertices++;
+
+            if (inLeftSide(vertex) && marked[vertex] == LastEdge::UNMATCHED_LAST_EDGE) {
+                cout << "ERROR!" << endl << flush;
+            }
+            if (!inLeftSide(vertex) && marked[vertex] == LastEdge::MATCHED_LAST_EDGE) {
+                cout << "ERROR!" << endl << flush;
             }
         }
-    } else {
-        // put vertices in mvc
-        for (int const vertex : setInGraph) {
-            if ((inLeftSide(vertex) && (marked[vertex] == LastEdge::NO_LAST_EDGE)) ||
-                    (!inLeftSide(vertex) && (marked[vertex] != LastEdge::NO_LAST_EDGE))) {
-#ifdef VERIFY
-                if (matching[vertex] == UNMATCHED_VERTEX) {
-                    cout << "ERROR! vertex " << vertex << " is not in matching!" << endl << flush;
-                }
-#endif //VERIFY
-                mvc[vertex] = true;
-                numMVCVertices++;
-
-                if (inLeftSide(vertex) && marked[vertex] == LastEdge::UNMATCHED_LAST_EDGE) {
-                    cout << "ERROR!" << endl << flush;
-                }
-                if (!inLeftSide(vertex) && marked[vertex] == LastEdge::MATCHED_LAST_EDGE) {
-                    cout << "ERROR!" << endl << flush;
-                }
+        else {
+            numTotalMISVertices++;
+            if (inLeftSide(vertex)) {
+                misToReturn.insert(vertex);
             }
-            else {
-                numTotalMISVertices++;
-                if (inLeftSide(vertex)) {
-                    misToReturn.insert(vertex);
-                }
 
-                // TODO/DS: I don't know if this belongs or not...
-////                else {
-////                    misToReturn.insert(vertex - matching.size()/2);
-////                }
+            // TODO/DS: I don't know if this belongs or not...
+            else {
+                misToReturn.insert(vertex);
             }
         }
     }
 
-////#ifdef VERIFY
+#ifdef VERIFY
+    for (int vertex=0; vertex < mvc.size(); ++vertex) {
+        if (!inGraph(vertex)) continue;
+        for (int const neighbor : biDoubleGraph[vertex]) {
+            if (!inGraph(neighbor)) continue;
+            if (!mvc[neighbor] && !mvc[vertex]) {
+                cout << "ERROR! MVC is not a vertex cover!, edge (" << vertex << "," << neighbor << ") is not covered." << endl << flush;
+            }
+        }
+    }
+
     for (int const vertex : misToReturn) {
         if (!inGraph(vertex)) {
             cout << "ERROR! vertex " << vertex << " in MIS is not in graph!" << endl;
@@ -1160,10 +1154,11 @@ set<int> GraphTools::ComputeBiDoubleMIS(vector<vector<int>> const &biDoubleGraph
             }
         }
     }
-////#endif // VERIFY
+#endif // VERIFY
 
 
 ////    cout << "Graph Vertices: " << setInGraph.size() << endl << flush;          
+////    cout << "Match Vertices: " << matchVertices << endl << flush;          
 ////    cout << "MVC   Vertices: " << numMVCVertices << endl << flush;
 ////    cout << "MIS   Vertices: " << misToReturn.size() << endl << flush;
 
@@ -1192,6 +1187,19 @@ set<int> GraphTools::ComputeBiDoubleMIS(vector<vector<int>> const &biDoubleGraph
 ////    }
 
     return misToReturn;
+}
+
+set<int> GraphTools::ComputeLeftMIS(vector<vector<int>> const &biDoubleGraph, vector<bool> const &vInGraph, set<int> const &setInGraph)
+{
+    set<int> mis(GraphTools::ComputeBiDoubleMIS(biDoubleGraph, vInGraph, setInGraph));
+    for (set<int>::iterator it = mis.begin(); it != mis.end(); ++it) {
+        if (*it >= biDoubleGraph.size()/2) {
+            mis.erase(it, mis.end());
+            break;
+        }
+    }
+
+    return mis;
 }
 
 

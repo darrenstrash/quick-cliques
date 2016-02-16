@@ -15,6 +15,7 @@ public:
     void KernelizeAndRunComponentWiseReductionSparseMISS() const;
     void ComputeCriticalIndependentSet() const;
     void ComputeCriticalIndependentSetKernel() const;
+    void ComputeMaximumCriticalIndependentSetKernel() const;
     void RunExactSearch() const;
     void RunStandardSearch() const;
     void RunComponentsMISS() const;

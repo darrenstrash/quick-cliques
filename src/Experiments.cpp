@@ -851,8 +851,6 @@ void Experiments::ComputeCriticalIndependentSetKernel() const
     }
     numEdges >>=1;
 
-    Isolates4<SparseArraySet> isolates(m_AdjacencyArray);
-
     clock_t startTime(clock());
 
     set<int> const remainingVertices(CliqueTools::IterativelyRemoveCriticalIndependentSets(m_AdjacencyArray));
@@ -861,9 +859,41 @@ void Experiments::ComputeCriticalIndependentSetKernel() const
     clock_t endTime(clock());
 
     if (m_bOutputLatex) {
-        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << "&" << remainingVertices.size() << " \\\\ " << endl << flush;
+        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << "&" << remainingVertices.size()/2 << " \\\\ " << endl << flush;
     } else {
-        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << remainingVertices.size() << endl << flush;
+        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << remainingVertices.size()/2 << endl << flush;
+    }
+}
+
+void Experiments::ComputeMaximumCriticalIndependentSetKernel() const
+{
+    if (m_bPrintHeader) {
+        if (m_bOutputLatex) {
+            cout << "Graph Name & $n$ & $m$ & $t$ & $k$ \\\\ \\hline" << endl << flush;
+        } else {
+            cout << "Graph Name\tn\tm\tt\tk" << endl << flush;
+        }
+    }
+
+
+    size_t const numVertices(m_AdjacencyArray.size());
+    size_t numEdges(0);
+    for (vector<int> const &neighbors : m_AdjacencyArray) {
+        numEdges+= neighbors.size();
+    }
+    numEdges >>=1;
+
+    clock_t startTime(clock());
+
+    set<int> const remainingVertices(CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(m_AdjacencyArray));
+////    cout << "Remaining graph (" << remainingVertices.size() << " elements):" << endl;
+
+    clock_t endTime(clock());
+
+    if (m_bOutputLatex) {
+        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << "&" << remainingVertices.size()/2 << " \\\\ " << endl << flush;
+    } else {
+        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << remainingVertices.size()/2 << endl << flush;
     }
 }
 
