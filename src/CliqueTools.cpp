@@ -794,8 +794,8 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
     return setRemainingBiDoubleVertices;
 }
 
-// Larson algorithm, TODO: finish
-set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vector<int>> const &adjacencyList)
+// Larson algorithm
+set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vector<int>> const &adjacencyList, set<int> &independentVertices)
 {
     clock_t start_time(clock());
     vector<vector<int>> biDoubleGraph(std::move(GraphTools::ComputeBiDoubleGraph(adjacencyList)));
@@ -978,11 +978,14 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
 ////        cout << "Num vertices removed        : " << removedFromBiDoubleCount << endl << flush;
 ////        cout << "Sum of neighbors            : " << sumOfNeighbors << endl << flush;
 
+        independentVertices.insert(maximumCriticalIndependentSet.begin(), maximumCriticalIndependentSet.end());
+
         newGraphSize = setRemainingBiDoubleVertices.size();
         if (newGraphSize == 0) {
 ////            cout << "Kernel is empty, breaking..." << endl << flush;
             break;
         }
+
     }
 
     clock_t end_time(clock());
