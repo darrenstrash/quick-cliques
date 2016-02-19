@@ -52,6 +52,7 @@ SOURCES_TMP += Isolates.cpp
 SOURCES_TMP += Isolates2.cpp
 SOURCES_TMP += Isolates3.cpp
 SOURCES_TMP += Isolates4.cpp
+SOURCES_TMP += FastIsolates.cpp
 SOURCES_TMP += IsolatesWithMatrix.cpp
 SOURCES_TMP += ExperimentalReduction.cpp
 SOURCES_TMP += IndependentSetsReduction.cpp

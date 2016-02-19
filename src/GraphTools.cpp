@@ -5,6 +5,7 @@
 #include "Isolates3.h"
 #include "Isolates4.h"
 #include "IsolatesWithMatrix.h"
+#include "FastIsolates.h"
 
 #include <set>
 #include <vector>
@@ -1244,4 +1245,7 @@ void GraphTools::ComputeConnectedComponents<Isolates4<ArraySet>>(Isolates4<Array
 
 template
 void GraphTools::ComputeConnectedComponents<IsolatesWithMatrix<ArraySet>>(IsolatesWithMatrix<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
+
+template
+void GraphTools::ComputeConnectedComponents<FastIsolates<SparseArraySet>>(FastIsolates<SparseArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
 

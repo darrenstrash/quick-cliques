@@ -1,6 +1,7 @@
 #include "Experiments.h"
 
 #include "Isolates4.h"
+#include "FastIsolates.h"
 #include "SparseArraySet.h"
 #include "TesterMISS.h"
 #include "ForwardSearchMISS.h"
@@ -70,6 +71,52 @@ void Experiments::RunKernelSize() const
         cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << kernelSize << "\t" << numComponents << "\t" << largestComponentSize << endl << flush;
     }
 }
+
+void Experiments::RunFastKernelSize() const
+{
+    if (m_bPrintHeader) {
+        if (m_bOutputLatex) {
+            cout << "Graph Name & $n$ & $m$ & $t$ & $k$ & $c$ & $l$ \\\\ \\hline" << endl << flush;
+        } else {
+            cout << "Graph Name\tn\tm\tt\tk\tc\tl" << endl << flush;
+        }
+    }
+
+    clock_t startTime(clock());
+
+    size_t const numVertices(m_AdjacencyArray.size());
+    size_t numEdges(0);
+    for (vector<int> const &neighbors : m_AdjacencyArray) {
+        numEdges+= neighbors.size();
+    }
+    numEdges >>=1;
+
+    FastIsolates<SparseArraySet> isolates(m_AdjacencyArray);
+    vector<int> vIsolates;
+    vector<int> vRemoved;
+    vector<Reduction> vReductions;
+    isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for removal */);
+
+    size_t const kernelSize(isolates.GetInGraph().Size());
+
+    clock_t endTime(clock());
+
+    vector<vector<int>> vComponents;
+    GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
+
+    size_t const numComponents(vComponents.size());
+    size_t largestComponentSize(0);
+    for (vector<int> const &vComponent : vComponents) {
+        largestComponentSize = max(vComponent.size(), largestComponentSize);
+    }
+
+    if (m_bOutputLatex) {
+        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << "&" << kernelSize << " & " << numComponents << " & " << largestComponentSize << " \\\\ " << endl << flush;
+    } else {
+        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << kernelSize << "\t" << numComponents << "\t" << largestComponentSize << endl << flush;
+    }
+}
+
 
 void Experiments::KernelizeAndRunReductionSparseMISS() const
 {

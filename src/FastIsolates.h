@@ -1,5 +1,5 @@
-#ifndef ISOLATES_4_H
-#define ISOLATES_4_H
+#ifndef FAST_ISOLATES_H
+#define FAST_ISOLATES_H
 
 #include "Set.h"
 #include "ArraySet.h"
@@ -15,22 +15,16 @@
 ////#define TIMERS
 ////#define SPARSE
 
-template <typename NeighborSet> class Isolates4
+template <typename NeighborSet> class FastIsolates
 {
 public:
-    Isolates4(std::vector<std::vector<int>> const &adjacencyArray);
-    ~Isolates4();
+    FastIsolates(std::vector<std::vector<int>> const &adjacencyArray);
+    ~FastIsolates();
 
     void RemoveVertexAndNeighbors(int const vertex, std::vector<int> &vRemoved, std::vector<Reduction> &vReductions);
     void RemoveVertex(int const vertex, std::vector<Reduction> &vReductions);
 
     void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions, bool const bConsiderAllVertices);
-    void ReplaceAllRemoved(std::vector<Reduction> const &vReductions);
-
-#if 0
-    int NextVertexToRemove(std::vector<int> &vVertices);
-    int NextVertexToRemove();
-#endif //0
 
     size_t size() const { return isolates.Size(); }
 
@@ -52,10 +46,14 @@ public:
 
     void SetAllowVertexFolds(bool const allow) { m_bAllowVertexFolds = allow; }
 
+    size_t GetReductionCount() const { return m_uReductionCount; }
+
 protected: // methods
     bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
+#ifdef SLOW
 ////    bool RemoveIsolatedPath      (int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
     bool RemoveDominatedVertex(int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
+#endif // SLOW
     bool FoldVertex(int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
 
 protected: // members
@@ -82,6 +80,7 @@ protected: // members
     bool m_bConnectedComponentMode;
     size_t foldedVertexCount;
     bool m_bAllowVertexFolds;
+    size_t m_uReductionCount;
 };
 
-#endif //ISOLATES_4_H
+#endif //FAST_ISOLATES_H

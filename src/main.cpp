@@ -177,6 +177,8 @@ void RunExperiment(string const &sInputFile, string const &sExperimentName, bool
 
     if (sExperimentName=="kernel-size") {
         experiments.RunKernelSize();
+    } else if (sExperimentName=="fast-kernel-size") {
+        experiments.RunFastKernelSize();
     } else if (sExperimentName=="critical-independent-set") {
         experiments.ComputeCriticalIndependentSet();
     } else if (sExperimentName=="kernel-size-critical-set") {

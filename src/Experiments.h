@@ -10,6 +10,7 @@ public:
     Experiments(std::string const sDataSetName, double const dTimeout, bool const bOutputLatex, bool const bPrintHeader, std::vector<std::vector<int>> const &adjacencyArray, std::vector<std::vector<char>> const &vAdjacencyMatrix);
 
     void RunKernelSize() const;
+    void RunFastKernelSize() const;
     void KernelizeAndRunReductionSparseMISS() const;
     void KernelizeAndRunComponentWiseMISS() const;
     void KernelizeAndRunComponentWiseReductionSparseMISS() const;
