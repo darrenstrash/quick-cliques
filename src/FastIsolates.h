@@ -21,17 +21,10 @@ public:
     FastIsolates(std::vector<std::vector<int>> const &adjacencyArray);
     ~FastIsolates();
 
-    void RemoveVertexAndNeighbors(int const vertex, std::vector<int> &vRemoved, std::vector<Reduction> &vReductions);
     void RemoveVertex(int const vertex, std::vector<Reduction> &vReductions);
 
     void RemoveAllIsolates(int const independentSetSIze, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions, bool const bConsiderAllVertices);
 
-    size_t size() const { return isolates.Size(); }
-
-    ArraySet const& GetIsolates() const { return isolates; }
-#ifdef SLOW
-    ArraySet const& GetInGraph()  const { return inGraph;  }
-#endif // SLOW
 #ifdef SPARSE
     std::vector<SparseArraySet> const& Neighbors()  const { return neighbors;  }
 #else
@@ -54,10 +47,6 @@ public:
 
 protected: // methods
     bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
-#ifdef SLOW
-////    bool RemoveIsolatedPath      (int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<std::pair<int,int>> &vAddedEdges);
-    bool RemoveDominatedVertex(int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
-#endif // SLOW
     bool FoldVertex(int const vertex, std::vector<int> &vIsolateVertices,  std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
 
 protected: // members
@@ -67,15 +56,9 @@ protected: // members
 #else
     std::vector<NeighborSet>     neighbors;
 #endif // SPARSE
-#ifdef SLOW
-    ArraySet inGraph;
-#else
     std::vector<bool> m_vbInGraph;
-#endif // SLOW
-    ArraySet isolates;
     ArraySet remaining;
     std::vector<bool> vMarkedVertices;
-    std::map<int,int> m_AlternativeVertices;
 #ifdef TIMERS
     clock_t timer;
     clock_t removeTimer;

@@ -19,15 +19,9 @@ template <typename NeighborSet>
 FastIsolates<NeighborSet>::FastIsolates(vector<vector<int>> const &adjacencyArray)
  : m_AdjacencyArray(adjacencyArray)
  , neighbors(adjacencyArray.size())
- #ifdef SLOW
- , inGraph(adjacencyArray.size())
- #else
  , m_vbInGraph(adjacencyArray.size(), true)
- #endif // SLOW
- , isolates(adjacencyArray.size())
  , remaining(adjacencyArray.size())
  , vMarkedVertices(adjacencyArray.size(), false)
- , m_AlternativeVertices()
 #ifdef TIMERS
  , timer(0)
  , removeTimer(0)
@@ -45,9 +39,6 @@ FastIsolates<NeighborSet>::FastIsolates(vector<vector<int>> const &adjacencyArra
 {
     for (size_t u=0; u < adjacencyArray.size(); ++u) {
         remaining.Insert(u);
-#ifdef SLOW
-        inGraph.Insert(u);
-#endif // SLOW
 #ifdef SPARSE
         neighbors[u].Resize(m_AdjacencyArray[u].size());
 #else
@@ -225,12 +216,8 @@ bool FastIsolates<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<in
 ////                cout << "Trying to remove non-existant neighbor " << neighbor << " from " << vertex << " neighbor list!" << endl << flush;
 ////            }
 ////            cout << __LINE__ << ": calling remove" << endl << flush;
-#ifdef SLOW
-            inGraph.Remove(neighbor);
-#else
             m_vbInGraph[neighbor] = false;
             m_uRemainingGraphSize--;
-#endif // SLOW
             remaining.Remove(neighbor);
 #ifdef SLOW
             reduction.AddNeighbor(neighbor);
@@ -246,13 +233,8 @@ bool FastIsolates<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<in
 ////        }
 
 ////        cout << __LINE__ << ": calling remove" << endl << flush;
-#ifdef SLOW
-        inGraph.Remove(vertex);
-#else
         m_vbInGraph[vertex] = false;
         m_uRemainingGraphSize--;
-#endif // SLOW
-        isolates.Insert(vertex);
         vIsolateVertices.push_back(vertex);
 ////        if (vertex == 0) {
 ////            cout << __LINE__ << ": Removing " << vertex << " from graph." << endl << flush;
@@ -262,11 +244,7 @@ bool FastIsolates<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<in
         for (int const neighbor : neighbors[vertex]) {
             ////                cout << "   Expunging neighbor " << neighbor << " with " << neighbors[neighbor].size() << " neighbors" << endl << flush;
             for (int const nNeighbor : neighbors[neighbor]) {
-#ifdef SLOW
-                if (inGraph.Contains(nNeighbor)) {
-#else
                 if (m_vbInGraph[nNeighbor]) {
-#endif // SLOW
                     remaining.Insert(nNeighbor);
                 }
 
@@ -406,15 +384,10 @@ bool FastIsolates<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsola
 
     remaining.Remove(vertex1);
     remaining.Remove(vertex2);
-#ifdef SLOW
-    inGraph.Remove(vertex2);
-    inGraph.Remove(vertex1);
-#else
     m_vbInGraph[vertex1] = false;
     m_vbInGraph[vertex2] = false;
     m_uRemainingGraphSize--;
     m_uRemainingGraphSize--;
-#endif // SLOW
 
 ////    if (debug) {
 ////        cout << "AFTER:" << endl;
@@ -444,120 +417,6 @@ bool FastIsolates<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsola
 }
 
 #endif // NEW_ISOLATE_CHECKS
-
-
-// TODO/DS: need to add 2-neighbors to remaining.
-template <typename NeighborSet>
-void FastIsolates<NeighborSet>::RemoveVertex(int const vertex, vector<Reduction> &vReductions)
-{
-////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
-////    cout << __LINE__ << ": calling remove" << endl << flush;
-#ifdef SLOW
-    inGraph.Remove(vertex);
-#else
-    m_vbInGraph[vertex] = false;
-    m_uRemainingGraphSize--;
-#endif // SLOW
-    remaining.Remove(vertex);
-    isolates.Remove(vertex);
-
-#ifdef SLOW
-    Reduction reduction(REMOVED_VERTEX);
-    reduction.SetVertex(vertex);
-#endif // SLOW
-
-    for (int const neighbor : neighbors[vertex]) {
-        neighbors[neighbor].Remove(vertex);
-        remaining.Insert(neighbor);
-#ifdef SLOW
-        reduction.AddRemovedEdge(vertex, neighbor);
-        reduction.AddRemovedEdge(neighbor, vertex);
-#endif // SLOW
-    }
-
-#ifdef SLOW
-    vReductions.emplace_back(reduction);
-#endif // SLOW
-
-    neighbors[vertex].Clear();
-}
-
-//TODO/DS: need to add 2-neighbors to remaining.
-template <typename NeighborSet>
-void FastIsolates<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vector<int> &vRemoved, vector<Reduction> &vReductions)
-{
-////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
-////    cout << __LINE__ << ": calling remove" << endl << flush;
-#ifdef SLOW
-    inGraph.Remove(vertex);
-#else
-    m_vbInGraph[vertex] = false;
-    m_uRemainingGraphSize--;
-#endif // SLOW
-    remaining.Remove(vertex);
-    isolates.Insert(vertex);
-    vRemoved.push_back(vertex);
-
-#ifdef SLOW
-    Reduction reduction(REMOVED_VERTEX_AND_NEIGHBORS);
-    reduction.SetVertex(vertex);
-#endif // SLOW
-////    if (vertex == 0) {
-////        cout << __LINE__ << ": Removing " << vertex << " from graph." << endl << flush;
-////    }
-
-    for (int const neighbor : neighbors[vertex]) {
-////        cout << __LINE__ << ":     Removing neighbor " << neighbor << endl << flush;
-////        cout << __LINE__ << ": calling remove" << endl << flush;
-#ifdef SLOW
-        inGraph.Remove(neighbor);
-#else
-        m_vbInGraph[neighbor] = false;
-        m_uRemainingGraphSize--;
-#endif // SLOW
-        remaining.Remove(neighbor);
-        vRemoved.push_back(neighbor);
-
-#ifdef SLOW
-        reduction.AddNeighbor(neighbor);
-        reduction.AddRemovedEdge(vertex, neighbor);
-        reduction.AddRemovedEdge(neighbor, vertex);
-#endif // SLOW
-
-////        if (neighbor == 0) {
-////            cout << __LINE__ << ": Removing " << neighbor << " from graph." << endl << flush;
-////        }
-
-        for (int const nNeighbor : neighbors[neighbor]) {
-////            cout << __LINE__ << ":         Removing from neighbor's neighbor "<< nNeighbor << endl << flush;
-            if (nNeighbor == vertex) continue;
-            neighbors[nNeighbor].Remove(neighbor);
-////            cout << __LINE__ << ":         Done removing" << endl << flush;
-#ifdef SLOW
-            if (inGraph.Contains(nNeighbor)) {
-#else
-            if (m_vbInGraph[nNeighbor]) {
-#endif // SLOW
-                remaining.Insert(nNeighbor);
-#ifdef SLOW
-                reduction.AddRemovedEdge(neighbor, nNeighbor);
-                reduction.AddRemovedEdge(nNeighbor, neighbor);
-#endif // SLOW
-            }
-        }
-////        cout << __LINE__ << ":     Done Removing neighbor" << neighbor << endl << flush;
-        neighbors[neighbor].Clear();
-////        cout << __LINE__ << ": Cleared neighbors: " << neighbor << endl << flush;
-    }
-
-////    cout << __LINE__ << ": Done Removing vertex " << vertex << endl << flush;
-    neighbors[vertex].Clear();
-
-#ifdef SLOW
-    vReductions.emplace_back(std::move(reduction));
-#endif // SLOW
-////    cout << __LINE__ << ": Cleared neighbors: " << vertex << endl << flush;
-}
 
 template <typename NeighborSet>
 void FastIsolates<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<Reduction> &vReductions, bool bConsiderAllVertices)
@@ -608,7 +467,7 @@ void FastIsolates<NeighborSet>::RemoveAllIsolates(int const independentSetSize, 
         bool reduction = RemoveIsolatedClique(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
 #ifdef NEW_ISOLATE_CHECKS
 #if 1 ////def FOLD_VERTEX
-        if (!reduction && m_bAllowVertexFolds) {
+        if (!reduction) {
 ////            reduction = RemoveIsolatedPath(vertex, vIsolateVertices, vOtherRemovedVertices, vAddedEdges);
             reduction = FoldVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
         }
@@ -644,6 +503,6 @@ void FastIsolates<NeighborSet>::RemoveAllIsolates(int const independentSetSize, 
 #endif // TIMERS
 }
 
-template class FastIsolates<ArraySet>;
+////template class FastIsolates<ArraySet>;
 template class FastIsolates<SparseArraySet>;
 
