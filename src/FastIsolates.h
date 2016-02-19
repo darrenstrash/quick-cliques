@@ -29,7 +29,9 @@ public:
     size_t size() const { return isolates.Size(); }
 
     ArraySet const& GetIsolates() const { return isolates; }
+#ifdef SLOW
     ArraySet const& GetInGraph()  const { return inGraph;  }
+#endif // SLOW
 #ifdef SPARSE
     std::vector<SparseArraySet> const& Neighbors()  const { return neighbors;  }
 #else
@@ -48,6 +50,8 @@ public:
 
     size_t GetReductionCount() const { return m_uReductionCount; }
 
+    size_t GetRemainingGraphSize() const { return m_uRemainingGraphSize; }
+
 protected: // methods
     bool RemoveIsolatedClique    (int const vertex, std::vector<int> &vIsolateVertices, std::vector<int> &vOtherRemovedVertices, std::vector<Reduction> &vReductions);
 #ifdef SLOW
@@ -63,7 +67,11 @@ protected: // members
 #else
     std::vector<NeighborSet>     neighbors;
 #endif // SPARSE
+#ifdef SLOW
     ArraySet inGraph;
+#else
+    std::vector<bool> m_vbInGraph;
+#endif // SLOW
     ArraySet isolates;
     ArraySet remaining;
     std::vector<bool> vMarkedVertices;
@@ -81,6 +89,7 @@ protected: // members
     size_t foldedVertexCount;
     bool m_bAllowVertexFolds;
     size_t m_uReductionCount;
+    size_t m_uRemainingGraphSize;
 };
 
 #endif //FAST_ISOLATES_H

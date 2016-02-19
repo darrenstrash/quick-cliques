@@ -97,10 +97,12 @@ void Experiments::RunFastKernelSize() const
     vector<Reduction> vReductions;
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for removal */);
 
-    size_t const kernelSize(isolates.GetInGraph().Size());
+////    size_t const kernelSize(isolates.GetInGraph().Size());
+    size_t const kernelSize(isolates.GetRemainingGraphSize());
 
     clock_t endTime(clock());
 
+#if 0
     vector<vector<int>> vComponents;
     GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
 
@@ -115,6 +117,13 @@ void Experiments::RunFastKernelSize() const
     } else {
         cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << kernelSize << "\t" << numComponents << "\t" << largestComponentSize << endl << flush;
     }
+#else
+    if (m_bOutputLatex) {
+        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << "&" << kernelSize << " \\\\ " << endl << flush;
+    } else {
+        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << kernelSize << endl << flush;
+    }
+#endif // 0
 }
 
 

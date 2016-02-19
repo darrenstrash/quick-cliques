@@ -19,7 +19,11 @@ template <typename NeighborSet>
 FastIsolates<NeighborSet>::FastIsolates(vector<vector<int>> const &adjacencyArray)
  : m_AdjacencyArray(adjacencyArray)
  , neighbors(adjacencyArray.size())
+ #ifdef SLOW
  , inGraph(adjacencyArray.size())
+ #else
+ , m_vbInGraph(adjacencyArray.size(), true)
+ #endif // SLOW
  , isolates(adjacencyArray.size())
  , remaining(adjacencyArray.size())
  , vMarkedVertices(adjacencyArray.size(), false)
@@ -37,10 +41,13 @@ FastIsolates<NeighborSet>::FastIsolates(vector<vector<int>> const &adjacencyArra
  , foldedVertexCount(0)
  , m_bAllowVertexFolds(true)
  , m_uReductionCount(0)
+ , m_uRemainingGraphSize(adjacencyArray.size())
 {
     for (size_t u=0; u < adjacencyArray.size(); ++u) {
         remaining.Insert(u);
+#ifdef SLOW
         inGraph.Insert(u);
+#endif // SLOW
 #ifdef SPARSE
         neighbors[u].Resize(m_AdjacencyArray[u].size());
 #else
@@ -218,7 +225,12 @@ bool FastIsolates<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<in
 ////                cout << "Trying to remove non-existant neighbor " << neighbor << " from " << vertex << " neighbor list!" << endl << flush;
 ////            }
 ////            cout << __LINE__ << ": calling remove" << endl << flush;
+#ifdef SLOW
             inGraph.Remove(neighbor);
+#else
+            m_vbInGraph[neighbor] = false;
+            m_uRemainingGraphSize--;
+#endif // SLOW
             remaining.Remove(neighbor);
 #ifdef SLOW
             reduction.AddNeighbor(neighbor);
@@ -234,7 +246,12 @@ bool FastIsolates<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<in
 ////        }
 
 ////        cout << __LINE__ << ": calling remove" << endl << flush;
+#ifdef SLOW
         inGraph.Remove(vertex);
+#else
+        m_vbInGraph[vertex] = false;
+        m_uRemainingGraphSize--;
+#endif // SLOW
         isolates.Insert(vertex);
         vIsolateVertices.push_back(vertex);
 ////        if (vertex == 0) {
@@ -245,7 +262,11 @@ bool FastIsolates<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<in
         for (int const neighbor : neighbors[vertex]) {
             ////                cout << "   Expunging neighbor " << neighbor << " with " << neighbors[neighbor].size() << " neighbors" << endl << flush;
             for (int const nNeighbor : neighbors[neighbor]) {
+#ifdef SLOW
                 if (inGraph.Contains(nNeighbor)) {
+#else
+                if (m_vbInGraph[nNeighbor]) {
+#endif // SLOW
                     remaining.Insert(nNeighbor);
                 }
 
@@ -385,8 +406,15 @@ bool FastIsolates<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsola
 
     remaining.Remove(vertex1);
     remaining.Remove(vertex2);
+#ifdef SLOW
     inGraph.Remove(vertex2);
     inGraph.Remove(vertex1);
+#else
+    m_vbInGraph[vertex1] = false;
+    m_vbInGraph[vertex2] = false;
+    m_uRemainingGraphSize--;
+    m_uRemainingGraphSize--;
+#endif // SLOW
 
 ////    if (debug) {
 ////        cout << "AFTER:" << endl;
@@ -424,7 +452,12 @@ void FastIsolates<NeighborSet>::RemoveVertex(int const vertex, vector<Reduction>
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
 ////    cout << __LINE__ << ": calling remove" << endl << flush;
+#ifdef SLOW
     inGraph.Remove(vertex);
+#else
+    m_vbInGraph[vertex] = false;
+    m_uRemainingGraphSize--;
+#endif // SLOW
     remaining.Remove(vertex);
     isolates.Remove(vertex);
 
@@ -455,7 +488,12 @@ void FastIsolates<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vecto
 {
 ////    cout << __LINE__ << ": Removing vertex " << vertex << endl << flush;
 ////    cout << __LINE__ << ": calling remove" << endl << flush;
+#ifdef SLOW
     inGraph.Remove(vertex);
+#else
+    m_vbInGraph[vertex] = false;
+    m_uRemainingGraphSize--;
+#endif // SLOW
     remaining.Remove(vertex);
     isolates.Insert(vertex);
     vRemoved.push_back(vertex);
@@ -471,7 +509,12 @@ void FastIsolates<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vecto
     for (int const neighbor : neighbors[vertex]) {
 ////        cout << __LINE__ << ":     Removing neighbor " << neighbor << endl << flush;
 ////        cout << __LINE__ << ": calling remove" << endl << flush;
+#ifdef SLOW
         inGraph.Remove(neighbor);
+#else
+        m_vbInGraph[neighbor] = false;
+        m_uRemainingGraphSize--;
+#endif // SLOW
         remaining.Remove(neighbor);
         vRemoved.push_back(neighbor);
 
@@ -490,7 +533,11 @@ void FastIsolates<NeighborSet>::RemoveVertexAndNeighbors(int const vertex, vecto
             if (nNeighbor == vertex) continue;
             neighbors[nNeighbor].Remove(neighbor);
 ////            cout << __LINE__ << ":         Done removing" << endl << flush;
+#ifdef SLOW
             if (inGraph.Contains(nNeighbor)) {
+#else
+            if (m_vbInGraph[nNeighbor]) {
+#endif // SLOW
                 remaining.Insert(nNeighbor);
 #ifdef SLOW
                 reduction.AddRemovedEdge(neighbor, nNeighbor);
@@ -526,12 +573,12 @@ void FastIsolates<NeighborSet>::RemoveAllIsolates(int const independentSetSize, 
         // TODO/DS: Put this in; it saves us from having to consider obvious non-candidates. Only works if we establish
         // the invariant that the graph contains no vertices that can be reduced.
 ////        if (bConsiderAllVertices) { ////true) { //bConsiderAllVertices) {
-        if (true) { //bConsiderAllVertices) {
-            remaining.Clear();
-            for (int const vertex : inGraph) {
-                remaining.Insert(vertex);
-            }
-        }
+////        if (true) { //bConsiderAllVertices) {
+////            remaining.Clear();
+////            for (int const vertex : inGraph) {
+////                remaining.Insert(vertex);
+////            }
+////        }
 ////    } else {
 ////        remaining.clear();
 ////        for (int const removedVertex : vOtherRemovedVertices) {

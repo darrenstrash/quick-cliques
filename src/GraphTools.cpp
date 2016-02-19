@@ -1246,6 +1246,7 @@ void GraphTools::ComputeConnectedComponents<Isolates4<ArraySet>>(Isolates4<Array
 template
 void GraphTools::ComputeConnectedComponents<IsolatesWithMatrix<ArraySet>>(IsolatesWithMatrix<ArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
 
+#if 0
 template
 void GraphTools::ComputeConnectedComponents<FastIsolates<SparseArraySet>>(FastIsolates<SparseArraySet> const &isolates, vector<vector<int>> &vComponents, size_t const uNumVertices);
-
+#endif // 0
