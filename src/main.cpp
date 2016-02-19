@@ -216,6 +216,7 @@ int main(int argc, char** argv)
 
     bool   const bQuiet(mapCommandLineArgs.find("--verbose") == mapCommandLineArgs.end());
     bool   const bOutputLatex(mapCommandLineArgs.find("--latex") != mapCommandLineArgs.end());
+    bool   const bOutputTable(mapCommandLineArgs.find("--table") != mapCommandLineArgs.end());
     string const inputFile((mapCommandLineArgs.find("--input-file") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--input-file"] : "");
     string const algorithm((mapCommandLineArgs.find("--algorithm") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--algorithm"] : "");
     bool   const computeCliqueGraph(mapCommandLineArgs.find("--compute-clique-graph") != mapCommandLineArgs.end());
@@ -234,7 +235,9 @@ int main(int argc, char** argv)
     }
     bool   const bRunExperiment(!sExperimentName.empty());
 
-    if (!bOutputLatex) {
+    bool   const bTableMode(bOutputLatex || bOutputTable);
+
+    if (!bTableMode) {
         PrintExperimentalWarning();
 #ifdef DEBUG_MESSAGE
         PrintDebugWarning();
@@ -267,10 +270,10 @@ int main(int argc, char** argv)
 
     vector<list<int>> adjacencyList;
     if (inputFile.find(".graph") != string::npos) {
-        if (!bOutputLatex) cout << "Reading .graph file format. " << endl << flush;
+        if (!bTableMode) cout << "Reading .graph file format. " << endl << flush;
         adjacencyList = readInGraphAdjListEdgesPerLine(n, m, inputFile);
     } else {
-        if (!bOutputLatex) cout << "Reading .edges file format. " << endl << flush;
+        if (!bTableMode) cout << "Reading .edges file format. " << endl << flush;
         adjacencyList = readInGraphAdjList(n, m, inputFile);
     }
 
@@ -502,7 +505,7 @@ int main(int argc, char** argv)
 
     pAlgorithm->SetQuiet(bQuiet);
 
-    RunAndPrintStats(pAlgorithm, cliques, bOutputLatex);
+    RunAndPrintStats(pAlgorithm, cliques, bTableMode);
 
     cliques.clear();
 

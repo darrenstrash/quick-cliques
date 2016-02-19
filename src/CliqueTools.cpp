@@ -753,11 +753,13 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
 ////        cout << "Num critical indepset nodes: " << criticalIndependentSet.size() << endl << flush;
 
         independentSetNodes.insert(criticalIndependentSet.begin(), criticalIndependentSet.end());
+#if DEBUG
         cout << "indepset: ";
         for (int const vertex : criticalIndependentSet) {
             cout << vertex << " ";
         }
         cout << endl;
+#endif
 
         size_t removedFromBiDoubleCount(0);
         size_t sumOfNeighbors(0);

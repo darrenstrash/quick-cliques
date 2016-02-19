@@ -13,4 +13,4 @@ for line in sys.stdin:
     edge = line.split(",")
     v1 = int(edge[0])
     v2 = int(edge[1])
-    print (v1+1), (v2+1)
+    print str(v1) + "\t" + str(v2)

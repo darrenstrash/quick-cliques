@@ -17,6 +17,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <iostream>
+
+using namespace std;
+
 /*! \file printnm.cpp
 
    \brief print the number of vertices and edges in an input
@@ -41,10 +45,11 @@ int main()
 
     if(scanf("%d", &n)!=1)
         exit(1);
-    fprintf(stderr, "Number of vertices: %d\n", n);
     if(scanf("%d", &m)!=1)
         exit(1);
+    fprintf(stderr, "Number of vertices: %d\n", n);
     fprintf(stderr, "Number of edges: %d\n", m/2);
+    cout << n << " " << m/2 << endl;
 
     return 0;
 }
