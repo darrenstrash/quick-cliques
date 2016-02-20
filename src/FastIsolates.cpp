@@ -55,20 +55,14 @@ FastIsolates<NeighborSet>::~FastIsolates()
 {
 
 #ifdef TIMERS
-    cout << "Total time spent computing next vertex: " << (timer/(double)CLOCKS_PER_SEC) << endl;
-    cout << "    Sort      : " << (sortDuringNextTimer/(double)CLOCKS_PER_SEC) << endl;
-    cout << "    RemoveOne : " << (removeOneDuringNextTimer/(double)CLOCKS_PER_SEC) << endl;
-    cout << "    RemoveRest: " << (removeDuringNextTimer/(double)CLOCKS_PER_SEC) << endl;
-    cout << "    ReplaceAll: " << (replaceDuringNextTimer/(double)CLOCKS_PER_SEC) << endl;
-   
     cout << "Total time spent applying reductions  : " << (removeTimer/(double)CLOCKS_PER_SEC) << endl;
-    cout << "Total time spent undoing  reductions  : " << (replaceTimer/(double)CLOCKS_PER_SEC) << endl;
 #endif // TIMERS
 }
 
 template <typename NeighborSet>
 bool FastIsolates<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<Reduction> &vReductions)
 {
+////    if (neighbors[vertex].Size() > 3) return false;
 ////    bool const debug(vertex==40653);
 ////    if (vertex == 31) {
 ////        cout << "Removing isolated clique with vertex " << vertex << endl << flush;
@@ -239,7 +233,9 @@ bool FastIsolates<NeighborSet>::RemoveIsolatedClique(int const vertex, vector<in
 ////        if (vertex == 0) {
 ////            cout << __LINE__ << ": Removing " << vertex << " from graph." << endl << flush;
 ////        }
+#ifdef SLOW
         vOtherRemovedVertices.insert(vOtherRemovedVertices.end(), neighbors[vertex].begin(), neighbors[vertex].end());
+#endif // SLOW
 
         for (int const neighbor : neighbors[vertex]) {
             ////                cout << "   Expunging neighbor " << neighbor << " with " << neighbors[neighbor].size() << " neighbors" << endl << flush;
@@ -376,11 +372,10 @@ bool FastIsolates<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsola
 
 #ifdef SLOW
     vReductions.emplace_back(std::move(reduction));
-#endif // SLOW
-
     // which one goes in independent set? Need to update...
     vOtherRemovedVertices.push_back(vertex1);
     vOtherRemovedVertices.push_back(vertex2);
+#endif // SLOW
 
     remaining.Remove(vertex1);
     remaining.Remove(vertex2);
@@ -421,81 +416,24 @@ bool FastIsolates<NeighborSet>::FoldVertex(int const vertex, vector<int> &vIsola
 template <typename NeighborSet>
 void FastIsolates<NeighborSet>::RemoveAllIsolates(int const independentSetSize, vector<int> &vIsolateVertices, vector<int> &vOtherRemovedVertices, vector<Reduction> &vReductions, bool bConsiderAllVertices)
 {
-////    if (find (vIsolateVertices.begin(), vIsolateVertices.end(), 31) != vIsolateVertices.end())
-////        cout << "Calling RemoveAllIsolates with 31 in the isolate set!" << endl;
 #ifdef TIMERS
     clock_t startClock = clock();
 #endif // TIMERS
-////    remaining = inGraph; // TODO/DS : We can optimize this by knowing which vertex (and neighbors where removed last.
-////    if (vOtherRemovedVertices.empty()) {
 
-        // TODO/DS: Put this in; it saves us from having to consider obvious non-candidates. Only works if we establish
-        // the invariant that the graph contains no vertices that can be reduced.
-////        if (bConsiderAllVertices) { ////true) { //bConsiderAllVertices) {
-////        if (true) { //bConsiderAllVertices) {
-////            remaining.Clear();
-////            for (int const vertex : inGraph) {
-////                remaining.Insert(vertex);
-////            }
-////        }
-////    } else {
-////        remaining.clear();
-////        for (int const removedVertex : vOtherRemovedVertices) {
-////            remaining.insert(neighbors[removedVertex].begin(), neighbors[removedVertex].end());
-////        }
-////    }
 ////    cout << "Removing all isolates." << endl << flush;
     int iterations(0);
     while (!remaining.Empty()) {
-////        size_t const numRemoved(vIsolateVertices.size() + vOtherRemovedVertices.size());
-////        if ((vIsolateVertices.size() + vOtherRemovedVertices.size()) %10000 == 0)
-////        cout << "Progress: Removed: " << vIsolateVertices.size() << " isolates, and " << vOtherRemovedVertices.size() << " others" << endl << flush;
         int const vertex = *(remaining.begin());
         remaining.Remove(vertex);
 
-    // can prune out high-degree vertices too. // but this is slow right now.
-
-////        if (inGraph.size() - neighbors[vertex].size() < independentSetSize) {
-////            remaining.insert(neighbors[vertex].begin(), neighbors[vertex].end());
-////            RemoveVertex(vertex);
-////            vOtherRemovedVertices.push_back(vertex);
-////            continue;
-////        }
-
 ////        cout << "Attempting to remove vertex " << vertex << endl << flush;
-
-        bool reduction = RemoveIsolatedClique(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
-#ifdef NEW_ISOLATE_CHECKS
-#if 1 ////def FOLD_VERTEX
+        bool const reduction = RemoveIsolatedClique(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
         if (!reduction) {
-////            reduction = RemoveIsolatedPath(vertex, vIsolateVertices, vOtherRemovedVertices, vAddedEdges);
-            reduction = FoldVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
+            FoldVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
         }
-#endif // 0
-#ifdef DOMINATION_CHECKS
-        if (!reduction) {
-            reduction = RemoveDominatedVertex(vertex, vIsolateVertices, vOtherRemovedVertices, vReductions);
-        }
-#endif //DOMINATION_CHECKS
-
-#endif // NEW_ISOLATE_CHECKS
-
-////    if (find (vIsolateVertices.begin(), vIsolateVertices.end(), 31) != vIsolateVertices.end())
-////        cout << "31 was added to the isolate set!" << endl;
-////        if (!inGraph.Contains(31)) cout << "And it's not in the graph..." << endl << flush;
 
         iterations++;
-
-////        size_t const numNewRemoved(vIsolateVertices.size() + vOtherRemovedVertices.size());
-////        if (numNewRemoved != numRemoved) {
-////            cout << "Progress: Removed: " << vIsolateVertices.size() << " isolates, and " << vOtherRemovedVertices.size() << " others, in " << iterations << " iterations." << endl << flush;
-////            iterations = 0;
-////            cout << "Remaining graph has " << inGraph.Size() << " vertices." << endl << flush;
-////        }
     }
-
-////    cout << "Removed " << isolates.size() - isolateSize << " isolates." << endl << flush;
-////    cout << "Removed: " << vIsolateVertices.size() << " isolates, and " << vOtherRemovedVertices.size() << " others, in " << iterations << " iterations." << endl << flush;
 
 #ifdef TIMERS
     clock_t endClock = clock();

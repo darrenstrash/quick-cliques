@@ -37,7 +37,6 @@ void Experiments::RunKernelSize() const
         }
     }
 
-    clock_t startTime(clock());
 
     size_t const numVertices(m_AdjacencyArray.size());
     size_t numEdges(0);
@@ -50,11 +49,12 @@ void Experiments::RunKernelSize() const
     vector<int> vIsolates;
     vector<int> vRemoved;
     vector<Reduction> vReductions;
+
+    clock_t startTime(clock());
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for removal */);
+    clock_t endTime(clock());
 
     size_t const kernelSize(isolates.GetInGraph().Size());
-
-    clock_t endTime(clock());
 
     vector<vector<int>> vComponents;
     GraphTools::ComputeConnectedComponents(isolates, vComponents, m_AdjacencyArray.size());
@@ -82,7 +82,6 @@ void Experiments::RunFastKernelSize() const
         }
     }
 
-    clock_t startTime(clock());
 
     size_t const numVertices(m_AdjacencyArray.size());
     size_t numEdges(0);
@@ -92,15 +91,18 @@ void Experiments::RunFastKernelSize() const
     numEdges >>=1;
 
     FastIsolates<SparseArraySet> isolates(m_AdjacencyArray);
+////    cout << "Time spend initializing isolates: " << Tools::GetTimeInSeconds(clock()-startTime) << endl << flush;
     vector<int> vIsolates;
     vector<int> vRemoved;
     vector<Reduction> vReductions;
+
+    clock_t const startTime(clock());
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for removal */);
 
 ////    size_t const kernelSize(isolates.GetInGraph().Size());
     size_t const kernelSize(isolates.GetRemainingGraphSize());
 
-    clock_t endTime(clock());
+    clock_t const endTime(clock());
 
 #if 0
     vector<vector<int>> vComponents;
@@ -203,7 +205,6 @@ void Experiments::KernelizeAndRunComponentWiseMISS() const
         }
     }
 
-    clock_t startTime(clock());
 
     size_t const numVertices(m_AdjacencyArray.size());
     size_t numEdges(0);
@@ -216,6 +217,7 @@ void Experiments::KernelizeAndRunComponentWiseMISS() const
     vector<int> vIsolates;
     vector<int> vRemoved;
     vector<Reduction> vReductions;
+    clock_t const startTime(clock());
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for removal */);
 
     size_t const kernelSize(isolates.GetInGraph().Size());
@@ -306,7 +308,6 @@ void Experiments::KernelizeAndRunComponentWiseReductionSparseMISS() const
         }
     }
 
-    clock_t startTime(clock());
 
     size_t const numVertices(m_AdjacencyArray.size());
     size_t numEdges(0);
@@ -319,6 +320,7 @@ void Experiments::KernelizeAndRunComponentWiseReductionSparseMISS() const
     vector<int> vIsolates;
     vector<int> vRemoved;
     vector<Reduction> vReductions;
+    clock_t const startTime(clock());
     isolates.RemoveAllIsolates(0, vIsolates, vRemoved, vReductions, true /* consider all vertices for removal */);
 
     size_t const kernelSize(isolates.GetInGraph().Size());
@@ -365,6 +367,7 @@ void Experiments::KernelizeAndRunComponentWiseReductionSparseMISS() const
         list<list<int>> indsets;
         algorithm.Run(indsets);
 
+#ifdef VERIFY
         cout << "Verifying independent set:" << endl;
         set<int> const indepset(indsets.back().begin(), indsets.back().end());
         for (int const vertex : indepset) {
@@ -374,6 +377,7 @@ void Experiments::KernelizeAndRunComponentWiseReductionSparseMISS() const
                 }
             }
         }
+#endif
 
         solutionDelta += indsets.back().size();
     }
