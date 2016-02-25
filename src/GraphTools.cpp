@@ -314,6 +314,53 @@ void GraphTools::ComputeConnectedComponents(IsolatesType const &isolates, vector
     }
 }
 
+void GraphTools::ComputeConnectedComponents(vector<vector<int>> const &adjacencyList, vector<vector<int>> &vComponents) {
+
+    vComponents.clear();
+    if (adjacencyList.empty()) return;
+
+
+    size_t componentCount(0);
+    size_t uNumVertices(adjacencyList.size());
+
+    vector<bool> evaluated    (uNumVertices, false);
+    ArraySet     currentSearch(uNumVertices);
+    ArraySet     remaining    (uNumVertices);
+
+    for (int vertex = 0; vertex < uNumVertices; ++vertex) {
+        remaining.Insert(vertex);
+    }
+
+    // add first vertex, from where we start search
+    int const startVertex(0);
+    currentSearch.Insert(startVertex);
+    remaining.Remove(startVertex);
+    componentCount++;
+    vComponents.resize(componentCount);
+
+    while (!remaining.Empty() && !currentSearch.Empty()) {
+        int const nextVertex(*currentSearch.begin());
+        evaluated[nextVertex] = true;
+        vComponents[componentCount - 1].push_back(nextVertex);
+        currentSearch.Remove(nextVertex);
+        remaining.Remove(nextVertex);
+        for (int const neighbor : adjacencyList[nextVertex]) {
+            if (!evaluated[neighbor]) {
+                currentSearch.Insert(neighbor);
+            }
+        }
+
+        if (currentSearch.Empty() && !remaining.Empty()) {
+            int const startVertex = *remaining.begin();
+            currentSearch.Insert(startVertex);
+            remaining.Remove(startVertex);
+            componentCount++;
+            vComponents.resize(componentCount);
+        }
+    }
+}
+
+
 vector<vector<int>> GraphTools::ComputeBiDoubleGraph(vector<vector<int>> const &adjacencyArray)
 {
     vector<vector<int>> biDoubleGraph(adjacencyArray.size()*2);

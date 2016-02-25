@@ -298,6 +298,100 @@ void Experiments::KernelizeAndRunComponentWiseMISS() const
 
 }
 
+void Experiments::RunComponentWiseMISS() const
+{
+    if (m_bPrintHeader) {
+        if (m_bOutputLatex) {
+            cout << "Graph Name & $n$ & $m$ & $t$ & $c & $l$ & $OPT$ \\\\ \\hline" << endl << flush;
+        } else {
+            cout << "Graph Name\tn\tm\tt\tc\tl\tOPT" << endl << flush;
+        }
+    }
+
+    size_t const numVertices(m_AdjacencyArray.size());
+    size_t numEdges(0);
+    for (vector<int> const &neighbors : m_AdjacencyArray) {
+        numEdges+= neighbors.size();
+    }
+    numEdges >>=1;
+
+    clock_t const startTime(clock());
+    vector<vector<int>> vComponents;
+    GraphTools::ComputeConnectedComponents(m_AdjacencyArray, vComponents);
+
+    size_t const numComponents(vComponents.size());
+    size_t largestComponentSize(0);
+    for (vector<int> const &vComponent : vComponents) {
+        largestComponentSize = max(vComponent.size(), largestComponentSize);
+    }
+
+    size_t solutionDelta(0);
+
+    for (vector<int> const &vComponent : vComponents) {
+
+        if (vComponent.size() > 20000) {
+            cerr << "ERROR!: unable to compute adjacencyMatrix, since the graph is too large: " << vComponent.size() << endl << flush;
+            exit(1);
+        }
+
+        vector<vector<char>> vAdjacencyMatrix;
+        vAdjacencyMatrix.resize(vComponent.size());
+
+        map<int,int> vertexRemap;
+////        map<int,int> reverseMap;
+        size_t uNewIndex = 0;
+
+        for (int const vertex : vComponent) {
+            vertexRemap[vertex] = uNewIndex++;
+////            reverseMap[uNewIndex-1] = vertex;
+        }
+
+        for (pair<int,int> const &mapPair : vertexRemap) {
+            int const oldVertex(mapPair.first);
+            int const newVertex(mapPair.second);
+
+            vAdjacencyMatrix[newVertex].resize(vComponent.size(), 0);
+            for (int const neighbor : m_AdjacencyArray[oldVertex]) {
+                if (vertexRemap.find(neighbor) != vertexRemap.end()) {
+                    //cout << "newVertex           =" << newVertex << endl; 
+                    vAdjacencyMatrix[newVertex][vertexRemap[neighbor]] = 1;
+                }
+            }
+        }
+
+        ////cout << "vAdjacencyArray.size=" << vAdjacencyArray.size() << endl;
+        LightWeightFullMISS algorithm(vAdjacencyMatrix);
+        algorithm.SetQuiet(true);
+
+        list<list<int>> indsets;
+        algorithm.Run(indsets);
+
+#ifdef VERIFY
+        cout << "Verifying independent set:" << endl;
+        set<int> const indepset(indsets.back().begin(), indsets.back().end());
+        for (int const vertex : indepset) {
+            for (int const otherVertex : indepset) {
+                if (vAdjacencyMatrix[vertex][otherVertex])
+                    cout << "    ERROR: " << vertex << " and " << otherVertex << " are neighbors" << endl << flush;
+            }
+        }
+#endif // VERIFY
+
+        solutionDelta += indsets.back().size();
+    }
+
+    clock_t endTime(clock());
+
+    int const solutionSize(solutionDelta);
+
+    if (m_bOutputLatex) {
+        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << "&" << numComponents << " & " << largestComponentSize << " & " << solutionSize << " \\\\ " << endl << flush;
+    } else {
+        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << numComponents << "\t" << largestComponentSize << "\t" << solutionSize << endl << flush;
+    }
+
+}
+
 void Experiments::KernelizeAndRunComponentWiseReductionSparseMISS() const
 {
     if (m_bPrintHeader) {

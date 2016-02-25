@@ -34,6 +34,8 @@ namespace GraphTools
 
     template<typename IsolatesType>
     void ComputeConnectedComponents(IsolatesType const &isolates, std::vector<std::vector<int>> &vComponents, size_t const uNumVertices);
+
+    void ComputeConnectedComponents(std::vector<std::vector<int>> const &adjacencyList, std::vector<std::vector<int>> &vComponents);
 };
 
 #endif //GRAPH_TOOLS_H

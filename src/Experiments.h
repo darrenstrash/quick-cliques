@@ -13,6 +13,7 @@ public:
     void RunFastKernelSize() const;
     void KernelizeAndRunReductionSparseMISS() const;
     void KernelizeAndRunComponentWiseMISS() const;
+    void RunComponentWiseMISS() const;
     void KernelizeAndRunComponentWiseReductionSparseMISS() const;
     void ComputeCriticalIndependentSet() const;
     void ComputeCriticalIndependentSetKernel() const;
