@@ -14,7 +14,9 @@ public:
 
     bool InLeftSide(int const vertex) const;
 
-    bool ComputeAugmentedPath(std::vector<int> const &vMatching, std::vector<int> &vPath) const;
+    bool ComputeResidualPath(std::vector<int> const &vMatching, std::vector<int> &vPath) const;
+
+    void ComputeMaximumMatching(std::vector<int> &vMatching) const;
 
 private:
 

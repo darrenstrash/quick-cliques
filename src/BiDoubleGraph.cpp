@@ -30,7 +30,7 @@ bool BiDoubleGraph::InLeftSide(int const vertex) const
     return vertex < m_AdjacencyList.size()/2;
 }
 
-bool BiDoubleGraph::ComputeAugmentedPath(vector<int> const &vMatching, vector<int> &vPath) const
+bool BiDoubleGraph::ComputeResidualPath(vector<int> const &vMatching, vector<int> &vPath) const
 {
     vector<bool> inStack(m_AdjacencyList.size(), false);
     vector<bool> evaluated(m_AdjacencyList.size(), false);
@@ -85,7 +85,6 @@ bool BiDoubleGraph::ComputeAugmentedPath(vector<int> const &vMatching, vector<in
         }
     }
 
-    vPath.clear();
     if (endVertex == UNMATCHED_VERTEX) return false;
     vPath.push_back(endVertex);
     while (vPreviousVertexOnPath[endVertex] != UNMATCHED_VERTEX) {
@@ -101,4 +100,64 @@ bool BiDoubleGraph::ComputeAugmentedPath(vector<int> const &vMatching, vector<in
     ////        }
     ////        cout << endl;
     return true;
+}
+
+void BiDoubleGraph::ComputeMaximumMatching(vector<int> &vMatching) const
+{
+    vector<int> path;
+    path.reserve(vMatching.size());
+    ComputeResidualPath(vMatching, path);
+    size_t iterations(0);
+    while (!path.empty()) {
+        iterations++;
+////        cout << "Found path of length " << path.size() << ", iteration: " << iterations << endl << flush;
+        for (size_t index = 1; index < path.size(); ++index) {
+            int const vertex1(path[index-1]);
+            int const vertex2(path[index]);
+            bool const backwardEdge(vertex1 > vertex2);
+            if (backwardEdge) {
+                vMatching[vertex1] = UNMATCHED_VERTEX;
+                vMatching[vertex2] = UNMATCHED_VERTEX;
+////                cout << "Remove backward edge " << vertex1 << "->" << vertex2 << " from vMatching" << endl << flush;
+            }
+////            if (vMatching[vertex1] != UNMATCHED_VERTEX) {
+////                vMatching[vMatching[vertex1]] = UNMATCHED_VERTEX;
+////            }
+////            if (vMatching[vertex2] != UNMATCHED_VERTEX) {
+////                vMatching[vMatching[vertex2]] = UNMATCHED_VERTEX;
+////            }
+////            vMatching[vertex1] = UNMATCHED_VERTEX;
+////            vMatching[vertex2] = UNMATCHED_VERTEX;
+        }
+
+        for (size_t index = 1; index < path.size(); ++index) {
+            int const vertex1(path[index-1]);
+            int const vertex2(path[index]);
+            bool const forwardEdge(vertex1 < vertex2);
+            if (forwardEdge) {
+                vMatching[vertex1] = vertex2;
+                vMatching[vertex2] = vertex1;
+
+////                cout << "Add    forward  edge " << vertex1 << "->" << vertex2 << " to   vMatching" << endl << flush;
+            }
+        }
+
+        ComputeResidualPath(vMatching, path);
+    }
+
+#ifdef VERIFY
+    bool bVerified(true);
+    for (int vertex = 0; vertex < vMatching.size(); ++vertex) {
+        if (vMatching[vertex] != UNMATCHED_VERTEX) {
+            if (vMatching[vMatching[vertex]] != vertex) {
+                cout << "ERROR! mismatch: " << vertex << " -> " << vMatching[vertex] << " -> " << vMatching[vMatching[vertex]] << endl << flush;
+                bVerified = false;
+                break;
+            }
+        }
+    }
+
+
+    cout << "Verification of matching " << (bVerified ? "passed!" : "failed!") << endl << flush;
+#endif // VERIFY
 }

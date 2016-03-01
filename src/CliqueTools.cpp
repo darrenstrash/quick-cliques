@@ -326,13 +326,22 @@ set<int> CliqueTools::ComputeCriticalIndependentSet(vector<vector<int>> const &a
 
 ////    GraphTools::PrintGraphInSNAPFormat(biDoubleGraph);
 
+#define TESTING
+#ifndef TESTING
     set<int> criticalSet(std::move(MatchingTools::ComputeLeftMIS(biDoubleGraph)));
     cout << "Critical             set found: " << criticalSet.size() << endl << flush;
 
-#define TESTING
-#ifdef TESTING
+#else
+    clock_t start_time1(clock());
+    set<int> criticalSet(std::move(MatchingTools::ComputeLeftMIS(biDoubleGraph)));
+    clock_t end_time1(clock());
+    cout << "Time to compute critical set  : " << Tools::GetTimeInSeconds(end_time1 - start_time1) << endl << flush;
+    cout << "Critical             set found: " << criticalSet.size() << endl << flush;
+    clock_t start_time2(clock());
     set<int> const criticalSet2(std::move(MatchingTools::ComputeCriticalSet(adjacencyList)));
+    clock_t end_time2(clock());
     cout << "Critical           set 2 found: " << criticalSet2.size() << endl << flush;
+    cout << "Time to compute critical set 2: " << Tools::GetTimeInSeconds(end_time2 - start_time2) << endl << flush;
 
     if (criticalSet.size() != criticalSet2.size()) {
         cout << "ERROR! Critical sets are different!" << endl << flush;
