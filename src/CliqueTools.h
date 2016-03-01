@@ -24,7 +24,6 @@ namespace CliqueTools
     std::set<int> IterativelyRemoveCriticalIndependentSets(std::vector<std::vector<int>> const &adjacencyList);
     std::set<int> IterativelyRemoveMaximumCriticalIndependentSets(std::vector<std::vector<int>> const &adjacencyList, std::set<int> &independentVertices);
 
-////    std::vector<int> ComputeBipartiteMaximumIndependentSet(std::vector<std::vector<int>> const &biDoubleGraph);
 };
 
 #endif //CLIQUE_TOOLS_H

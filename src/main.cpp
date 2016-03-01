@@ -149,7 +149,6 @@ void RunUnitTests()
 {
     std::cout << "Running unit tests..." << std::endl;
     ArraySet::Test();
-    GraphTools::TestMatchingCount();
 }
 
 
@@ -229,6 +228,7 @@ int main(int argc, char** argv)
     string const sExperimentName((mapCommandLineArgs.find("--experiment") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--experiment"] : "");
     bool   const bPrintHeader(mapCommandLineArgs.find("--header") != mapCommandLineArgs.end());
     string const sTimeout(mapCommandLineArgs.find("--timeout") != mapCommandLineArgs.end() ? mapCommandLineArgs["--timeout"] : "");
+    bool   const bRunUnitTests(mapCommandLineArgs.find("--run-tests") != mapCommandLineArgs.end());
     double dTimeout(0.0);
     if (!sTimeout.empty()) {
         try {
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
 #ifdef DEBUG_MESSAGE
         PrintDebugWarning();
 #endif //DEBUG_MESSAGE
-        RunUnitTests();
+        if (bRunUnitTests) RunUnitTests();
     }
 
 
