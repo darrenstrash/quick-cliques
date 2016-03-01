@@ -14,13 +14,19 @@ public:
 
     bool InLeftSide(int const vertex) const;
 
-    bool ComputeResidualPath(std::vector<int> const &vMatching, std::vector<int> &vPath) const;
+    bool ComputeResidualPath(std::vector<int> const &vMatching, std::vector<int> &vPath);
 
-    void ComputeMaximumMatching(std::vector<int> &vMatching) const;
+    void ComputeMaximumMatching(std::vector<int> &vMatching);
 
 private:
+    void PushOnStack(int const vertex);
+    int  PopOffStack();
+    bool IsEvaluated(int const vertex) const;
 
     std::vector<std::vector<int>> m_AdjacencyList;
+    std::vector<int> m_Stack;
+    std::vector<int> m_Evaluated;
+    int m_iCurrentRound;
 };
 
 #endif // _BI_DOUBLE_GRAPH_H_

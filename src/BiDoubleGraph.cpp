@@ -12,7 +12,11 @@ using namespace std;
 
 BiDoubleGraph::BiDoubleGraph(vector<vector<int>> adjacencyList)
 : m_AdjacencyList()
+, m_Stack()
+////, m_InStack(adjacencyList.size()*2, false)
+, m_Evaluated(adjacencyList.size()*2, -1)
 {
+    m_Stack.reserve(adjacencyList.size()*2);
     m_AdjacencyList = std::move(GraphTools::ComputeBiDoubleGraph(adjacencyList));
 }
 
@@ -30,13 +34,35 @@ bool BiDoubleGraph::InLeftSide(int const vertex) const
     return vertex < m_AdjacencyList.size()/2;
 }
 
-bool BiDoubleGraph::ComputeResidualPath(vector<int> const &vMatching, vector<int> &vPath) const
+void BiDoubleGraph::PushOnStack(int const vertex)
 {
-    vector<bool> inStack(m_AdjacencyList.size(), false);
-    vector<bool> evaluated(m_AdjacencyList.size(), false);
-    list<int> stack;
+    m_Stack.push_back(vertex);
+    m_Evaluated[vertex] = m_iCurrentRound;
+}
+
+int BiDoubleGraph::PopOffStack()
+{
+    int const top(m_Stack.back());
+    m_Stack.pop_back();
+    return top;
+}
+
+bool BiDoubleGraph::IsEvaluated(int const vertex) const
+{
+    return m_Evaluated[vertex] == m_iCurrentRound;
+}
+
+bool BiDoubleGraph::ComputeResidualPath(vector<int> const &vMatching, vector<int> &vPath)
+{
+////    m_InStack.clear(); m_InStack.resize(m_AdjacencyList.size(), false);
+////    m_Evaluated.clear(); m_Evaluated.resize(m_AdjacencyList.size(), false);
 
     vPath.clear();
+    m_Stack.clear();
+    m_iCurrentRound++;
+    if (m_iCurrentRound == 0) {
+        m_Evaluated.clear(); m_Evaluated.resize(m_AdjacencyList.size(), -1);
+    }
 
     size_t numVerticesInLeftSide(vMatching.size()/2);
 
@@ -47,27 +73,23 @@ bool BiDoubleGraph::ComputeResidualPath(vector<int> const &vMatching, vector<int
         // only insert vertices without edges in matching, otherwise
         // imaginary first vertex has residual capacity 0 to that vertex.
         if (vMatching[index] != UNMATCHED_VERTEX) continue;
-        stack.push_back(index);
-        inStack[index] = true;
+        PushOnStack(index);
     }
 
     vector<int> vPreviousVertexOnPath(m_AdjacencyList.size(), UNMATCHED_VERTEX);
     int endVertex(UNMATCHED_VERTEX);
 
     bool foundPath(false);
-    while (!stack.empty() && !foundPath) {
-        int const vertex = stack.back(); stack.pop_back();
-        evaluated[vertex] = true;
-        inStack[vertex] = false;
+    while (!m_Stack.empty() && !foundPath) {
+        int const vertex = PopOffStack();
         for (int const neighbor : m_AdjacencyList[vertex]) {
             // evaluate neighbor if the edge to that neighbor has residual capacity.
-            if (evaluated[neighbor] || inStack[neighbor]) continue;
+            if (IsEvaluated(neighbor)) continue;
 
             // forward edge with residual capacity
             if (InLeftSide(vertex) && vMatching[vertex] != neighbor) {
                 vPreviousVertexOnPath[neighbor] = vertex;
-                stack.push_back(neighbor);
-                inStack[neighbor] = true;
+                PushOnStack(neighbor);
 
                 if (!InLeftSide(neighbor) && vMatching[neighbor] == UNMATCHED_VERTEX) { //found path
                     foundPath = true;
@@ -75,12 +97,11 @@ bool BiDoubleGraph::ComputeResidualPath(vector<int> const &vMatching, vector<int
                     break;
                 }
             }
+
             // backward edge that we can "undo" by pushing flow back...
             else if (InLeftSide(neighbor) && vMatching[neighbor] == vertex) {
-                ////                else if (!InLeftSide(vertex) && vMatching[neighbor] == vertex) {
                 vPreviousVertexOnPath[neighbor] = vertex;
-                stack.push_back(neighbor);
-                inStack[neighbor] = true;
+                PushOnStack(neighbor);
             }
         }
     }
@@ -102,7 +123,7 @@ bool BiDoubleGraph::ComputeResidualPath(vector<int> const &vMatching, vector<int
     return true;
 }
 
-void BiDoubleGraph::ComputeMaximumMatching(vector<int> &vMatching) const
+void BiDoubleGraph::ComputeMaximumMatching(vector<int> &vMatching)
 {
     vector<int> path;
     path.reserve(vMatching.size());
