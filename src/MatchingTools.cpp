@@ -342,8 +342,6 @@ void MatchingTools::ComputeAlternatingPaths(BiDoubleGraph const &biDouble, vecto
 
     vector<int> previousVertex(vMatching.size(), -1);
 
-
-    // TODO/DS: Check that lambda works 
     auto isMatchedEdge = [&vMatching] (int const vertex, int const neighbor) {
         return vMatching[neighbor] == vertex; 
     };
@@ -429,45 +427,71 @@ void MatchingTools::ComputeAlternatingPaths(BiDoubleGraph const &biDouble, vecto
     cout << "Cover           Vertices: " << coverVertexCount << endl << flush;
 }
 
+void MatchingTools::ComputeAlternatingPathsOptimized(BiDoubleGraph const &biDouble, vector<int> const &vMatching, vector<MatchingTools::LastEdge> &vOnAlternatingPath)
+{
+    auto isMatchedEdge = [&vMatching] (int const vertex, int const neighbor) {
+        return vMatching[neighbor] == vertex; 
+    };
+
+    vector<bool> vEvaluated(vMatching.size(), false);
+    vector<int> vStack;
+    vStack.reserve(vMatching.size());
+
+    // First mark all unmatched vertices on left-hand side and their neighbors.
+    for (int vertex = 0; vertex < vMatching.size()/2; ++vertex) {
+        if (vMatching[vertex] != UNMATCHED_VERTEX) continue;
+        vEvaluated[vertex] = true;
+        vOnAlternatingPath[vertex] = MatchingTools::LastEdge::NULL_LAST_EDGE;
+        for (int const neighbor : biDouble.Neighbors(vertex)) {
+            vOnAlternatingPath[neighbor] = MatchingTools::LastEdge::UNMATCHED_LAST_EDGE;
+            if (!vEvaluated[neighbor]) vStack.push_back(neighbor);
+            vEvaluated[neighbor] = true;
+        }
+    }
+
+    while (!vStack.empty()) {
+        int const matchedVertex(vStack.back()); vStack.pop_back();
+
+        LastEdge const edgeIntoVertex(vOnAlternatingPath[matchedVertex]);
+
+        // If the last edge was matched, follow unmatched edges
+        if (edgeIntoVertex == MatchingTools::LastEdge::MATCHED_LAST_EDGE) {
+            for (int const neighbor : biDouble.Neighbors(matchedVertex)) {
+                if (!isMatchedEdge(matchedVertex, neighbor)) {
+                    if (vOnAlternatingPath[neighbor] == MatchingTools::LastEdge::NO_LAST_EDGE) {
+                        vOnAlternatingPath[neighbor] = MatchingTools::LastEdge::UNMATCHED_LAST_EDGE;
+
+                        if (!vEvaluated[neighbor]) {
+                            vStack.push_back(neighbor);
+                            vEvaluated[neighbor] = true;
+                        }
+                    }
+                }
+            }
+
+        // If last edge was unmatched, follow matched edge.
+        } else if (edgeIntoVertex == MatchingTools::LastEdge::UNMATCHED_LAST_EDGE) {
+            int const neighbor(vMatching[matchedVertex]);
+            if (neighbor != UNMATCHED_VERTEX) {
+                if (vOnAlternatingPath[neighbor] == NO_LAST_EDGE) {
+                    vOnAlternatingPath[neighbor] = MatchingTools::LastEdge::MATCHED_LAST_EDGE;
+
+                    if (!vEvaluated[neighbor]) {
+                        vStack.push_back(neighbor);
+                        vEvaluated[neighbor] = true;
+                    }
+                }
+            }
+        }
+    }
+}
+
 set<int> MatchingTools::GetLeftVerticesOnAlternatingPaths(BiDoubleGraph const &biDouble, vector<int> const &vMatching, vector<MatchingTools::LastEdge> &vOnAlternatingPath)
 {
     set<int> misToReturn;
-    for (int vertex = 0; vertex < vMatching.size(); ++vertex) {
-        if ((biDouble.InLeftSide(vertex) && (vOnAlternatingPath[vertex] == MatchingTools::LastEdge::NO_LAST_EDGE)) ||
-            (!biDouble.InLeftSide(vertex) && (vOnAlternatingPath[vertex] != MatchingTools::LastEdge::NO_LAST_EDGE))) {
-#ifdef VERIFY
-            if (vMatching[vertex] == UNMATCHED_VERTEX) {
-                cout << "ERROR! vertex " << vertex << " is not in matching!" << endl << flush;
-            }
-            if (biDouble.InLeftSide(vertex) && vOnAlternatingPath[vertex] == MatchingTools::LastEdge::UNMATCHED_LAST_EDGE) {
-                cout << "ERROR!" << endl << flush;
-            }
-            if (!biDouble.InLeftSide(vertex) && vOnAlternatingPath[vertex] == MatchingTools::LastEdge::MATCHED_LAST_EDGE) {
-                cout << "ERROR!" << endl << flush;
-            }
-#endif //VERIFY
-        }
-        else {
-            if (biDouble.InLeftSide(vertex)) {
-                misToReturn.insert(vertex);
-            }
-
-            // TODO/DS: I don't know if this belongs or not...
-////            else {
-////                misToReturn.insert(vertex - matching.size()/2);
-////            }
-        }
+    for (int vertex = 0; vertex < vMatching.size()/2; ++vertex) {
+        if (vOnAlternatingPath[vertex] != MatchingTools::LastEdge::NO_LAST_EDGE) misToReturn.insert(vertex);
     }
-
-#ifdef VERIFY
-    for (int const vertex : misToReturn) {
-        for (int const neighbor : biDouble.Neighbors(vertex)) {
-            if (misToReturn.find(neighbor) != misToReturn.end()) {
-                cout << "ERROR! Failed independent set validation." << endl << flush;
-            }
-        }
-    }
-#endif // VERIFY
 
     return misToReturn;
 }
@@ -488,7 +512,7 @@ set<int> MatchingTools::ComputeCriticalSet(vector<vector<int>> const &adjacencyL
     // i.e., number of vertices marked = number of matchings.
     vector<LastEdge> vOnAlternatingPath(matching.size(), MatchingTools::LastEdge::NO_LAST_EDGE);
 
-    ComputeAlternatingPaths(biDouble, matching, vOnAlternatingPath);
+    ComputeAlternatingPathsOptimized(biDouble, matching, vOnAlternatingPath);
 
     set<int> misToReturn;
 
