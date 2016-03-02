@@ -626,7 +626,8 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
             set<int> const newCriticalSet(std::move(MatchingTools::ComputeBiDoubleMIS(biDoubleGraph, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
 #else
             set<int> const newCriticalSet(std::move(MatchingTools::ComputeBiDoubleMIS(biDoubleGraph, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
-            set<int> const newCriticalSet2(std::move(MatchingTools::ComputeBiDoubleMISOptimized(biDouble, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
+            vector<int> matching(biDouble.Size(), -1);
+            set<int> const newCriticalSet2(std::move(MatchingTools::ComputeBiDoubleMISOptimizedWithMatching(biDouble, matching, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
 
             if (newCriticalSet.size() != newCriticalSet2.size()) {
                 cout << "ERROR! Critical sets are different!" << endl << flush;

@@ -19,7 +19,12 @@ namespace MatchingTools
     std::set<int> ComputeBiDoubleMIS(std::vector<std::vector<int>> const &biDoubleGraph, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
     std::set<int> ComputeLeftMIS(std::vector<std::vector<int>> const &biDoubleGraph, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
 
+// store vertices in graph, for repeated calls to matching.
+    void ComputeAlternatingPathsOptimized(BiDoubleGraph const &biDouble, std::vector<int> const &vMatching, std::vector<LastEdge> &vOnAlternatingPath, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
+
+    std::set<int> GetVerticesOnAlternatingPaths(BiDoubleGraph const &biDouble, std::vector<int> const &vMatching, std::vector<MatchingTools::LastEdge> &vOnAlternatingPath, std::set<int> const &setInGraph);
     std::set<int> ComputeBiDoubleMISOptimized(BiDoubleGraph &biDouble, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
+    std::set<int> ComputeBiDoubleMISOptimizedWithMatching(BiDoubleGraph &biDouble, std::vector<int> &matching, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
 };
 
 

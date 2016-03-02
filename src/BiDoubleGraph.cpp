@@ -214,7 +214,7 @@ bool BiDoubleGraph::ComputeResidualPath(vector<int> const &vMatching, vector<int
         ////        for (size_t index = numVerticesInLeftSide; index > 0; --index) {
         // only insert vertices without edges in matching, otherwise
         // imaginary first vertex has residual capacity 0 to that vertex.
-        if (vMatching[vertex] != UNMATCHED_VERTEX && InLeftSide(vertex)) continue;
+        if (vMatching[vertex] != UNMATCHED_VERTEX || !InLeftSide(vertex)) continue;
         PushOnStack(vertex);
     }
 
@@ -269,7 +269,7 @@ void BiDoubleGraph::ComputeMaximumMatching(vector<int> &vMatching, vector<bool> 
 {
     vector<int> path;
     path.reserve(vMatching.size());
-    ComputeResidualPath(vMatching, path);
+    ComputeResidualPath(vMatching, path, vInGraph, setInGraph);
     size_t iterations(0);
     while (!path.empty()) {
         iterations++;
@@ -305,7 +305,7 @@ void BiDoubleGraph::ComputeMaximumMatching(vector<int> &vMatching, vector<bool> 
             }
         }
 
-        ComputeResidualPath(vMatching, path);
+        ComputeResidualPath(vMatching, path, vInGraph, setInGraph);
     }
 
 #ifdef VERIFY
