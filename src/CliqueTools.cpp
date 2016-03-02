@@ -18,6 +18,8 @@
 #include <set>
 #include <iostream>
 
+#define TESTING
+
 using namespace std;
 
 void CliqueTools::ComputeCliqueGraph(vector<vector<int>> &adjacencyList, vector<vector<int>> &cliqueGraphAdjacencyList, vector<vector<int>> &vertexToClique)
@@ -326,7 +328,6 @@ set<int> CliqueTools::ComputeCriticalIndependentSet(vector<vector<int>> const &a
 
 ////    GraphTools::PrintGraphInSNAPFormat(biDoubleGraph);
 
-#define TESTING
 #ifndef TESTING
     set<int> criticalSet(std::move(MatchingTools::ComputeLeftMIS(biDoubleGraph)));
     cout << "Critical             set found: " << criticalSet.size() << endl << flush;
@@ -511,6 +512,10 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
     clock_t start_time(clock());
     vector<vector<int>> biDoubleGraph(std::move(GraphTools::ComputeBiDoubleGraph(adjacencyList)));
 
+#ifdef TESTING
+    BiDoubleGraph biDouble(adjacencyList);
+#endif // TESTING
+
     int const biDoubleGraphSize(biDoubleGraph.size());
 ////    cout << "bi-double graph size=" << biDoubleGraph.size() << endl;
     set<int> setRemainingBiDoubleVertices;
@@ -615,8 +620,23 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
                 removeFromNewBiDouble(neighbor);
             }
 
-            // compute new critical set size 
+            // compute new critical set size
+
+#ifndef TESTING
             set<int> const newCriticalSet(std::move(MatchingTools::ComputeBiDoubleMIS(biDoubleGraph, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
+#else
+            set<int> const newCriticalSet(std::move(MatchingTools::ComputeBiDoubleMIS(biDoubleGraph, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
+            set<int> const newCriticalSet2(std::move(MatchingTools::ComputeBiDoubleMISOptimized(biDouble, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
+
+            if (newCriticalSet.size() != newCriticalSet2.size()) {
+                cout << "ERROR! Critical sets are different!" << endl << flush;
+            }
+            for (int const vertex : newCriticalSet) {
+                if (newCriticalSet2.find(vertex) == newCriticalSet2.end()) {
+                    cout << "ERROR! Critical set 2 does not contain " << vertex << "!" << endl << flush;
+                }
+            }
+#endif // TESTING
 
             bool const addToIndependentSet(criticalSet.size() == (newCriticalSet.size() + 2));
 ////            cout << "set size comparison = " << criticalSet.size() << ", " << newCriticalSet.size() << endl << flush;

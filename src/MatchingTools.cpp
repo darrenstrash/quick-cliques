@@ -880,3 +880,335 @@ set<int> MatchingTools::ComputeLeftMIS(vector<vector<int>> const &biDoubleGraph,
     return mis;
 }
 
+set<int> MatchingTools::ComputeBiDoubleMISOptimized(BiDoubleGraph &biDouble, vector<bool> const &vInGraph, set<int> const &setInGraph)
+{
+    // each edge in matching is indexed by first vertex, and contains the second vertex
+    // initially there are no edges in matching (thus invalid second vertex in matching).
+    vector<int> matching(biDouble.Size(), UNMATCHED_VERTEX);
+
+    // residual graph is represented the same as edge in matching.
+    // we can iterate over neighbors (excluding neighbor in matching
+    // to find residual paths.
+
+////    cout << "Computing BiDoubleMIS..." << endl << flush;
+
+    auto inLeftSide = [&biDouble] (int const vertex) {
+        return biDouble.InLeftSide(vertex);
+    };
+
+    auto inGraph = [&vInGraph] (int const vertex) {
+        return vInGraph[vertex];
+    };
+
+    // finds a path from start to finish with excess capacity.
+    auto findPath = [&inLeftSide, &biDouble, &inGraph, &setInGraph] (vector<int> const &matching) {
+        vector<bool> inStack(matching.size(), false);
+        vector<bool> evaluated(matching.size(), false);
+        list<int> stack;
+
+        // depth first search, starting from imaginary start vertex
+        // i.e., search starts from left-side.
+        for (int const vertex : setInGraph) {
+////        for (size_t index = matching.size()/2; index > 0; --index) {
+            // only insert vertices without edges in matching, otherwise
+            // imaginary first vertex has residual capacity 0 to that vertex.
+            if (matching[vertex] != UNMATCHED_VERTEX || !inLeftSide(vertex)) continue;
+            stack.push_back(vertex);
+            inStack[vertex] = true;
+        }
+
+        vector<int> vPreviousVertexOnPath(biDouble.Size(), UNMATCHED_VERTEX);
+        int endVertex(UNMATCHED_VERTEX);
+
+        bool foundPath(false);
+        while (!stack.empty() && !foundPath) {
+            int const vertex = stack.back(); stack.pop_back();
+            evaluated[vertex] = true;
+            inStack[vertex] = false;
+            for (int const neighbor : biDouble.Neighbors(vertex)) {
+                // evaluate neighbor if the edge to that neighbor has residual capacity.
+                if (!inGraph(neighbor) || evaluated[neighbor] || inStack[neighbor]) continue;
+
+                // forward edge with residual capacity
+                if (inLeftSide(vertex) && matching[vertex] != neighbor) {
+                    vPreviousVertexOnPath[neighbor] = vertex;
+                    stack.push_back(neighbor);
+                    inStack[neighbor] = true;
+
+                    if (!inLeftSide(neighbor) && matching[neighbor] == UNMATCHED_VERTEX) { //found path
+                        foundPath = true;
+                        endVertex = neighbor;
+                        break;
+                    }
+                }
+                // backward edge that we can "undo" by pushing flow back...
+                else if (inLeftSide(neighbor) && matching[neighbor] == vertex) {
+////                else if (!inLeftSide(vertex) && matching[neighbor] == vertex) {
+                    vPreviousVertexOnPath[neighbor] = vertex;
+                    stack.push_back(neighbor);
+                    inStack[neighbor] = true;
+                }
+            }
+        }
+
+        vector<int> vPath;
+        if (endVertex == UNMATCHED_VERTEX) return vPath;
+        vPath.push_back(endVertex);
+        while (vPreviousVertexOnPath[endVertex] != UNMATCHED_VERTEX) {
+            vPath.push_back(vPreviousVertexOnPath[endVertex]);
+            endVertex = vPreviousVertexOnPath[endVertex];
+        }
+
+        std::reverse(vPath.begin(), vPath.end());
+
+////        cout << "Path through residual graph: ";
+////        for (int const vertex : vPath) {
+////            cout << vertex << " ";
+////        }
+////        cout << endl;
+        return vPath;
+    };
+
+    vector<int> path;
+    path = findPath(matching);
+    size_t iterations(0);
+    while (!path.empty()) {
+        iterations++;
+////        cout << "Found path of length " << path.size() << ", iteration: " << iterations << endl << flush;
+        for (size_t index = 1; index < path.size(); ++index) {
+            int const vertex1(path[index-1]);
+            int const vertex2(path[index]);
+            bool const backwardEdge(vertex1 > vertex2);
+            if (backwardEdge) {
+                matching[vertex1] = UNMATCHED_VERTEX;
+                matching[vertex2] = UNMATCHED_VERTEX;
+////                cout << "Remove backward edge " << vertex1 << "->" << vertex2 << " from matching" << endl << flush;
+            }
+////            if (matching[vertex1] != UNMATCHED_VERTEX) {
+////                matching[matching[vertex1]] = UNMATCHED_VERTEX;
+////            }
+////            if (matching[vertex2] != UNMATCHED_VERTEX) {
+////                matching[matching[vertex2]] = UNMATCHED_VERTEX;
+////            }
+////            matching[vertex1] = UNMATCHED_VERTEX;
+////            matching[vertex2] = UNMATCHED_VERTEX;
+        }
+
+        for (size_t index = 1; index < path.size(); ++index) {
+            int const vertex1(path[index-1]);
+            int const vertex2(path[index]);
+            bool const forwardEdge(vertex1 < vertex2);
+            if (forwardEdge) {
+                matching[vertex1] = vertex2;
+                matching[vertex2] = vertex1;
+
+////                cout << "Add    forward  edge " << vertex1 << "->" << vertex2 << " to   matching" << endl << flush;
+            }
+        }
+
+        path = findPath(matching);
+    }
+
+    // From each unmatched vertex, calculate the alternating paths.
+    // -- Paths that alternate matched edges and non-matched edges.
+    // Mark all vertices that are connected by an alternating path.
+
+#ifdef VERIFY
+    bool bVerified(true);
+    for (int const vertex : setInGraph) {
+        if (matching[vertex] != UNMATCHED_VERTEX) {
+            if (matching[matching[vertex]] != vertex) {
+                cout << "ERROR! mismatch: " << vertex << " -> " << matching[vertex] << " -> " << matching[matching[vertex]] << endl << flush;
+                bVerified = false;
+                break;
+            }
+        }
+    }
+
+    cout << "Verification of matching " << (bVerified ? "passed!" : "failed!") << endl << flush;
+#endif // VERIFY
+
+    enum LastEdge {NO_LAST_EDGE, MATCHED_LAST_EDGE, UNMATCHED_LAST_EDGE, BOTH_LAST_EDGE, NULL_LAST_EDGE};
+
+    // TODO/DS: Make more efficient. Stop search when after marking a vertex in each matchings.
+    // i.e., number of vertices marked = number of matchings.
+    vector<LastEdge> marked(matching.size(), NO_LAST_EDGE);
+
+    // first, mark unmatched vertices, and their neighbors.
+    vector<int> matchedVertices;
+
+    vector<int> previousVertex(matching.size(), -1);
+
+    auto isMatchedEdge = [&matching] (int const vertex, int const neighbor) {
+        return matching[neighbor] == vertex; 
+    };
+
+    int coverVertexCount(0);
+    //Mark all unmatched vertices on left-hand side
+    //mark their matched neighbors.
+    for (int const vertex : setInGraph) {
+        if (!inLeftSide(vertex)) continue;
+        if (matching[vertex] == UNMATCHED_VERTEX) {
+////            cout << "Mark " << vertex << " as unmatched!" << endl << flush;
+            marked[vertex] = LastEdge::NULL_LAST_EDGE;
+            coverVertexCount++;
+            for (int const neighbor : biDouble.Neighbors(vertex)) {
+                if (!inGraph(neighbor)) continue;
+                if (marked[neighbor] == LastEdge::NO_LAST_EDGE)
+                    coverVertexCount++;
+                marked[neighbor] = LastEdge::UNMATCHED_LAST_EDGE;
+                previousVertex[neighbor] = vertex;
+////                if (isMatchedEdge(vertex, neighbor)) {
+////                    cout << "ERROR! (" << __LINE__ << ")" << endl << flush;
+////                }
+            }
+        } else {
+           matchedVertices.push_back(vertex); 
+        }
+    }
+
+////    cout << "Matching       has " << matchedVertices.size() << " vertices" << endl << flush;
+////    cout << "Cover count     is " << coverVertexCount                      << endl << flush;
+
+
+    int iteration(0);
+    while (iteration < setInGraph.size()) {
+        int const savedCoverCount(coverVertexCount);
+        //cout << "Iteration: " << iteration << "/" << matching.size() << endl << flush;
+        iteration++;
+////        for (int const matchedVertex : matchedVertices) {
+        for (int const matchedVertex : setInGraph) {
+            if (marked[matchedVertex] == NO_LAST_EDGE) continue;
+
+            LastEdge const edgeIntoVertex(marked[matchedVertex]);
+
+            // If the last edge was matched, follow unmatched edges
+            if (edgeIntoVertex == LastEdge::MATCHED_LAST_EDGE) {
+////                if (!inLeftSide(matchedVertex))
+////                    cout << "ERROR! (" << __LINE__ << ") Vertex " << matchedVertex << " has   matched last edge " << endl << flush;
+                for (int const neighbor : biDouble.Neighbors(matchedVertex)) {
+                    if (!inGraph(neighbor)) continue;
+                    if (!isMatchedEdge(matchedVertex, neighbor)) {
+                        if (marked[neighbor] == LastEdge::NO_LAST_EDGE) {
+                            marked[neighbor] = LastEdge::UNMATCHED_LAST_EDGE;
+                            coverVertexCount++;
+                        }
+                    }
+////                    if (marked[neighbor] == LastEdge::MATCHED_LAST_EDGE)
+////                        cout << "ERROR! Vertex " << neighbor << " on " << (inLeftSide(neighbor)? "left": "right") << " has   matched last edge." << endl << flush;
+                }
+
+            // If last edge was unmatched, follow matched edges.
+            } else if (edgeIntoVertex == LastEdge::UNMATCHED_LAST_EDGE) {
+////                if (inLeftSide(matchedVertex))
+////                    cout << "ERROR! (" << __LINE__ << ") Vertex " << matchedVertex << " has unmatched last edge " << endl << flush;
+                for (int const neighbor : biDouble.Neighbors(matchedVertex)) {
+                    if (!inGraph(neighbor)) continue;
+                    if (isMatchedEdge(matchedVertex, neighbor)) {
+                        if (marked[neighbor] == NO_LAST_EDGE) {
+                            marked[neighbor] = LastEdge::MATCHED_LAST_EDGE;
+                            coverVertexCount++;
+                        }
+////                        else if (marked[neighbor] == LastEdge::UNMATCHED_LAST_EDGE)
+////                            cout << "ERROR! Vertex " << neighbor << " on " << (inLeftSide(neighbor)? "left": "right") << " has unmatched last edge." << endl << flush;
+                    }
+                }
+            }
+        }
+
+////        if (savedCoverCount != coverVertexCount) {
+////            cout << "Cover increased to " << coverVertexCount << endl << flush;
+////        }
+        // TODO/DS: doesn't work, I'm not sure why...
+////        else {
+////            break;
+////        }
+    }
+
+    int matchVertices(0);
+    for (int const vertex : setInGraph) {
+        if (matching[vertex] != UNMATCHED_VERTEX) {
+            matchVertices++;
+        }
+    }
+
+    matchVertices >>= 1;
+
+    vector<bool> mvc(matching.size(), false);
+    set<int> misToReturn;
+
+    size_t numMVCVertices(0);
+    size_t numTotalMISVertices(0);
+
+    // put vertices in mvc
+    for (int const vertex : setInGraph) {
+        if ((inLeftSide(vertex) && (marked[vertex] == LastEdge::NO_LAST_EDGE)) ||
+                (!inLeftSide(vertex) && (marked[vertex] != LastEdge::NO_LAST_EDGE))) {
+#ifdef VERIFY
+            if (matching[vertex] == UNMATCHED_VERTEX) {
+                cout << "ERROR! vertex " << vertex << " is not in matching!" << endl << flush;
+            }
+#endif //VERIFY
+            mvc[vertex] = true;
+            numMVCVertices++;
+
+            if (inLeftSide(vertex) && marked[vertex] == LastEdge::UNMATCHED_LAST_EDGE) {
+                cout << "ERROR!" << endl << flush;
+            }
+            if (!inLeftSide(vertex) && marked[vertex] == LastEdge::MATCHED_LAST_EDGE) {
+                cout << "ERROR!" << endl << flush;
+            }
+        }
+        else {
+            numTotalMISVertices++;
+            if (inLeftSide(vertex)) {
+                misToReturn.insert(vertex);
+            }
+
+            // TODO/DS: I don't know if this belongs or not...
+            else {
+                misToReturn.insert(vertex);
+            }
+        }
+    }
+
+#ifdef VERIFY
+    for (int vertex=0; vertex < mvc.size(); ++vertex) {
+        if (!inGraph(vertex)) continue;
+        for (int const neighbor : biDouble.Neighbors(vertex)) {
+            if (!inGraph(neighbor)) continue;
+            if (!mvc[neighbor] && !mvc[vertex]) {
+                cout << "ERROR! MVC is not a vertex cover!, edge (" << vertex << "," << neighbor << ") is not covered." << endl << flush;
+            }
+        }
+    }
+
+    for (int const vertex : misToReturn) {
+        if (!inGraph(vertex)) {
+            cout << "ERROR! vertex " << vertex << " in MIS is not in graph!" << endl;
+        }
+        for (int const neighbor : biDouble.Neighbors(vertex)) {
+            if (misToReturn.find(neighbor) != misToReturn.end()) {
+                cout << "ERROR! Failed independent set validation." << endl << flush;
+            }
+        }
+    }
+#endif // VERIFY
+
+
+////    cout << "Graph Vertices: " << setInGraph.size() << endl << flush;          
+////    cout << "Match Vertices: " << matchVertices << endl << flush;          
+////    cout << "MVC   Vertices: " << numMVCVertices << endl << flush;
+////    cout << "MIS   Vertices: " << misToReturn.size() << endl << flush;
+
+    if (numMVCVertices + numTotalMISVertices != setInGraph.size()) {
+        cout << "ERROR! MVC + MIS != Graph" << endl << flush;
+    }
+
+    if (numMVCVertices != matchVertices) {
+        cout << "ERROR! MVC != size of matching" << endl << flush;
+    }
+
+    return misToReturn;
+}
+

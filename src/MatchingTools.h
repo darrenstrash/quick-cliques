@@ -18,6 +18,9 @@ namespace MatchingTools
     std::set<int> ComputeCriticalSet(std::vector<std::vector<int>> const &adjacencyList);
     std::set<int> ComputeBiDoubleMIS(std::vector<std::vector<int>> const &biDoubleGraph, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
     std::set<int> ComputeLeftMIS(std::vector<std::vector<int>> const &biDoubleGraph, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
+
+    std::set<int> ComputeBiDoubleMISOptimized(BiDoubleGraph &biDouble, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
 };
+
 
 #endif // _MATCHING_TOOLS_H_

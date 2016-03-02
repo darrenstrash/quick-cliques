@@ -18,6 +18,12 @@ public:
 
     void ComputeMaximumMatching(std::vector<int> &vMatching);
 
+    bool ComputeResidualPath(std::vector<int> const &vMatching, std::vector<int> &vPath, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
+
+    void ComputeMaximumMatching(std::vector<int> &vMatching, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
+
+    size_t Size() const { return m_AdjacencyList.size(); }
+
 private:
     void PushOnStack(int const vertex);
     int  PopOffStack();
