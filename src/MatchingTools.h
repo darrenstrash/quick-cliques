@@ -25,7 +25,8 @@ namespace MatchingTools
     std::set<int> GetVerticesOnAlternatingPaths(BiDoubleGraph const &biDouble, std::vector<int> const &vMatching, std::vector<MatchingTools::LastEdge> &vOnAlternatingPath, std::set<int> const &setInGraph);
     std::set<int> ComputeBiDoubleMISOptimized(BiDoubleGraph &biDouble, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
     std::set<int> ComputeBiDoubleMISOptimizedWithMatching(BiDoubleGraph &biDouble, std::vector<int> &matching, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
+    std::set<int> ComputeLeftMISOptimizedWithMatching(BiDoubleGraph &biDouble, std::vector<int> &matching, std::vector<bool> const &vInGraph, std::set<int> const &setInGraph);
+
+
 };
-
-
 #endif // _MATCHING_TOOLS_H_

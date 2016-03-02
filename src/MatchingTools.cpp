@@ -1057,3 +1057,15 @@ set<int> MatchingTools::ComputeBiDoubleMISOptimizedWithMatching(BiDoubleGraph &b
     return misToReturn;
 }
 
+set<int> MatchingTools::ComputeLeftMISOptimizedWithMatching(BiDoubleGraph &biDouble, vector<int> &matching, vector<bool> const &vInGraph, set<int> const &setInGraph)
+{
+    set<int> mis(MatchingTools::ComputeBiDoubleMISOptimizedWithMatching(biDouble, matching, vInGraph, setInGraph));
+    for (set<int>::iterator it = mis.begin(); it != mis.end(); ++it) {
+        if (*it >= biDouble.Size()/2) {
+            mis.erase(it, mis.end());
+            break;
+        }
+    }
+
+    return mis;
+}

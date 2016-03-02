@@ -18,7 +18,7 @@
 #include <set>
 #include <iostream>
 
-#define TESTING
+////#define TESTING
 
 using namespace std;
 
@@ -380,10 +380,14 @@ set<int> CliqueTools::ComputeCriticalIndependentSet(vector<vector<int>> const &a
 
 // Iterate critical independent set computation (this is a critical set reduction)
 // returns vertices in kernel.
-set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int>> const &adjacencyList)
+set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int>> const &adjacencyList, set<int> &independentVertices)
 {
+    independentVertices.clear();
     clock_t start_time(clock());
     vector<vector<int>> biDoubleGraph(std::move(GraphTools::ComputeBiDoubleGraph(adjacencyList)));
+
+    BiDoubleGraph biDouble(adjacencyList);
+    vector<int> matching(biDouble.Size(), -1);
 
     int const biDoubleGraphSize(biDoubleGraph.size());
 ////    cout << "bi-double graph size=" << biDoubleGraph.size() << endl;
@@ -409,7 +413,7 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
 ////    GraphTools::PrintGraphInSNAPFormat(biDoubleGraph);
 
     // remove a vertex and its twin, if they exist
-    auto removeFromBiDouble = [&biDoubleGraph, &setRemainingBiDoubleVertices, &vInBiDoubleGraph, &biDoubleGraphSize] (int const vertex) {
+    auto removeFromBiDouble = [&biDoubleGraph, &matching, &setRemainingBiDoubleVertices, &vInBiDoubleGraph, &biDoubleGraphSize] (int const vertex) {
         set<int>::iterator it = setRemainingBiDoubleVertices.find(vertex);
         if (it != setRemainingBiDoubleVertices.end()) {
             biDoubleGraph[vertex].clear();
@@ -421,6 +425,14 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
             setRemainingBiDoubleVertices.erase(it);
             it = setRemainingBiDoubleVertices.find(vertex + biDoubleGraphSize/2);
             setRemainingBiDoubleVertices.erase(it);
+            if (matching[vertex] != -1) {
+                matching[matching[vertex]] = -1;
+                matching[vertex] = -1;
+            }
+            if (matching[vertex + biDoubleGraph.size()/2] != -1) {
+                matching[matching[vertex + biDoubleGraph.size()/2]] = -1;
+                matching[vertex + biDoubleGraph.size()/2] = -1;
+            }
             return true;
         }
         return false;
@@ -428,8 +440,6 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
 
     int previousGraphSize(adjacencyList.size());
     int newGraphSize(-1);
-
-    set<int> independentSetNodes;
 
     while (previousGraphSize != newGraphSize) {
 #ifdef DEBUG
@@ -442,7 +452,7 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
 #endif // DEBUG
         
         previousGraphSize = newGraphSize;
-        set<int> criticalSet(std::move(MatchingTools::ComputeLeftMIS(biDoubleGraph, vInBiDoubleGraph, setRemainingBiDoubleVertices)));
+        set<int> criticalSet(std::move(MatchingTools::ComputeLeftMISOptimizedWithMatching(biDouble, matching, vInBiDoubleGraph, setRemainingBiDoubleVertices)));
 ////        cout << "Critical          set found: " << criticalSet.size() << endl << flush;
 
         set<int> toRemove;
@@ -462,7 +472,7 @@ set<int> CliqueTools::IterativelyRemoveCriticalIndependentSets(vector<vector<int
 
 ////        cout << "Num critical indepset nodes: " << criticalIndependentSet.size() << endl << flush;
 
-        independentSetNodes.insert(criticalIndependentSet.begin(), criticalIndependentSet.end());
+        independentVertices.insert(criticalIndependentSet.begin(), criticalIndependentSet.end());
 #if DEBUG
         cout << "indepset: ";
         for (int const vertex : criticalIndependentSet) {
@@ -512,9 +522,8 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
     clock_t start_time(clock());
     vector<vector<int>> biDoubleGraph(std::move(GraphTools::ComputeBiDoubleGraph(adjacencyList)));
 
-#ifdef TESTING
     BiDoubleGraph biDouble(adjacencyList);
-#endif // TESTING
+    vector<int> matching(biDouble.Size(), -1);
 
     int const biDoubleGraphSize(biDoubleGraph.size());
 ////    cout << "bi-double graph size=" << biDoubleGraph.size() << endl;
@@ -542,7 +551,7 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
 ////    GraphTools::PrintGraphInSNAPFormat(biDoubleGraph);
 
     // remove a vertex and its twin, if they exist
-    auto removeFromBiDouble = [&biDoubleGraph, &setRemainingBiDoubleVertices, &setRemainingVertices, &vInBiDoubleGraph, &biDoubleGraphSize] (int const vertex) {
+    auto removeFromBiDouble = [&biDoubleGraph, &matching, &setRemainingBiDoubleVertices, &setRemainingVertices, &vInBiDoubleGraph, &biDoubleGraphSize] (int const vertex) {
         set<int>::iterator it = setRemainingBiDoubleVertices.find(vertex);
         if (it != setRemainingBiDoubleVertices.end()) {
 ////            biDoubleGraph[vertex].clear();
@@ -555,6 +564,14 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
             setRemainingBiDoubleVertices.erase(it);
             it = setRemainingBiDoubleVertices.find(vertex + biDoubleGraphSize/2);
             setRemainingBiDoubleVertices.erase(it);
+            if (matching[vertex] != -1) {
+                matching[matching[vertex]] = -1;
+                matching[vertex] = -1;
+            }
+            if (matching[vertex + biDoubleGraph.size()/2] != -1) {
+                matching[matching[vertex + biDoubleGraph.size()/2]] = -1;
+                matching[vertex + biDoubleGraph.size()/2] = -1;
+            }
             return true;
         }
         return false;
@@ -595,12 +612,16 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
             }
 
             // Compute actual independent set, not just independent set on left side
+#ifndef TESTING
+            set<int> const criticalSet(std::move(MatchingTools::ComputeBiDoubleMISOptimizedWithMatching(biDouble, matching, vInBiDoubleGraph, setRemainingBiDoubleVertices)));
+#else
             set<int> const criticalSet(std::move(MatchingTools::ComputeBiDoubleMIS(biDoubleGraph, vInBiDoubleGraph, setRemainingBiDoubleVertices)));
+#endif // TESTING
 
             vector<bool> vNewInBiDoubleGraph(vInBiDoubleGraph);
             set<int> setNewRemainingBiDoubleVertices(setRemainingBiDoubleVertices);
 
-            auto removeFromNewBiDouble = [&biDoubleGraph, &vNewInBiDoubleGraph, &setNewRemainingBiDoubleVertices] (int const vertexToRemove) {
+            auto removeFromNewBiDouble = [&biDoubleGraph, &matching, &vNewInBiDoubleGraph, &setNewRemainingBiDoubleVertices] (int const vertexToRemove) {
                 set<int>::iterator it = setNewRemainingBiDoubleVertices.find(vertexToRemove);
                 if (it != setNewRemainingBiDoubleVertices.end()) {
                     setNewRemainingBiDoubleVertices.erase(it);
@@ -608,6 +629,14 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
 
                     vNewInBiDoubleGraph[vertexToRemove] = false;
                     vNewInBiDoubleGraph[vertexToRemove + biDoubleGraph.size()/2] = false;
+                    if (matching[vertexToRemove] != -1) {
+                        matching[matching[vertexToRemove]] = -1;
+                        matching[vertexToRemove] = -1;
+                    }
+                    if (matching[vertexToRemove + biDoubleGraph.size()/2] != -1) {
+                        matching[matching[vertexToRemove + biDoubleGraph.size()/2]] = -1;
+                        matching[vertexToRemove + biDoubleGraph.size()/2] = -1;
+                    }
                     return true;
                 }
                 return false;
@@ -623,10 +652,9 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
             // compute new critical set size
 
 #ifndef TESTING
-            set<int> const newCriticalSet(std::move(MatchingTools::ComputeBiDoubleMIS(biDoubleGraph, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
+            set<int> const newCriticalSet(std::move(MatchingTools::ComputeBiDoubleMISOptimizedWithMatching(biDouble, matching, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
 #else
             set<int> const newCriticalSet(std::move(MatchingTools::ComputeBiDoubleMIS(biDoubleGraph, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
-            vector<int> matching(biDouble.Size(), -1);
             set<int> const newCriticalSet2(std::move(MatchingTools::ComputeBiDoubleMISOptimizedWithMatching(biDouble, matching, vNewInBiDoubleGraph, setNewRemainingBiDoubleVertices)));
 
             if (newCriticalSet.size() != newCriticalSet2.size()) {
