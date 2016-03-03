@@ -1080,9 +1080,9 @@ void Experiments::ComputeMaximumCriticalIndependentSet() const
     clock_t endTime(clock());
 
     if (m_bOutputLatex) {
-        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << " & " << independentVertices.size() << " & " << remainingVertices.size()/2 << " \\\\ " << endl << flush;
+        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << " & " << independentVertices.size() << " & " << remainingVertices.size() << " \\\\ " << endl << flush;
     } else {
-        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << independentVertices.size() << "\t" << remainingVertices.size()/2 << endl << flush;
+        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << independentVertices.size() << "\t" << remainingVertices.size() << endl << flush;
     }
 }
 

@@ -710,12 +710,13 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
 ////                    cout << "ERROR! line " << __LINE__ << endl;
 ////                }
 ////                cout << "NO" << endl << flush;
-                if (removeFromBiDouble(vertex))
-                    removed.push_back(vertex);
+////                if (removeFromBiDouble(vertex))
+////                    removed.push_back(vertex);
             }
 ////        cout << "Critical          set found: " << criticalSet.size() << endl << flush;
 ////            cout << "Vertices Remaining     : " << setRemainingVertices.size() << endl << flush;
 ////            cout << "BiDouble Remaining     : " << setRemainingBiDoubleVertices.size() << endl << flush;
+
         }
 
 ////        cout << "Num critical indepset nodes: " << maximumCriticalIndependentSet.size() << endl << flush;
@@ -758,10 +759,10 @@ set<int> CliqueTools::IterativelyRemoveMaximumCriticalIndependentSets(vector<vec
 
         independentVertices.insert(maximumCriticalIndependentSet.begin(), maximumCriticalIndependentSet.end());
 
-        if (newGraphSize == 0) {
+////        if (newGraphSize == 0) {
 ////            cout << "Kernel is empty, breaking..." << endl << flush;
             break;
-        }
+////        }
 
     }
 
@@ -1036,10 +1037,10 @@ set<int> CliqueTools::ComputeMaximumCriticalIndependentSet(vector<vector<int>> c
 
         independentVertices.insert(maximumCriticalIndependentSet.begin(), maximumCriticalIndependentSet.end());
 
-        if (newGraphSize == 0) {
+////        if (newGraphSize == 0) {
 ////            cout << "Kernel is empty, breaking..." << endl << flush;
             break;
-        }
+////        }
 
     }
 
