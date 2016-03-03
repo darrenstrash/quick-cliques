@@ -3,6 +3,7 @@
 #include "GraphTools.h"
 #include "BiDoubleGraph.h"
 
+#include <algorithm>
 #include <set>
 #include <vector>
 #include <list>

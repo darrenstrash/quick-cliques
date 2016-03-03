@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <set>
+#include <cstddef>
 
 class BiDoubleGraph
 {

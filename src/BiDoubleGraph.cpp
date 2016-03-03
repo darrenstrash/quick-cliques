@@ -1,6 +1,7 @@
 #include "BiDoubleGraph.h"
 #include "GraphTools.h"
 
+#include <algorithm> // std::reverse
 #include <set>
 #include <vector>
 #include <list>
