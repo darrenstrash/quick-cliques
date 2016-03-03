@@ -10,6 +10,7 @@ namespace MatchingTools
 {
     enum LastEdge {NO_LAST_EDGE, MATCHED_LAST_EDGE, UNMATCHED_LAST_EDGE, BOTH_LAST_EDGE, NULL_LAST_EDGE};
 
+    std::set<int> ComputeBiDoubleMIS(std::vector<std::vector<int>> const &biDoubleGraph);
     std::set<int> ComputeLeftMIS(std::vector<std::vector<int>> const &biDoubleGraph);
 
     void ComputeAlternatingPaths(BiDoubleGraph const &biDouble, std::vector<int> const &vMatching, std::vector<LastEdge> &vOnAlternatingPath);

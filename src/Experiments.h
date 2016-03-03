@@ -18,6 +18,7 @@ public:
     void ComputeCriticalIndependentSet() const;
     void ComputeCriticalIndependentSetKernel() const;
     void ComputeMaximumCriticalIndependentSetKernel() const;
+    void ComputeMaximumCriticalIndependentSet() const;
     void RunExactSearch() const;
     void RunStandardSearch() const;
     void RunComponentsMISS() const;

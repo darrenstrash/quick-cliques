@@ -1053,3 +1053,36 @@ void Experiments::ComputeMaximumCriticalIndependentSetKernel() const
     }
 }
 
+void Experiments::ComputeMaximumCriticalIndependentSet() const
+{
+    if (m_bPrintHeader) {
+        if (m_bOutputLatex) {
+            cout << "Graph Name & $n$ & $m$ & $t$ & $|I|$ & $k$ \\\\ \\hline" << endl << flush;
+        } else {
+            cout << "Graph Name\tn\tm\tt\t|I|\tk" << endl << flush;
+        }
+    }
+
+
+    size_t const numVertices(m_AdjacencyArray.size());
+    size_t numEdges(0);
+    for (vector<int> const &neighbors : m_AdjacencyArray) {
+        numEdges+= neighbors.size();
+    }
+    numEdges >>=1;
+
+    clock_t startTime(clock());
+
+    set<int> independentVertices;
+    set<int> const remainingVertices(CliqueTools::ComputeMaximumCriticalIndependentSet(m_AdjacencyArray, independentVertices));
+////    cout << "Remaining graph (" << remainingVertices.size() << " elements):" << endl;
+
+    clock_t endTime(clock());
+
+    if (m_bOutputLatex) {
+        cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << " & " << independentVertices.size() << " & " << remainingVertices.size()/2 << " \\\\ " << endl << flush;
+    } else {
+        cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << independentVertices.size() << "\t" << remainingVertices.size()/2 << endl << flush;
+    }
+}
+
