@@ -25,6 +25,7 @@ public:
     void RunComponentsStandardSearch() const;
     void RunComponentsForwardSearch() const;
     void RunForwardSearch() const;
+    void PartitionCliques(std::string const &partitionFile) const;
 
 private:
     std::string m_sDataSetName;

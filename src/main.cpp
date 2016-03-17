@@ -26,6 +26,7 @@
 #include "DegeneracyAlgorithm.h"
 #include "FasterDegeneracyAlgorithm.h"
 #include "GraphTools.h"
+#include "PartitionTools.h"
 
 #include "TesterMISS.h"
 ////#include "ComparisonFullMISS.h"
@@ -49,6 +50,9 @@
 #include "LightWeightStaticOrderMCS.h"
 #include "LightWeightMCR.h"
 #include "LightWeightSparseMCQ.h"
+#include "LightWeightSparseMCR.h"
+#include "LightWeightSparseStaticOrderMCS.h"
+#include "LightWeightSparseFullMCS.h"
 #include "LightWeightMCQ.h"
 #include "AdjacencyMatrixVertexSetsMax.h"
 #include "AdjacencyMatrixVertexSets.h"
@@ -102,7 +106,7 @@ using namespace std;
 
 bool isValidAlgorithm(string const &name)
 {
-    return (name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "reduction-sparse-misq" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "reduction-sparse-miss" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis" || name == "sparse-mcq" || name == "connected-component-miss" || name == "connected-component-miss2"/* || name == "comparison-miss"*/ || name == "tester-miss");
+    return (name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "reduction-sparse-misq" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "reduction-sparse-miss" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" || name == "timedelay-adjlist" || name == "timedelay-maxdegree" || name == "hybrid" || name == "degeneracy" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis" || name == "sparse-mcq" || name == "sparse-mcr" || name == "sparse-static-order-mcs" || name == "sparse-mcs" || name == "connected-component-miss" || name == "connected-component-miss2"/* || name == "comparison-miss"*/ || name == "tester-miss");
 }
 
 void ProcessCommandLineArgs(int const argc, char** argv, map<string,string> &mapCommandLineArgs)
@@ -169,7 +173,7 @@ string basename(string const &fileName)
     return sBaseName;
 }
 
-void RunExperiment(string const &sInputFile, string const &sExperimentName, bool const bOutputLatex, bool const bPrintHeader, vector<vector<int>> const &adjacencyArray, vector<vector<char>> const &vAdjacencyMatrix, double const dTimeout)
+void RunExperiment(string const &sInputFile, string const &partitionFile, string const &sExperimentName, bool const bOutputLatex, bool const bPrintHeader, vector<vector<int>> const &adjacencyArray, vector<vector<char>> const &vAdjacencyMatrix, double const dTimeout)
 {
     string const dataSetName(basename(sInputFile));
     Experiments experiments(dataSetName, dTimeout, bOutputLatex, bPrintHeader, adjacencyArray, vAdjacencyMatrix);
@@ -186,6 +190,8 @@ void RunExperiment(string const &sInputFile, string const &sExperimentName, bool
         experiments.ComputeMaximumCriticalIndependentSetKernel();
     } else if (sExperimentName=="mcis") {
         experiments.ComputeMaximumCriticalIndependentSet();
+    } else if (sExperimentName=="partition-cliques") {
+        experiments.PartitionCliques(partitionFile);
     } else if (sExperimentName=="kernel-sparse-miss") {
         experiments.KernelizeAndRunReductionSparseMISS();
     } else if (sExperimentName=="kernel-component-sparse-miss") {
@@ -223,6 +229,7 @@ int main(int argc, char** argv)
     bool   const bOutputLatex(mapCommandLineArgs.find("--latex") != mapCommandLineArgs.end());
     bool   const bOutputTable(mapCommandLineArgs.find("--table") != mapCommandLineArgs.end());
     string const inputFile((mapCommandLineArgs.find("--input-file") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--input-file"] : "");
+    string const partitionFile((mapCommandLineArgs.find("--partition-file") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--partition-file"] : "");
     string const algorithm((mapCommandLineArgs.find("--algorithm") != mapCommandLineArgs.end()) ? mapCommandLineArgs["--algorithm"] : "");
     bool   const computeCliqueGraph(mapCommandLineArgs.find("--compute-clique-graph") != mapCommandLineArgs.end());
     bool   const staging(mapCommandLineArgs.find("--staging") != mapCommandLineArgs.end());
@@ -256,6 +263,12 @@ int main(int argc, char** argv)
         cout << "ERROR: Missing input file " << endl;
         // ShowUsageMessage();
         // return 1; // TODO/DS
+    }
+
+    if (!partitionFile.empty()) {
+        vector<int> vVertexToPartition;
+        vector<vector<int>> vPartitions;
+        PartitionTools::ReadPartitionFile(partitionFile, vVertexToPartition, vPartitions);
     }
 
     if (!(staging || computeCliqueGraph || bRunExperiment) && algorithm.empty()) {
@@ -315,7 +328,7 @@ int main(int argc, char** argv)
         }
     }
 
-    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || bRunExperiment || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "reduction-sparse-misq" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "reduction-sparse-miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "sparse-mcq" || name == "connected-component-miss" || name == "connected-component-miss2"/* || name == "comparison-miss"*/ || name == "tester-miss");
+    bool const bComputeAdjacencyArray(staging || computeCliqueGraph || bRunExperiment || name == "adjlist" || name == "timedelay-adjlist" || name == "generic-adjlist" || name == "generic-adjlist-max" ||name == "timedelay-maxdegree" || name == "timedelay-degeneracy" || name == "faster-degeneracy" || name == "generic-degeneracy" || name == "cache-degeneracy" || name == "mis" || name == "degeneracy-mis" || name == "partial-match-degeneracy" || name == "reverse-degeneracy" || name == "degeneracy-min" || name == "degeneracy-mis-2" || name == "reduction-mis" || name == "experimental-mis" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "reduction-sparse-misq" || name == "reduction-sparse-misr" || name == "reduction-sparse-static-order-miss" || name == "reduction-sparse-miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "sparse-mcq" || name == "sparse-mcr" || name == "sparse-static-order-mcs" || name == "sparse-mcs" || name == "connected-component-miss" || name == "connected-component-miss2"/* || name == "comparison-miss"*/ || name == "tester-miss");
 
     vector<vector<int>> adjacencyArray;
 
@@ -332,7 +345,7 @@ int main(int argc, char** argv)
     }
 
     if (bRunExperiment) {
-        RunExperiment(inputFile, sExperimentName, bOutputLatex, bPrintHeader, adjacencyArray, vAdjacencyMatrix, dTimeout);
+        RunExperiment(inputFile, partitionFile, sExperimentName, bOutputLatex, bPrintHeader, adjacencyArray, vAdjacencyMatrix, dTimeout);
         return 0;
     }
 
@@ -348,6 +361,12 @@ int main(int argc, char** argv)
         pAlgorithm = new LightWeightMCQ(vAdjacencyMatrix);
     } else if (name == "sparse-mcq") {
         pAlgorithm = new LightWeightSparseMCQ(adjacencyArray);
+    } else if (name == "sparse-mcr") {
+        pAlgorithm = new LightWeightSparseMCR(adjacencyArray);
+    } else if (name == "sparse-static-order-mcs") {
+        pAlgorithm = new LightWeightSparseStaticOrderMCS(adjacencyArray);
+    } else if (name == "sparse-mcs") {
+        pAlgorithm = new LightWeightSparseFullMCS(adjacencyArray);
     } else if (name == "mcr") {
         pAlgorithm = new LightWeightMCR(vAdjacencyMatrix);
     } else if (name == "static-order-mcs") {
@@ -512,6 +531,8 @@ int main(int argc, char** argv)
     pAlgorithm->SetQuiet(bQuiet);
 
     RunAndPrintStats(pAlgorithm, cliques, bTableMode);
+
+////    cout << "Last clique has size: " << cliques.back().size() << endl << flush;
 
     cliques.clear();
 

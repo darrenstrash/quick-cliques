@@ -6,11 +6,14 @@
 #include "TesterMISS.h"
 #include "ForwardSearchMISS.h"
 #include "LightWeightFullMISS.h"
+#include "LightWeightFullMCS.h"
+#include "LightWeightSparseStaticOrderMCS.h"
 #include "LightWeightReductionSparseFullMISS.h"
 #include "GraphTools.h"
 #include "Tools.h"
 #include "OrderingTools.h"
 #include "CliqueTools.h"
+#include "PartitionTools.h"
 
 #include <list>
 #include <cstdlib>
@@ -1083,6 +1086,88 @@ void Experiments::ComputeMaximumCriticalIndependentSet() const
         cout << m_sDataSetName << " & " << numVertices << " & " << numEdges << " & " << Tools::GetTimeInSeconds(endTime-startTime) << " & " << independentVertices.size() << " & " << remainingVertices.size() << " \\\\ " << endl << flush;
     } else {
         cout << m_sDataSetName << "\t" << numVertices << "\t" << numEdges << "\t" << Tools::GetTimeInSeconds(endTime-startTime) << "\t" << independentVertices.size() << "\t" << remainingVertices.size() << endl << flush;
+    }
+}
+
+void Experiments::PartitionCliques(string const &partitionFile) const
+{
+    vector<int> vVertexToPartition;
+    vector<vector<int>> vPartitions;
+
+    PartitionTools::ReadPartitionFile(partitionFile, vVertexToPartition, vPartitions);
+
+    clock_t startTime(clock());
+
+    set<int> allBoundaryVertices;
+
+    size_t maxCliqueSize(0);
+    for (size_t partitionIndex=0; partitionIndex < vPartitions.size(); ++partitionIndex) {
+        vector<int> const vPartition(vPartitions[partitionIndex]);
+        cout << "Running MCS on partition " << (partitionIndex+1) << "/" << vPartitions.size() << endl << flush;
+        cout << "    Partition has size " << vPartition.size() << endl << flush;
+        map<int,int> mapUnused;
+        vector<vector<int>> subgraphAdjacencyList;
+        set<int> setVertices(vPartition.begin(), vPartition.end());
+
+////        cout << "Inserting boundary edges..." << endl << flush;
+////        for (int const vertex : vPartition) {
+////            setVertices.insert(m_AdjacencyArray[vertex].begin(), m_AdjacencyArray[vertex].end());
+////        }
+
+        set<int> boundaryVertices;
+        for (int const vertex : vPartition) {
+            for (int const neighbor: m_AdjacencyArray[vertex]) {
+                if (vVertexToPartition[neighbor] != partitionIndex) {
+                    boundaryVertices.insert(vertex);
+                    boundaryVertices.insert(neighbor);
+                    allBoundaryVertices.insert(vertex);
+                    allBoundaryVertices.insert(neighbor);
+                }
+            }
+            boundaryVertices.insert(m_AdjacencyArray[vertex].begin(), m_AdjacencyArray[vertex].end());
+        }
+        cout << "    Partition has size " << boundaryVertices.size() << " boundary vertices " << endl << flush;
+
+
+////        if (subgraphAdjacencyList.size() > 20000) {
+////            cout << "ERROR: partition is too large to fit into adjacency matrix" << endl << flush;
+////            exit(1);
+////        }
+
+////        vector<vector<char>> subgraphAdjacencyMatrix(subgraphAdjacencyList.size());
+////        for (int vertex = 0; vertex < subgraphAdjacencyList.size(); ++vertex) {
+////            vector<int> const &neighbors(subgraphAdjacencyList[vertex]);
+////            subgraphAdjacencyMatrix[vertex].resize(subgraphAdjacencyList.size(), 0);
+////            for (int const neighbor : neighbors) {
+////                subgraphAdjacencyMatrix[vertex][neighbor] = 1;
+////            }
+////        }
+
+#ifdef RUN_MCS
+        GraphTools::ComputeInducedSubgraph(m_AdjacencyArray, setVertices, subgraphAdjacencyList, mapUnused);
+        LightWeightSparseStaticOrderMCS algorithm(subgraphAdjacencyList);
+////        algorithm.SetQuiet(false); 
+////        algorithm.SetQuiet(true);
+        list<list<int>> cliques;
+        algorithm.Run(cliques);
+        maxCliqueSize = max(maxCliqueSize, cliques.back().size());
+        cout << "    Found clique of size: " << cliques.back().size() << endl << flush;
+#endif // RUN_MCS
+    }
+
+    vector<vector<int>> boundaryAdjacencyList;
+    map<int,int> mapUnused;
+    GraphTools::ComputeInducedSubgraph(m_AdjacencyArray, allBoundaryVertices, boundaryAdjacencyList, mapUnused);
+    GraphTools::PrintGraphInEdgesFormat(boundaryAdjacencyList);
+
+    clock_t const endTime(clock());
+
+    ////    cout << "Found independent set of size " << totalCliqueSize << endl << flush;
+
+    if (m_bOutputLatex) {
+        cout << maxCliqueSize << " & " << Tools::GetTimeInSeconds(endTime - startTime, false /* no brackets */) << flush;
+    } else {
+        cout << maxCliqueSize << "\t" << Tools::GetTimeInSeconds(endTime - startTime, false /* no brackets */) << flush;
     }
 }
 

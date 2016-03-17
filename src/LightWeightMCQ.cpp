@@ -73,7 +73,6 @@ void LightWeightMCQ::GetNewOrder(vector<int> &vNewVertexOrder, vector<int> &vVer
 ////    }
 ////    cout << endl;
 
-
     R.push_back(chosenVertex);
 }
 
