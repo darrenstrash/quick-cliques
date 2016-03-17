@@ -1142,7 +1142,7 @@ void Experiments::PartitionCliques(string const &partitionFile) const
 ////                subgraphAdjacencyMatrix[vertex][neighbor] = 1;
 ////            }
 ////        }
-
+#define RUN_MCS
 #ifdef RUN_MCS
         GraphTools::ComputeInducedSubgraph(m_AdjacencyArray, setVertices, subgraphAdjacencyList, mapUnused);
         LightWeightSparseStaticOrderMCS algorithm(subgraphAdjacencyList);
@@ -1155,10 +1155,12 @@ void Experiments::PartitionCliques(string const &partitionFile) const
 #endif // RUN_MCS
     }
 
+#ifndef RUN_MCS
     vector<vector<int>> boundaryAdjacencyList;
     map<int,int> mapUnused;
     GraphTools::ComputeInducedSubgraph(m_AdjacencyArray, allBoundaryVertices, boundaryAdjacencyList, mapUnused);
     GraphTools::PrintGraphInEdgesFormat(boundaryAdjacencyList);
+#endif // RUN_MCS
 
     clock_t const endTime(clock());
 
@@ -1171,3 +1173,30 @@ void Experiments::PartitionCliques(string const &partitionFile) const
     }
 }
 
+
+void Experiments::RunMCSPrintClique() const
+{
+    cout << "Running MCS algorithm" << endl << flush;
+    cout << "Graph has " << m_AdjacencyMatrix.size() << " vertices" << endl;
+
+    list<list<int>> cliques;
+
+    clock_t const startTime(clock());
+    LightWeightFullMCS mcs(m_AdjacencyMatrix);
+    mcs.Run(cliques);
+    clock_t const endTime(clock());
+
+    if (cliques.empty()) {
+        cout << "Something went wrong...no clique was found" << endl << flush;
+        exit(1);
+    }
+
+    cout << "Found clique of size " << cliques.back().size() << " in " << Tools::GetTimeInSeconds(endTime - startTime, false /* no brackets */) << endl << flush;
+
+    cout << "Maximum Clique:";
+    for (int const vertex : cliques.back()) {
+        cout << " " << vertex;
+    }
+
+    cout << endl;
+}

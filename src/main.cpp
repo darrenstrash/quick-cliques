@@ -180,6 +180,8 @@ void RunExperiment(string const &sInputFile, string const &partitionFile, string
 
     if (sExperimentName=="kernel-size") {
         experiments.RunKernelSize();
+    } if (sExperimentName=="find-and-print-maxclique") {
+        experiments.RunMCSPrintClique();
     } else if (sExperimentName=="fast-kernel-size") {
         experiments.RunFastKernelSize();
     } else if (sExperimentName=="critical-independent-set") {
@@ -297,9 +299,9 @@ int main(int argc, char** argv)
     }
 
     bool const bComputeAdjacencyMatrix(adjacencyList.size() < 20000);
-    bool const bShouldComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "connected-component-miss" || name == "connected-component-miss2" /* || name == "comparison-miss"*/ || name == "tester-miss");
+    bool const bShouldComputeAdjacencyMatrix(name == "tomita" || name == "generic-adjmatrix" || name == "generic-adjmatrix-max" || name == "mcq" || name == "mcr" || name == "static-order-mcs" || name == "mcs" || name == "misq" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "connected-component-miss" || name == "connected-component-miss2" /* || name == "comparison-miss"*/ || name == "tester-miss" || sExperimentName == "find-and-print-maxclique");
 
-    bool const addDiagonals(bRunExperiment || name == "misq" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "connected-component-miss" || name == "connected-component-miss2" || name == "comparison-miss" || name == "tester-miss");
+    bool const addDiagonals((bRunExperiment && sExperimentName != "find-and-print-maxclique") || name == "misq" || name == "misr" || name == "static-order-miss" || name == "miss" || name == "reduction-domination-misq" || name == "reduction-domination-misr" || name == "reduction-misq" || name == "reduction-misr" || name == "reduction-static-order-miss" || name == "reduction-miss" || name == "connected-component-miss" || name == "connected-component-miss2" || name == "comparison-miss" || name == "tester-miss");
 
     if (bShouldComputeAdjacencyMatrix && !bComputeAdjacencyMatrix) {
         cout << "ERROR!: unable to compute adjacencyMatrix, since the graph is too large: " << adjacencyList.size() << endl << flush;

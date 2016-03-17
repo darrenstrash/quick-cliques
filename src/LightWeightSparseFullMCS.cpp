@@ -12,6 +12,7 @@ LightWeightSparseFullMCS::LightWeightSparseFullMCS(vector<vector<int>> const &vA
 : LightWeightSparseStaticOrderMCS(vAdjacencyArray)
 {
     SetName("sparse-mcs");
+    cout << "WARNING: the " << GetName() << " algorithm is not working correctly, don't believe the result." << endl << flush;
 }
 
 void LightWeightSparseFullMCS::Color(std::vector<int> const &vVertexOrder, std::vector<int> &vVerticesToReorder, std::vector<int> &vColors)
