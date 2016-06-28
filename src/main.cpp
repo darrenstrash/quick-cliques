@@ -180,7 +180,7 @@ void RunExperiment(string const &sInputFile, string const &partitionFile, string
 
     if (sExperimentName=="kernel-size") {
         experiments.RunKernelSize();
-    } if (sExperimentName=="find-and-print-maxclique") {
+    } else if (sExperimentName=="find-and-print-maxclique") {
         experiments.RunMCSPrintClique();
     } else if (sExperimentName=="fast-kernel-size") {
         experiments.RunFastKernelSize();
