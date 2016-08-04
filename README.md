@@ -42,7 +42,7 @@ $ make
 
 ### Running
 ```sh
-$ ./bin/qc --input-file=<input graph> --algorithm=<algorithm name>
+$ ./bin/qc --input-file=<input graph> --algorithm=<tomita|adjlist|degeneracy|hybrid>
 ```
 
 or
