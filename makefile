@@ -30,13 +30,16 @@ EXECS = $(addprefix $(BIN_DIR)/, $(EXEC_NAMES))
 
 #DEFINE += -DDEBUG       #for debugging
 #DEFINE += -DMEMORY_DEBUG #for memory debugging.
-#DEFINE += -DRETURN_CLIQUES_ONE_BY_ONE 
-#DEFINE += -DPRINT_CLIQUES_ONE_BY_ONE 
+#DEFINE += -DPRINT_CLIQUES_ONE_BY_ONE   #print cliques, one per line
 
+# print cliques in tree-like format:
+#  - print each vertex that's evaluated
+#  - print c if you reach a maximal clique to report
+#  - print b if you backtrack
 #DEFINE += -DPRINT_CLIQUES_TOMITA_STYLE # used by Eppstein and Strash (2011)
 
 #some systems handle malloc and calloc with 0 bytes strangely.
-DEFINE += -DALLOW_ALLOC_ZERO_BYTES# used by Eppstein and Strash (2011) 
+DEFINE += -DALLOW_ALLOC_ZERO_BYTES      # used by Eppstein and Strash (2011) 
 
 VPATH = src
 
