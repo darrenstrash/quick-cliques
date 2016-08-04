@@ -63,7 +63,7 @@ Currently, two formats are supported:
 
    `<# vertices> <# edges> 1`
 
-   followed by <#vertices> lines of space-separated vertices,  where the `i`-th line consists of 
+   followed by `<# vertices>` lines of space-separated vertices,  where the `i`-th line consists of 
    all neighbors of `i`. All vertices range from `1` to `<# vertices>`
 
  - **A custom format**: Which consists of
@@ -74,7 +74,7 @@ Currently, two formats are supported:
  
    `u,v`
  
-   where `u` and `v` are vertices represented by integers from `0` to `<#vertices>-1`. If `u,v` is in the list, then `v,u` must be in also.
+   where `u` and `v` are vertices represented by integers from `0` to `<# vertices>-1`. If `u,v` is in the list, then `v,u` must be in the list also.
 
 There are plans to phase out the custom format and put in support for *snap* and *dimacs* files.
 
