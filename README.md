@@ -4,18 +4,18 @@
 
 The original intent of this software was to provide exact reproducibility of experimental results from two papers:
 
-*Listing All Maximal Cliques in Large Sparse Real-World Graphs in Near-Optimal Time*,
-**D. Eppstein, M. Löffler, and D. Strash**,
-Journal of Experimental Algorithmics, 18 (3): 3.1, 2013, 
-[doi:10.1145/2543629](https://doi.org/10.1145/2543629)
+*Listing All Maximal Cliques in Large Sparse Real-World Graphs in Near-Optimal Time*,  
+**D. Eppstein, M. Löffler, and D. Strash**,  
+Journal of Experimental Algorithmics, 18 (3): 3.1, 2013,   
+[doi:10.1145/2543629](https://doi.org/10.1145/2543629)  
 
 and
 
-*Listing All Maximal Cliques in Large Sparse Real-World Graphs*, 
-**D. Eppstein and D. Strash**
-Proceedings of the 10th International Conference on Experimental Algorithms (SEA 2011), LNCS vol. 6630, pp. 403-414.
-[doi:10.1007/978-3-642-20662-7_31](https://doi.org/10.1007/978-3-642-20662-7_31)
-[arXiv:1103.0318](https://arxiv.org/abs/1103.0318)
+*Listing All Maximal Cliques in Large Sparse Real-World Graphs*,   
+**D. Eppstein and D. Strash**  
+Proceedings of the 10th International Conference on Experimental Algorithms (SEA 2011), LNCS vol. 6630, pp. 403-414.  
+[doi:10.1007/978-3-642-20662-7_31](https://doi.org/10.1007/978-3-642-20662-7_31)  
+[arXiv:1103.0318](https://arxiv.org/abs/1103.0318)  
 
 However, in the original implementation (written in C) was not designed to be integrated with other code. It has since been upgraded to C++11, is becoming more hardened, and has better support for integration into other software packages.
 
