@@ -70,7 +70,7 @@ Currently, two formats are supported:
 
    `<# vertices> 2*<# edges>`
 
-   followed by 2*<# edges> lines of comma-separated vertices of the form 
+   followed by `2*<# edges>` lines of comma-separated vertices of the form 
  
    `u,v`
  
