@@ -61,20 +61,20 @@ Currently, two formats are supported:
 
  - **The unweighted METIS format**: Which consists of
 
-`<# vertices> <# edges> 1`
+   `<# vertices> <# edges> 1`
 
-followed by <#vertices> lines of space-separated vertices,  where the `i`-th line consists of 
-all neighbors of `i`. All vertices range from `1` to `<# vertices>`
+   followed by <#vertices> lines of space-separated vertices,  where the `i`-th line consists of 
+   all neighbors of `i`. All vertices range from `1` to `<# vertices>`
 
  - **A custom format**: Which consists of
 
- `<# vertices> 2*<# edges>`
+   `<# vertices> 2*<# edges>`
 
- followed by 2*<# edges> lines of comma-separated vertices of the form 
+   followed by 2*<# edges> lines of comma-separated vertices of the form 
  
-`u,v`
+   `u,v`
  
-where `u` and `v` are vertices represented by integers from `0` to `<#vertices>-1`. If `u,v` is in the list, then `v,u` must be in also.
+   where `u` and `v` are vertices represented by integers from `0` to `<#vertices>-1`. If `u,v` is in the list, then `v,u` must be in also.
 
 There are plans to phase out the custom format and put in support for *snap* and *dimacs* files.
 
