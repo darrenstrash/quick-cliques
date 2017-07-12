@@ -3,7 +3,7 @@ BUILD_DIR = build
 SRC_DIR   = src
 BIN_DIR   = bin
 
-CFLAGS = -Winline -O2 -std=c++0x -g
+CFLAGS = -Winline -O2 -std=c++11 -g
 #CFLAGS = -Winline -DDEBUG_MESSAGE -O0 -std=c++0x -g
 
 SOURCES_TMP += CliqueTools.cpp
@@ -41,6 +41,9 @@ EXECS = $(addprefix $(BIN_DIR)/, $(EXEC_NAMES))
 #some systems handle malloc and calloc with 0 bytes strangely.
 DEFINE += -DALLOW_ALLOC_ZERO_BYTES      # used by Eppstein and Strash (2011) 
 
+#set CXX to generic g++ if not set.
+CXX ?= g++
+
 VPATH = src
 
 .PHONY : all
@@ -53,19 +56,19 @@ clean:
 	rm -rf $(EXECS) $(BUILD_DIR) $(BIN_DIR)
 
 $(BIN_DIR)/printnm: printnm.cpp ${OBJECTS} | ${BIN_DIR}
-	g++ ${DEFINE} ${OBJECTS} $(SRC_DIR)/printnm.cpp -o $@
+	$(CXX) $(CFLAGS) ${DEFINE} ${OBJECTS} $(SRC_DIR)/printnm.cpp -o $@
 
 $(BIN_DIR)/compdegen: compdegen.cpp ${OBJECTS} | ${BIN_DIR}
-	g++ $(CFLAGS) ${DEFINE} ${OBJECTS} $(SRC_DIR)/compdegen.cpp -o $@
+	$(CXX) $(CFLAGS) ${DEFINE} ${OBJECTS} $(SRC_DIR)/compdegen.cpp -o $@
 
 $(BIN_DIR)/qc: main.cpp ${OBJECTS} | ${BIN_DIR}
-	g++ $(CFLAGS) ${DEFINE} ${OBJECTS} $(SRC_DIR)/main.cpp -o $@
+	$(CXX) $(CFLAGS) ${DEFINE} ${OBJECTS} $(SRC_DIR)/main.cpp -o $@
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp $(SRC_DIR)/%.h $(BUILD_DIR)/%.d | $(BUILD_DIR)
-	g++ $(CFLAGS) ${DEFINE} -c $< -o $@
+	$(CXX) $(CFLAGS) ${DEFINE} -c $< -o $@
 
 $(BUILD_DIR)/%.d: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
-	g++ $(CFLAGS) -MM -MT '$(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$<)' $< -MF $@
+	$(CXX) $(CFLAGS) -MM -MT '$(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$<)' $< -MF $@
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
