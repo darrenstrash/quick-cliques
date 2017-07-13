@@ -1,6 +1,7 @@
 # **Quick Cliques**: Quickly compute all maximal cliques in sparse graphs
 
 [![license](https://img.shields.io/badge/license-GPL%20v3.0-blue.svg)](http://www.gnu.org/licenses/)
+[![Build Status](https://travis-ci.org/darrenstrash/quick-cliques.svg?branch=master)](https://travis-ci.org/darrenstrash/quick-cliques)
 
 The original intent of this software was to provide exact reproducibility of experimental results from two papers:
 
