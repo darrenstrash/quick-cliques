@@ -155,12 +155,14 @@ int main(int argc, char** argv)
     int n; // number of vertices
     int m; // 2x number of edges
 
+    bool bOneBasedVertexIds(false);
     vector<list<int>> adjacencyList;
     if (inputFile.find(".graph") != string::npos) {
-        if (!bTableMode) cout << "Reading .graph file format. " << endl << flush;
+        if (!bTableMode) cout << "Detected .graph extension, reading METIS file format. " << endl << flush;
         adjacencyList = readInGraphAdjListEdgesPerLine(n, m, inputFile);
+        bOneBasedVertexIds = true;
     } else {
-        if (!bTableMode) cout << "Reading .edges file format. " << endl << flush;
+        if (!bTableMode) cout << "Reading .edges file format: one edge per line. " << endl << flush;
         adjacencyList = readInGraphAdjList(n, m, inputFile);
     }
 
@@ -220,8 +222,20 @@ int main(int argc, char** argv)
     }
 
 #ifdef PRINT_CLIQUES_ONE_BY_ONE
-    auto printClique = [](list<int> const &clique) {
-        Tools::printList(clique, &Tools::printInt);
+    auto printClique = [bOneBasedVertexIds](list<int> const &clique) {
+        list<int>::const_iterator it = clique.begin();
+
+        int offset = bOneBasedVertexIds ? 1 : 0;
+
+        if (it != clique.end()) {
+            printf("%d", *it + offset); //cout << *it;
+            ++it;
+        }
+        while (it != clique.end()) {
+            printf(" %d", *it + offset); //cout << " " << *it;
+            ++it;
+        }
+        printf("\n"); //cout << endl;
     };
 
     pAlgorithm->AddCallBack(printClique);

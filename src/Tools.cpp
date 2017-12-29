@@ -502,7 +502,7 @@ void Tools::printList(list<int> const &linkedList, void (*printFunc)(int))
     int count = 0;
     for (int const value : linkedList) {
         printFunc(value);
-        if (count != linkedList.size()) {
+        if (++count != linkedList.size()) {
             printf(" ");
         }
     }
