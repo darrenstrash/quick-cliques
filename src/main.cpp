@@ -88,7 +88,7 @@ void PrintDebugWarning()
 
 void PrintHeader()
 {
-    cout << "NOTE: Quick Cliques v2.0beta." << endl;
+    cerr << "NOTE: Quick Cliques v2.0beta." << endl;
 }
 
 string basename(string const &fileName)
@@ -158,11 +158,11 @@ int main(int argc, char** argv)
     bool bOneBasedVertexIds(false);
     vector<list<int>> adjacencyList;
     if (inputFile.find(".graph") != string::npos) {
-        if (!bTableMode) cout << "Detected .graph extension, reading METIS file format. " << endl << flush;
+        if (!bTableMode) cerr << "Detected .graph extension, reading METIS file format. " << endl << flush;
         adjacencyList = readInGraphAdjListEdgesPerLine(n, m, inputFile);
         bOneBasedVertexIds = true;
     } else {
-        if (!bTableMode) cout << "Reading .edges file format: one edge per line. " << endl << flush;
+        if (!bTableMode) cerr << "Reading .edges file format: one edge per line. " << endl << flush;
         adjacencyList = readInGraphAdjList(n, m, inputFile);
     }
 
